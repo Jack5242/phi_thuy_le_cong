@@ -141,7 +141,6 @@ const App: React.FC = () => {
 
   const calculateTotal = () => {
     const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-    const shipping = subtotal > 2000 ? 0 : 50;
     
     let discountAmount = 0;
     if (appliedVoucher) {
@@ -152,7 +151,7 @@ const App: React.FC = () => {
       }
     }
     
-    return Math.max(0, subtotal - discountAmount + shipping);
+    return Math.max(0, subtotal - discountAmount);
   };
 
   const handleLogin = (userData: User, authToken: string) => {
