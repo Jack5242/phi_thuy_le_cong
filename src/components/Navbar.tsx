@@ -60,7 +60,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
                 search
               </span>
               <input 
-                className="bg-transparent border-none focus:ring-0 text-xs w-full placeholder:text-white/50 text-white ml-2 font-medium" 
+                className="bg-transparent border-none focus:ring-0 focus:outline-none text-xs w-full placeholder:text-white/50 text-white ml-2 font-medium" 
                 placeholder={t('nav.search')}
                 type="text"
                 value={searchQuery}
@@ -193,7 +193,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
                   search
                 </span>
                 <input 
-                  className="bg-transparent border-none focus:ring-0 text-xs w-full placeholder:text-white/50 text-white ml-2 font-medium" 
+                  className="bg-transparent border-none focus:ring-0 focus:outline-none text-xs w-full placeholder:text-white/50 text-white ml-2 font-medium" 
                   placeholder={t('nav.search')}
                   type="text"
                   value={searchQuery}
