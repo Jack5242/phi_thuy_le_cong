@@ -37,6 +37,7 @@ const PROMOTIONS_FALLBACK = [
 export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct, products }) => {
   const [promotions, setPromotions] = useState<any[]>(PROMOTIONS_FALLBACK);
   const [currentPromo, setCurrentPromo] = useState(0);
+  const [promotionsLoaded, setPromotionsLoaded] = useState(false);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -51,6 +52,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
         }
       } catch (err) {
         console.error('Failed to fetch promotions', err);
+      } finally {
+        setPromotionsLoaded(true);
       }
     };
     fetchPromotions();
@@ -115,23 +118,24 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
   return (
     <div className="space-y-12 pb-12">
       {/* 0. Promotion Slider - Full Width */}
-      <section className="relative h-[600px] md:h-[800px] bg-jade-900 overflow-hidden group/slider">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentPromo}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.2 }}
-            className="absolute inset-0"
-          >
-            {/* Background Image */}
-            <div 
-              className="absolute inset-0 bg-center bg-cover bg-no-repeat scale-105"
-              style={{ backgroundImage: `url('${promotions[currentPromo]?.image}')` }}
+      {promotionsLoaded ? (
+        <section className="relative h-[600px] md:h-[800px] bg-jade-900 overflow-hidden group/slider">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentPromo}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.2 }}
+              className="absolute inset-0"
             >
-              <div className="absolute inset-0 bg-black/40" />
-            </div>
+              {/* Background Image */}
+              <div 
+                className="absolute inset-0 bg-center bg-cover bg-no-repeat scale-105"
+                style={{ backgroundImage: `url('${promotions[currentPromo]?.image}')` }}
+              >
+                <div className="absolute inset-0 bg-black/40" />
+              </div>
 
             {/* Content Overlay */}
             <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-start">
@@ -199,6 +203,20 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
           ))}
         </div>
       </section>
+      ) : (
+        <section className="relative h-[600px] md:h-[800px] bg-jade-900 overflow-hidden">
+          <div className="absolute inset-0 bg-jade-800 animate-pulse">
+            <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-start">
+              <div className="max-w-2xl space-y-4">
+                <div className="h-4 bg-white/20 rounded w-32"></div>
+                <div className="h-16 bg-white/20 rounded w-96"></div>
+                <div className="h-6 bg-white/20 rounded w-80"></div>
+                <div className="h-12 bg-white/20 rounded w-40"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 1. New Arrivals (Slider) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
