@@ -150,6 +150,33 @@ export function seedProducts(products: Product[]) {
     insertPromo.run("Di Sản Thủ Công", "Khám phá bí mật của Ngọc Phỉ Thúy Myanmar", "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?q=80&w=1920&auto=format&fit=crop", "Tìm Hiểu Thêm", 2);
     console.log('Database seeded with initial promotions.');
   }
+
+  const checkOrders = db.prepare('SELECT count(*) as count FROM orders').get() as { count: number };
+  if (checkOrders.count === 0) {
+    // Create sample orders for testing
+    const orderId1 = 'order-001';
+    const orderId2 = 'order-002';
+
+    // Sample order 1
+    db.prepare('INSERT INTO orders (id, user_email, name, phone, address, notes, total, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(orderId1, 'customer@example.com', 'Nguyễn Văn A', '0123456789', '123 Đường ABC, Quận 1, TP.HCM', 'Giao hàng vào buổi sáng', 4850, 'Delivered', '2024-03-01 10:00:00');
+
+    // Add items for order 1
+    db.prepare('INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)')
+      .run(orderId1, '5', 1, 4850); // Mặt Dây Chuyền Rồng Phỉ Thúy Đa Sắc
+
+    // Sample order 2
+    db.prepare('INSERT INTO orders (id, user_email, name, phone, address, notes, total, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(orderId2, 'guest@example.com', null, null, null, null, 2400, 'Processing', '2024-03-05 14:30:00');
+
+    // Add items for order 2
+    db.prepare('INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)')
+      .run(orderId2, '2', 1, 2500); // Mặt Dây Chuyền Lục Bảo Hoàng Gia
+    db.prepare('INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)')
+      .run(orderId2, '1', 1, 1200); // Vòng Tay Phỉ Thúy Tím
+
+    console.log('Database seeded with sample orders.');
+  }
 }
 
 export function getAllProducts(): Product[] {
@@ -242,7 +269,12 @@ export function deleteProduct(id: string) {
 export function getAllOrders() {
   const orders = db.prepare('SELECT * FROM orders ORDER BY created_at DESC').all() as any[];
   return orders.map(order => {
-    const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(order.id);
+    const items = db.prepare(`
+      SELECT oi.*, p.name, p.image, p.category, p.collection
+      FROM order_items oi
+      JOIN products p ON oi.product_id = p.id
+      WHERE oi.order_id = ?
+    `).all(order.id);
     return { ...order, items };
   });
 }

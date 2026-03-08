@@ -15,6 +15,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
   const [orders, setOrders] = useState<any[]>([]);
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
   const [receiptToView, setReceiptToView] = useState<string | null>(null);
+  const [orderToView, setOrderToView] = useState<any | null>(null);
   
   // Vouchers State
   const [vouchers, setVouchers] = useState<any[]>([]);
@@ -657,6 +658,13 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                         </select>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button 
+                          onClick={() => setOrderToView(order)}
+                          className="text-blue-600 hover:text-blue-900 mr-4"
+                          title="Xem chi tiết đơn hàng"
+                        >
+                          <span className="material-symbols-outlined text-lg align-middle">visibility</span>
+                        </button>
                         {order.receipt && (
                           <button 
                             onClick={() => setReceiptToView(order.receipt)}
@@ -717,6 +725,136 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
               </div>
             </div>
           )}
+
+          {/* View Order Details Modal */}
+          {orderToView && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm" onClick={() => setOrderToView(null)}>
+              <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-2xl font-bold text-jade-900">Chi Tiết Đơn Hàng #{orderToView.id}</h3>
+                  <button onClick={() => setOrderToView(null)} className="text-gray-500 hover:text-gray-700">
+                    <X size={24} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                  {/* Order Information */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-3">Thông Tin Đơn Hàng</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Mã đơn hàng:</span>
+                        <span className="font-medium text-gray-900">{orderToView.id}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Ngày đặt:</span>
+                        <span className="font-medium text-gray-900">{new Date(orderToView.created_at).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Trạng thái:</span>
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full 
+                          ${orderToView.status === 'Delivered' || orderToView.status === 'Đã Giao' ? 'bg-green-100 text-green-800' : 
+                            orderToView.status === 'Shipped' || orderToView.status === 'Đang Giao' ? 'bg-blue-100 text-blue-800' : 
+                            orderToView.status === 'Processing' || orderToView.status === 'Đang Xử Lý' ? 'bg-yellow-100 text-yellow-800' : 
+                            'bg-gray-100 text-gray-800'}`}>
+                          {orderToView.status === 'Pending' ? 'Chờ Xử Lý' : 
+                          orderToView.status === 'Processing' ? 'Đang Xử Lý' : 
+                          orderToView.status === 'Shipped' ? 'Đang Giao' : 
+                          orderToView.status === 'Delivered' ? 'Đã Giao' : 
+                          orderToView.status === 'Cancelled' ? 'Đã Hủy' : orderToView.status}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Tổng tiền:</span>
+                        <span className="font-bold text-jade-900">{orderToView.total.toLocaleString()} VND</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Customer Information */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-3">Thông Tin Khách Hàng</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Email:</span>
+                        <span className="font-medium text-gray-900">{orderToView.user_email}</span>
+                      </div>
+                      {orderToView.name && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Tên:</span>
+                          <span className="font-medium text-gray-900">{orderToView.name}</span>
+                        </div>
+                      )}
+                      {orderToView.phone && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Số điện thoại:</span>
+                          <span className="font-medium text-gray-900">{orderToView.phone}</span>
+                        </div>
+                      )}
+                      {orderToView.address && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Địa chỉ:</span>
+                          <span className="font-medium text-gray-900">{orderToView.address}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order Items */}
+                <div className="mb-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Sản Phẩm Đã Đặt</h4>
+                  <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Sản Phẩm</th>
+                          <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Số Lượng</th>
+                          <th className="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Đơn Giá</th>
+                          <th className="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Tổng</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {orderToView.items?.map((item: any, index: number) => (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center">
+                                <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded mr-3" />
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                                  <div className="text-xs text-gray-500">{item.category}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-center text-sm text-gray-900">{item.quantity}</td>
+                            <td className="px-4 py-3 text-right text-sm text-gray-900">{item.price.toLocaleString()} VND</td>
+                            <td className="px-4 py-3 text-right text-sm font-medium text-gray-900">{(item.price * item.quantity).toLocaleString()} VND</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Order Notes */}
+                {orderToView.notes && (
+                  <div className="mb-6">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">Ghi Chú</h4>
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <p className="text-sm text-gray-700">{orderToView.notes}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-3 pt-4 border-t">
+                  <button onClick={() => setOrderToView(null)} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium">
+                    Đóng
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -739,34 +877,41 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
           </div>
 
           {(isAddingVoucher || editingVoucher) && (
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8">
-              <h3 className="text-xl font-bold text-jade-900 mb-4">{isAddingVoucher ? 'Thêm Mã Giảm Giá Mới' : 'Chỉnh Sửa Mã Giảm Giá'}</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold text-gray-800 mb-1">Mã</label>
-                  <input type="text" value={voucherForm.code} onChange={e => setVoucherForm({...voucherForm, code: e.target.value.toUpperCase()})} className="w-full border border-gray-300 rounded-md p-2 uppercase text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none" />
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+              <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-jade-900">{isAddingVoucher ? 'Thêm Mã Giảm Giá Mới' : 'Chỉnh Sửa Mã Giảm Giá'}</h3>
+                  <button onClick={() => { setIsAddingVoucher(false); setEditingVoucher(null); }} className="text-gray-500 hover:text-gray-700">
+                    <X size={24} />
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-800 mb-1">Mức Giảm Giá</label>
-                  <input type="number" value={voucherForm.discount} onChange={e => setVoucherForm({...voucherForm, discount: Number(e.target.value)})} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none" />
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-1">Mã</label>
+                    <input type="text" value={voucherForm.code} onChange={e => setVoucherForm({...voucherForm, code: e.target.value.toUpperCase()})} className="w-full border border-gray-300 rounded-md p-2 uppercase text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-1">Mức Giảm Giá</label>
+                    <input type="number" value={voucherForm.discount} onChange={e => setVoucherForm({...voucherForm, discount: Number(e.target.value)})} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-1">Loại</label>
+                    <select value={voucherForm.type} onChange={e => setVoucherForm({...voucherForm, type: e.target.value})} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none">
+                      <option value="percent">Phần Trăm (%)</option>
+                      <option value="fixed">Số Tiền Cố Định (VND)</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input type="checkbox" checked={voucherForm.is_active} onChange={e => setVoucherForm({...voucherForm, is_active: e.target.checked})} className="rounded text-jade-600 focus:ring-jade-500 w-4 h-4" />
+                      <span className="text-sm font-semibold text-gray-800">Hoạt Động</span>
+                    </label>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-800 mb-1">Loại</label>
-                  <select value={voucherForm.type} onChange={e => setVoucherForm({...voucherForm, type: e.target.value})} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none">
-                    <option value="percent">Phần Trăm (%)</option>
-                    <option value="fixed">Số Tiền Cố Định (VND)</option>
-                  </select>
+                <div className="mt-6 flex justify-end space-x-3">
+                  <button onClick={() => { setIsAddingVoucher(false); setEditingVoucher(null); }} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium">Hủy</button>
+                  <button onClick={handleSaveVoucher} className="px-4 py-2 bg-jade-800 text-white rounded-md hover:bg-jade-900 font-medium">Lưu Mã Giảm Giá</button>
                 </div>
-                <div className="flex items-center mt-6">
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input type="checkbox" checked={voucherForm.is_active} onChange={e => setVoucherForm({...voucherForm, is_active: e.target.checked})} className="rounded text-jade-600 focus:ring-jade-500 w-4 h-4" />
-                    <span className="text-sm font-semibold text-gray-800">Hoạt Động</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mt-6 flex justify-end space-x-3">
-                <button onClick={() => { setIsAddingVoucher(false); setEditingVoucher(null); }} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium">Hủy</button>
-                <button onClick={handleSaveVoucher} className="px-4 py-2 bg-jade-800 text-white rounded-md hover:bg-jade-900 font-medium">Lưu Mã Giảm Giá</button>
               </div>
             </div>
           )}
