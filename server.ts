@@ -1,21 +1,58 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import { PRODUCTS } from './src/constants';
-import { seedProducts, getAllProducts, createOrder, addProduct, updateProduct, deleteProduct, getAllOrders, updateOrderStatus, deleteOrder, getAllVouchers, addVoucher, updateVoucher, deleteVoucher, getVoucherByCode, createUser, getUserByEmail, getUserById, updateUserProfile, getUserOrders, getAllPromotions, addPromotion, updatePromotion, deletePromotion } from './src/db';
+import { seedProducts, getAllProducts, createOrder, addProduct, updateProduct, deleteProduct, getAllOrders, updateOrderStatus, deleteOrder, getAllVouchers, addVoucher, updateVoucher, deleteVoucher, getVoucherByCode, createUser, getUserByEmail, getUserById, updateUserProfile, getUserOrders, getAllPromotions, addPromotion, updatePromotion, deletePromotion, hasUserUsedVoucher, getUserTotalSpent, logSearchKeyword, getSearchAnalytics, clearSearchAnalytics, getAllBlogs, getBlogBySlug, addBlog, updateBlog, deleteBlog, createEmailVerification, verifyEmailCode, markUserVerified, createPasswordResetToken, verifyPasswordResetToken, updatePassword, saveOrderFeedback, getOrderFeedback, getAdminByEmail, getAdminById, getAllAdmins, addAdmin, updateAdminCredentials, updateAdminPassword, getBankSettings, updateBankSettings, getSocialSettings, updateSocialSettings, getFeaturedBlogs } from './src/db';
+import { sendVerificationEmail, sendPasswordResetEmail, sendFeedbackRequestEmail } from './email';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import path from 'path';
+import multer from 'multer';
 
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-123';
 
 const UPLOADS_DIR = path.join(process.cwd(), 'uploads', 'products');
+const BLOG_UPLOADS_DIR = path.join(process.cwd(), 'uploads', 'blogs');
+const BANK_UPLOADS_DIR = path.join(process.cwd(), 'uploads', 'bank');
+
 if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
+if (!fs.existsSync(BLOG_UPLOADS_DIR)) {
+  fs.mkdirSync(BLOG_UPLOADS_DIR, { recursive: true });
+}
+if (!fs.existsSync(BANK_UPLOADS_DIR)) {
+  fs.mkdirSync(BANK_UPLOADS_DIR, { recursive: true });
+}
+
+// Multer configuration for blogs
+const blogStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, BLOG_UPLOADS_DIR);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `blog_${Date.now()}${ext}`);
+  }
+});
+
+const uploadBlog = multer({ storage: blogStorage });
+
+// Multer configuration for bank QR
+const bankStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, BANK_UPLOADS_DIR);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `bank_qr_${Date.now()}${ext}`);
+  }
+});
+
+const uploadBank = multer({ storage: bankStorage });
 
 function processProductImages(productId: string, images: string[]) {
   const productDir = path.join(UPLOADS_DIR, productId);
@@ -24,7 +61,7 @@ function processProductImages(productId: string, images: string[]) {
   }
 
   const processedImages: string[] = [];
-  
+
   images.forEach((img, index) => {
     if (img.startsWith('data:image')) {
       const matches = img.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/);
@@ -80,6 +117,19 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  const validatePassword = (password: string) => {
+    return password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password);
+  };
+
+  const validatePhone = (phone: string) => {
+    const digits = String(phone || '').replace(/\D/g, '');
+    return digits.length >= 10;
+  };
+
+  const validateAddress = (address: string) => {
+    return address && address.trim().length >= 5;
+  };
+
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
@@ -106,11 +156,67 @@ async function startServer() {
     }
   });
 
+  app.get('/api/settings/bank', (req, res) => {
+    try {
+      const settings = getBankSettings();
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch bank settings' });
+    }
+  });
+
+  app.get('/api/settings/social', (req, res) => {
+    try {
+      const settings = getSocialSettings();
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch social settings' });
+    }
+  });
+
+
   app.post('/api/orders', (req, res) => {
     try {
-      const { email, name, phone, address, notes, total, items, receipt } = req.body;
+      const { email, name, phone, address, notes, total, items, receipt, voucher_code, voucher_id } = req.body;
+      const orderEmail = email || 'guest@example.com';
+
+      if (!validatePhone(phone)) {
+        return res.status(400).json({ error: 'Số điện thoại phải có ít nhất 10 chữ số.' });
+      }
+      if (!validateAddress(address)) {
+        return res.status(400).json({ error: 'Địa chỉ phải có ít nhất 5 ký tự.' });
+      }
+
+      // Perform voucher validation again right before order creation
+      if (voucher_code) {
+        const voucher = getVoucherByCode(voucher_code);
+        if (!voucher) {
+          return res.status(400).json({ error: 'Voucher is invalid or inactive' });
+        }
+        if (voucher.usage_limit && voucher.usage_count >= voucher.usage_limit) {
+          return res.status(400).json({ error: 'Voucher usage limit reached' });
+        }
+        if (hasUserUsedVoucher(orderEmail, voucher_code)) {
+          return res.status(400).json({ error: 'You have already used this voucher' });
+        }
+        const totalSpent = getUserTotalSpent(orderEmail);
+        if (voucher.min_user_spending && totalSpent < voucher.min_user_spending) {
+          return res.status(400).json({ error: `You must spend at least ${voucher.min_user_spending.toLocaleString()} VND to use this voucher` });
+        }
+      }
+
       const orderId = `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
-      const result = createOrder({ id: orderId, email: email || 'guest@example.com', name, phone, address, notes, total, items, receipt });
+      const result = createOrder({
+        id: orderId,
+        email: orderEmail,
+        name, phone, address, notes, total, items, receipt,
+        voucher_code, voucher_id
+      });
+
+      if (email) {
+        sendFeedbackRequestEmail(email, orderId).catch(console.error);
+      }
+
       res.json(result);
     } catch (error) {
       res.status(500).json({ error: 'Failed to create order' });
@@ -118,12 +224,35 @@ async function startServer() {
   });
 
   // Auth Routes
+  app.post('/api/auth/request-verification', async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) return res.status(400).json({ error: 'Email is required' });
+
+      const existingUser = getUserByEmail(email);
+      if (existingUser) return res.status(400).json({ error: 'Email already registered' });
+
+      const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
+      const expiresAt = new Date(Date.now() + 15 * 60000); // 15 mins
+      createEmailVerification(email, code, expiresAt);
+
+      await sendVerificationEmail(email, code);
+      res.json({ success: true, message: 'Verification code sent' });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to send verification code' });
+    }
+  });
+
   app.post('/api/auth/register', async (req, res) => {
     try {
-      const { email, password, name } = req.body;
-      
-      if (!email || !password) {
-        return res.status(400).json({ error: 'Email and password are required' });
+      const { email, password, name, code } = req.body;
+
+      if (!email || !password || !code) {
+        return res.status(400).json({ error: 'Email, password, and verification code are required' });
+      }
+
+      if (!validatePassword(password)) {
+        return res.status(400).json({ error: 'Mật khẩu phải có ít nhất 8 ký tự, 1 chữ hoa và 1 chữ số.' });
       }
 
       const existingUser = getUserByEmail(email);
@@ -131,22 +260,68 @@ async function startServer() {
         return res.status(400).json({ error: 'Email already registered' });
       }
 
+      if (!verifyEmailCode(email, code)) {
+        return res.status(400).json({ error: 'Invalid or expired verification code' });
+      }
+
       const hashedPassword = await bcrypt.hash(password, 10);
       const userId = `USR-${Math.floor(1000 + Math.random() * 9000)}`;
-      
+
       createUser({ id: userId, email, password: hashedPassword, name });
-      
+      markUserVerified(email);
+
       const token = jwt.sign({ id: userId, email }, JWT_SECRET, { expiresIn: '24h' });
-      res.json({ token, user: { id: userId, email, name } });
+      res.json({ token, user: { id: userId, email, name, is_verified: true } });
     } catch (error) {
       res.status(500).json({ error: 'Failed to register user' });
+    }
+  });
+
+  app.post('/api/auth/forgot-password', async (req, res) => {
+    try {
+      const { email } = req.body;
+      const user = getUserByEmail(email);
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      const expiresAt = new Date(Date.now() + 60 * 60000); // 1 hr
+      createPasswordResetToken(email, token, expiresAt);
+
+      const appDomain = process.env.APP_URL || 'http://localhost:5173';
+      const resetLink = `${appDomain}/?view=reset-password&token=${token}`;
+      await sendPasswordResetEmail(email, resetLink);
+
+      res.json({ success: true, message: 'Password reset link sent' });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to process request' });
+    }
+  });
+
+  app.post('/api/auth/reset-password', async (req, res) => {
+    try {
+      const { token, newPassword } = req.body;
+      if (!token || !newPassword) return res.status(400).json({ error: 'Token and new password required' });
+
+      if (!validatePassword(newPassword)) {
+        return res.status(400).json({ error: 'Mật khẩu mới không hợp lệ.' });
+      }
+
+      const email = verifyPasswordResetToken(token);
+      if (!email) return res.status(400).json({ error: 'Invalid or expired token' });
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      updatePassword(email, hashedPassword);
+
+      res.json({ success: true, message: 'Password has been reset' });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to reset password' });
     }
   });
 
   app.post('/api/auth/login', async (req, res) => {
     try {
       const { email, password } = req.body;
-      
+
       const user = getUserByEmail(email);
       if (!user) {
         return res.status(400).json({ error: 'Invalid email or password' });
@@ -169,7 +344,7 @@ async function startServer() {
     try {
       const user = getUserById(req.user.id);
       if (!user) return res.status(404).json({ error: 'User not found' });
-      
+
       const { password, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
     } catch (error) {
@@ -180,6 +355,12 @@ async function startServer() {
   app.put('/api/users/profile', authenticateToken, (req: any, res: any) => {
     try {
       const { name, phone, address } = req.body;
+      if (!validatePhone(phone)) {
+        return res.status(400).json({ error: 'Số điện thoại không hợp lệ.' });
+      }
+      if (!validateAddress(address)) {
+        return res.status(400).json({ error: 'Địa chỉ không hợp lệ.' });
+      }
       updateUserProfile(req.user.id, { name, phone, address });
       res.json({ success: true });
     } catch (error) {
@@ -199,7 +380,213 @@ async function startServer() {
     }
   });
 
+  // Feedback Routes
+  app.post('/api/orders/:id/feedback', (req, res) => {
+    try {
+      const { rating, comment } = req.body;
+      if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ error: 'Valid rating between 1 and 5 is required' });
+      }
+      const existing = getOrderFeedback(req.params.id);
+      if (existing) {
+        return res.status(400).json({ error: 'Feedback already submitted for this order' });
+      }
+      const result = saveOrderFeedback(req.params.id, rating, comment || '');
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to save feedback' });
+    }
+  });
+
+  app.get('/api/admin/orders/:id/feedback', (req, res) => {
+    try {
+      const feedback = getOrderFeedback(req.params.id);
+      res.json(feedback || { success: false, message: 'No feedback found' });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch feedback' });
+    }
+  });
+
   // Admin Routes
+  app.post('/api/admin/auth/login', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      const admin = getAdminByEmail(email);
+
+      if (!admin) {
+        return res.status(401).json({ error: 'Invalid admin credentials' });
+      }
+
+      const validPassword = await bcrypt.compare(password, admin.password);
+      if (!validPassword) {
+        return res.status(401).json({ error: 'Invalid admin credentials' });
+      }
+
+      // We sign the token with an explicit role to distinguish it from a normal user
+      const token = jwt.sign({ id: admin.id, email: admin.email, role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
+      res.json({ token, admin: { id: admin.id, email: admin.email } });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to login admin' });
+    }
+  });
+
+  app.put('/api/admin/settings', authenticateToken, async (req: any, res: any) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Forbidden. Admin role required.' });
+      }
+
+      const { newEmail, currentPassword, newPassword } = req.body;
+      if (!newEmail || !currentPassword) {
+        return res.status(400).json({ error: 'Email and current password are required.' });
+      }
+
+      const admin = getAdminById(req.user.id);
+      if (!admin) return res.status(404).json({ error: 'Admin not found.' });
+
+      const validPassword = await bcrypt.compare(currentPassword, admin.password);
+      if (!validPassword) {
+        return res.status(400).json({ error: 'Current password is incorrect.' });
+      }
+
+      if (newPassword) {
+        if (!validatePassword(newPassword)) {
+          return res.status(400).json({ error: 'Mật khẩu mới không đủ độ mạnh.' });
+        }
+      }
+
+      // If they provided a new password, hash it. Otherwise, keep the old one.
+      const passwordToSave = newPassword ? await bcrypt.hash(newPassword, 10) : admin.password;
+
+      // Update the DB
+      updateAdminCredentials(admin.id, newEmail, passwordToSave);
+
+      // We issue a new token in case the email is stored inside it
+      const newToken = jwt.sign({ id: admin.id, email: newEmail, role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
+
+      res.json({ success: true, token: newToken, admin: { id: admin.id, email: newEmail } });
+    } catch (error) {
+      if ((error as any).code === 'SQLITE_CONSTRAINT_UNIQUE') {
+        return res.status(400).json({ error: 'Email already extremely exists.' });
+      }
+      res.status(500).json({ error: 'Failed to update admin settings' });
+    }
+  });
+
+  app.put('/api/admin/settings/bank', authenticateToken, uploadBank.single('bankQR'), (req: any, res: any) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Forbidden. Admin role required.' });
+      }
+
+      const { bankName, bankOwner, bankNumber, bankQR_url } = req.body;
+      let bankQR = bankQR_url || '';
+      
+      if (req.file) {
+        bankQR = `/uploads/bank/${req.file.filename}`;
+      }
+
+      const result = updateBankSettings({ bankName, bankOwner, bankNumber, bankQR });
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update bank settings' });
+    }
+  });
+
+  app.put('/api/admin/settings/social', authenticateToken, (req: any, res: any) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Forbidden. Admin role required.' });
+      }
+
+      const { facebook, tiktok, instagram, telegram } = req.body;
+      const result = updateSocialSettings({ facebook, tiktok, instagram, telegram });
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update social settings' });
+    }
+  });
+
+
+  app.get('/api/admin/admins', authenticateToken, (req: any, res: any) => {
+    try {
+      if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+      res.json(getAllAdmins());
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch admins' });
+    }
+  });
+
+  app.post('/api/admin/admins', authenticateToken, async (req: any, res: any) => {
+    try {
+      if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+      const { email, password } = req.body;
+      if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+
+      if (!validatePassword(password)) {
+        return res.status(400).json({ error: 'Mật khẩu không đạt yêu cầu.' });
+      }
+
+      const existing = getAdminByEmail(email);
+      if (existing) return res.status(400).json({ error: 'Admin email already registered' });
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      addAdmin(email, hashedPassword);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to create admin' });
+    }
+  });
+
+  app.post('/api/admin/auth/forgot-password', async (req, res) => {
+    try {
+      const { email } = req.body;
+      const admin = getAdminByEmail(email);
+      if (!admin) {
+        // Obfuscate to prevent enumeration
+        return res.json({ success: true, message: 'Reset link sent' });
+      }
+
+      const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      const expiresAt = new Date(Date.now() + 60 * 60000); // 1 hr
+
+      createPasswordResetToken(email, token, expiresAt);
+
+      const appDomain = process.env.APP_URL || 'http://localhost:3000';
+      const resetLink = `${appDomain}/?view=admin-reset-password&token=${token}`;
+
+      await sendPasswordResetEmail(email, resetLink);
+
+      res.json({ success: true, message: 'Reset link sent' });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to process request' });
+    }
+  });
+
+  app.post('/api/admin/auth/reset-password', async (req, res) => {
+    try {
+      const { token, newPassword } = req.body;
+      if (!token || !newPassword) return res.status(400).json({ error: 'Token and new password required' });
+
+      if (!validatePassword(newPassword)) {
+        return res.status(400).json({ error: 'Mật khẩu mới không đạt yêu cầu.' });
+      }
+
+      const email = verifyPasswordResetToken(token);
+      if (!email) return res.status(400).json({ error: 'Invalid or expired reset token' });
+
+      const admin = getAdminByEmail(email);
+      if (!admin) return res.status(400).json({ error: 'Admin account not found' });
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      updateAdminPassword(email, hashedPassword);
+
+      res.json({ success: true, message: 'Admin password reset successfully' });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to reset admin password' });
+    }
+  });
+
   app.post('/api/admin/products', (req, res) => {
     try {
       const productData = req.body;
@@ -318,6 +705,62 @@ async function startServer() {
     }
   });
 
+  app.post('/api/vouchers/validate', (req, res) => {
+    try {
+      const { code, email } = req.body;
+      if (!code || !email) {
+        return res.status(400).json({ error: 'Voucher code and email are required' });
+      }
+
+      const voucher = getVoucherByCode(code);
+      if (!voucher) {
+        return res.status(404).json({ error: 'Voucher not found or inactive' });
+      }
+
+      // Check global limit
+      if (voucher.usage_limit && voucher.usage_count >= voucher.usage_limit) {
+        return res.status(400).json({ error: 'Voucher usage limit reached' });
+      }
+
+      // Check unique usage per user
+      if (hasUserUsedVoucher(email, code)) {
+        return res.status(400).json({ error: 'You have already used this voucher' });
+      }
+
+      // Check minimum spending eligibility
+      const totalSpent = getUserTotalSpent(email);
+      if (voucher.min_user_spending && totalSpent < voucher.min_user_spending) {
+        return res.status(400).json({ error: `You must spend at least ${voucher.min_user_spending.toLocaleString()} VND to use this voucher` });
+      }
+
+      // If all checks pass
+      res.json({ success: true, voucher });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to validate voucher' });
+    }
+  });
+
+  app.get('/api/vouchers/available', (req, res) => {
+    try {
+      const email = req.query.email as string;
+      if (!email) {
+        return res.status(400).json({ error: 'Email query parameter is required' });
+      }
+
+      const allVouchers = getAllVouchers();
+      const availableVouchers = allVouchers.filter(v => {
+        if (!v.is_active) return false;
+        if (v.usage_limit && v.usage_count >= v.usage_limit) return false;
+        if (hasUserUsedVoucher(email, v.code)) return false;
+        return true;
+      });
+
+      res.json(availableVouchers);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch available vouchers' });
+    }
+  });
+
   // Admin Promotions Routes
   app.get('/api/admin/promotions', (req, res) => {
     try {
@@ -352,6 +795,135 @@ async function startServer() {
       res.json(result);
     } catch (error) {
       res.status(500).json({ error: 'Failed to delete promotion' });
+    }
+  });
+
+  // Blog Routes
+  // IMPORTANT: /api/blogs/featured must be registered BEFORE /api/blogs/:slug
+  app.get('/api/blogs/featured', (req, res) => {
+    try {
+      const blogs = getFeaturedBlogs();
+      res.json(blogs);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch featured blogs' });
+    }
+  });
+
+  app.get('/api/blogs', (req, res) => {
+    try {
+      const blogs = getAllBlogs(false); // only published
+      res.json(blogs);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch blogs' });
+    }
+  });
+
+  app.get('/api/blogs/:slug', (req, res) => {
+    try {
+      const blog = getBlogBySlug(req.params.slug);
+      if (blog && blog.is_published) {
+        res.json(blog);
+      } else {
+        res.status(404).json({ error: 'Blog not found' });
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch blog detail' });
+    }
+  });
+
+  app.get('/api/admin/blogs', (req, res) => {
+    try {
+      const blogs = getAllBlogs(true); // all blogs
+      res.json(blogs);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch admin blogs' });
+    }
+  });
+
+  app.post('/api/admin/blogs', uploadBlog.single('image'), (req, res) => {
+    try {
+      const blogData = req.body;
+      if (req.file) {
+        blogData.image = `/uploads/blogs/${req.file.filename}`;
+      }
+      // FormData sends booleans as strings
+      if (typeof blogData.is_published === 'string') {
+        blogData.is_published = blogData.is_published === 'true';
+      }
+      if (typeof blogData.is_featured === 'string') {
+        blogData.is_featured = blogData.is_featured === 'true';
+      }
+      const result = addBlog(blogData);
+      res.json(result);
+    } catch (error) {
+      console.error('Error adding blog:', error);
+      res.status(500).json({ error: 'Failed to add blog' });
+    }
+  });
+
+  app.put('/api/admin/blogs/:id', uploadBlog.single('image'), (req, res) => {
+    try {
+      const blogData = req.body;
+      if (req.file) {
+        blogData.image = `/uploads/blogs/${req.file.filename}`;
+      } else if (blogData.image_url) {
+        // Keep existing image — image_url is the fallback sent when no new file is selected
+        blogData.image = blogData.image_url;
+      }
+      // Remove image_url so it doesn't get passed to updateBlog (no such column)
+      delete blogData.image_url;
+
+      // Convert boolean fields if they came as string from FormData
+      if (typeof blogData.is_published === 'string') {
+        blogData.is_published = blogData.is_published === 'true';
+      }
+      if (typeof blogData.is_featured === 'string') {
+        blogData.is_featured = blogData.is_featured === 'true';
+      }
+
+      const result = updateBlog(req.params.id, blogData);
+      res.json(result);
+    } catch (error) {
+      console.error('Error updating blog:', error);
+      res.status(500).json({ error: 'Failed to update blog' });
+    }
+  });
+
+  app.delete('/api/admin/blogs/:id', (req, res) => {
+    try {
+      const result = deleteBlog(req.params.id);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to delete blog' });
+    }
+  });
+
+  // Search Analytics Routes
+  app.post('/api/search/log', (req, res) => {
+    try {
+      const { keyword } = req.body;
+      const result = logSearchKeyword(keyword);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to log search keyword' });
+    }
+  });
+
+  app.get('/api/admin/search-analytics', (req, res) => {
+    try {
+      const result = getSearchAnalytics();
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch search analytics' });
+    }
+  });
+
+  app.delete('/api/admin/search-analytics', (req, res) => {
+    try {
+      const result = clearSearchAnalytics();
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to clear search analytics' });
     }
   });
 

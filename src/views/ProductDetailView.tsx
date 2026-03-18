@@ -103,7 +103,12 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
                 {t('prod.addCart')}
               </button>
             </div>
-            <button className="w-full border border-jade-900 text-jade-900 font-bold py-3 hover:bg-jade-900/5 transition-all rounded-sm">
+            <button 
+              onClick={() => {
+                for (let i = 0; i < quantity; i++) addToCart(product);
+                setView('cart');
+              }}
+              className="w-full border border-jade-900 text-jade-900 font-bold py-3 hover:bg-jade-900/5 transition-all rounded-sm">
               {t('prod.buyNow')}
             </button>
           </div>

@@ -41,6 +41,9 @@ const translations = {
     'home.sub.placeholder': 'Địa chỉ email của bạn',
     'home.sub.btn': 'Đăng Ký Ngay',
     'home.sub.note': 'Chúng tôi tôn trọng quyền riêng tư của bạn. Hủy đăng ký bất cứ lúc nào.',
+    'home.blog.empty': 'Bài viết đang được cập nhật...',
+    'home.blog.viewAllBtn': 'Xem Tất Cả Bài Viết',
+    'home.blog.viewAllLink': 'Xem tất cả bài viết →',
 
     // CollectionsView
     'col.title': 'Bộ Sưu Tập',
@@ -143,6 +146,14 @@ const translations = {
     'cart.summary.taxCalc': 'Tính khi thanh toán',
     'cart.summary.total': 'Tổng cộng',
     'cart.checkout': 'Tiến Hành Thanh Toán',
+    'cart.voucher.view': 'Xem ưu đãi',
+    'cart.voucher.modal.title': 'Mã Ưu Đãi Của Bạn',
+    'cart.voucher.modal.off': 'Giảm',
+    'cart.voucher.modal.min': 'Đơn tối thiểu',
+    'cart.voucher.modal.use': 'Sử dụng',
+    'cart.voucher.modal.empty': 'Bạn chưa có mã ưu đãi nào khả dụng lúc này.',
+    'cart.voucher.loginPrompt': 'Vui lòng đăng nhập để xem danh sách ưu đãi của bạn. Bạn có muốn đăng nhập tiếp tục?',
+    'cart.voucher.emailRequired': 'Vui lòng nhập Email của bạn ở form bên trái trước khi áp dụng mã giảm giá.',
 
     // AuthView
     'auth.login.title': 'Chào Mừng Trở Lại',
@@ -231,7 +242,12 @@ const translations = {
     'footer.support.guide': 'Hướng Dẫn Mua Hàng',
     'footer.support.size': 'Chính Sách Đổi Trả',
     'footer.support.faq': 'Câu Hỏi Thường Gặp',
+    'footer.links.midRange': 'Chủng tầm trung',
+    'footer.links.highEnd': 'Chủng tầm cao',
     'footer.contact': 'Liên Hệ',
+    'footer.company': 'Công Ty',
+    'footer.privacy': 'Chính Sách Bảo Mật',
+    'footer.terms': 'Điều Khoản Dịch Vụ',
     'footer.rights': 'Bản quyền thuộc về Phỉ Thúy Lê Công.',
 
     // General
@@ -271,6 +287,9 @@ const translations = {
     'home.sub.placeholder': 'Your email address',
     'home.sub.btn': 'Subscribe Now',
     'home.sub.note': 'We respect your privacy. Unsubscribe at any time.',
+    'home.blog.empty': 'Posts are being updated...',
+    'home.blog.viewAllBtn': 'View All Posts',
+    'home.blog.viewAllLink': 'View all posts →',
 
     // CollectionsView
     'col.title': 'Collections',
@@ -373,6 +392,14 @@ const translations = {
     'cart.summary.taxCalc': 'Calculated at checkout',
     'cart.summary.total': 'Total',
     'cart.checkout': 'Proceed to Checkout',
+    'cart.voucher.view': 'View offers',
+    'cart.voucher.modal.title': 'Your Discount Codes',
+    'cart.voucher.modal.off': 'Off',
+    'cart.voucher.modal.min': 'Min spend',
+    'cart.voucher.modal.use': 'Use',
+    'cart.voucher.modal.empty': 'You have no available discount codes at this time.',
+    'cart.voucher.loginPrompt': 'Please login to view your available offers. Would you like to login now?',
+    'cart.voucher.emailRequired': 'Please enter your email in the form on the left before applying a discount code.',
 
     // AuthView
     'auth.login.title': 'Welcome Back',
@@ -461,7 +488,12 @@ const translations = {
     'footer.support.guide': 'Shopping Guide',
     'footer.support.size': 'Return Policy',
     'footer.support.faq': 'FAQ',
+    'footer.links.midRange': 'Mid-range Jade',
+    'footer.links.highEnd': 'High-end Jade',
     'footer.contact': 'Contact',
+    'footer.company': 'Company',
+    'footer.privacy': 'Privacy Policy',
+    'footer.terms': 'Terms of Service',
     'footer.rights': 'Copyright by Le Cong Jade.',
 
     // General

@@ -9,9 +9,10 @@ interface NavbarProps {
   isLoggedIn: boolean;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  setSelectedCategory: (category: string) => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount, isLoggedIn, searchQuery, setSearchQuery }) => {
+export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount, isLoggedIn, searchQuery, setSearchQuery, setSelectedCategory }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isProductDropdownOpen, setIsProductDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -159,6 +160,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
                     <button
                       key={cat}
                       onClick={() => {
+                        setSelectedCategory(cat);
                         setView('collections');
                         setIsProductDropdownOpen(false);
                       }}
@@ -171,7 +173,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
               )}
             </div>
 
-            <button className="text-[11px] font-black uppercase tracking-[0.3em] text-white/80 hover:text-white transition-colors py-1">Blog</button>
+            <button 
+              onClick={() => setView('blog')}
+              className={`text-[11px] font-black uppercase tracking-[0.3em] hover:text-white transition-colors py-1 ${currentView === 'blog' || currentView === 'blog-detail' ? 'border-b-2 border-white text-white' : 'text-white/80'}`}
+            >
+              Blog
+            </button>
             <button className="text-[11px] font-black uppercase tracking-[0.3em] text-white/80 hover:text-white transition-colors py-1">{t('nav.contact')}</button>
           </div>
         </nav>
@@ -230,6 +237,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
                   <button
                     key={cat}
                     onClick={() => {
+                      setSelectedCategory(cat);
                       setView('collections');
                       setIsMobileMenuOpen(false);
                     }}
@@ -241,7 +249,10 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
               </div>
             </div>
 
-            <button className="text-left px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white/80 hover:bg-white/5 hover:text-white transition-colors">
+            <button 
+              onClick={() => { setView('blog'); setIsMobileMenuOpen(false); }}
+              className={`text-left px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] hover:bg-white/5 hover:text-white transition-colors ${currentView === 'blog' || currentView === 'blog-detail' ? 'text-white bg-white/5' : 'text-white/80'}`}
+            >
               Blog
             </button>
             <button className="text-left px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white/80 hover:bg-white/5 hover:text-white transition-colors">

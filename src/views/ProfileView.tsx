@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, User } from '../types';
 import { useLanguage } from '../context/LanguageContext';
+import { validatePhone, validateAddress } from '../utils/validation';
 
 interface ProfileViewProps {
   user: User;
@@ -47,6 +48,19 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const phoneVal = validatePhone(profileForm.phone);
+    if (!phoneVal.isValid) {
+      setSaveMessage(phoneVal.message);
+      return;
+    }
+
+    const addressVal = validateAddress(profileForm.address);
+    if (!addressVal.isValid) {
+      setSaveMessage(addressVal.message);
+      return;
+    }
+
     setIsSaving(true);
     setSaveMessage('');
     
@@ -74,6 +88,15 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
   };
 
   const totalSpent = orders.reduce((sum, order) => sum + order.total, 0);
+
+  const getRank = (spent: number): { label: string; color: string } => {
+    if (spent >= 1_000_000_000) return { label: 'Băng Chủng', color: 'text-cyan-600' };
+    if (spent >= 300_000_000) return { label: 'Nếp Chủng', color: 'text-emerald-600' };
+    if (spent >= 50_000_000) return { label: 'Đậu Chủng', color: 'text-amber-600' };
+    return { label: 'Ngọc Thô', color: 'text-slate-500' };
+  };
+
+  const rank = getRank(totalSpent);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-20">
@@ -124,18 +147,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
           {activeTab === 'overview' && (
             <section>
               <h1 className="text-3xl font-extrabold text-jade-900 mb-8">{t('profile.welcome')}{user.name || user.email}</h1>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="p-6 bg-jade-50 rounded-sm border border-jade-100">
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">{t('profile.overview.totalOrders')}</p>
                   <p className="text-2xl font-extrabold text-jade-900">{orders.length}</p>
                 </div>
                 <div className="p-6 bg-jade-50 rounded-sm border border-jade-100">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">{t('profile.overview.totalSpent')}</p>
-                  <p className="text-2xl font-extrabold text-jade-900">{totalSpent.toLocaleString()} VND</p>
-                </div>
-                <div className="p-6 bg-jade-50 rounded-sm border border-jade-100">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">{t('profile.overview.tier')}</p>
-                  <p className="text-2xl font-extrabold text-jade-700">{totalSpent > 10000 ? t('profile.overview.tier.elite') : t('profile.overview.tier.member')}</p>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Hạng Thành Viên</p>
+                  <p className={`text-2xl font-extrabold ${rank.color}`}>{rank.label}</p>
                 </div>
               </div>
             </section>

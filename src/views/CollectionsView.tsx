@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Product, View } from '../types';
 import { ProductCard } from '../components/ProductCard';
 import { useLanguage } from '../context/LanguageContext';
@@ -8,24 +8,47 @@ interface CollectionsViewProps {
   setSelectedProduct: (product: Product) => void;
   products: Product[];
   searchQuery?: string;
+  initialCategory?: string;
+  onCategoryChange?: (cat: string) => void;
 }
 
-export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSelectedProduct, products, searchQuery }) => {
+export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSelectedProduct, products, searchQuery, initialCategory, onCategoryChange }) => {
   const { t } = useLanguage();
-  const [selectedCategory, setSelectedCategory] = useState(t('col.filter.all'));
+  const [selectedCategory, setSelectedCategory] = useState(() => initialCategory || t('col.filter.all'));
   const [minPrice, setMinPrice] = useState<number>(0);
   const [maxPrice, setMaxPrice] = useState<number>(7000);
   const [sortOrder, setSortOrder] = useState<string>('featured');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
-  const [itemsPerPage, setItemsPerPage] = useState<number>(6);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(12);
 
   const categories = [t('col.filter.all'), 'Chủng tầm trung', 'Chủng tầm cao'];
-  const collections = ['Nếp băng chủng', 'Băng chủng', 'Thủy tinh chủng', 'Mực dục', 'Hoa bay', 'Tím tử la lan', 'Xanh táo', 'Xanh cây'];
-  
+  const collections = React.useMemo(() => Array.from(new Set(products.map(p => p.collection))).filter(Boolean), [products]);
+
   const removeAccents = (str: string) => {
     return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   };
+
+  // Sync when initialCategory changes (e.g. from nav bar click)
+  useEffect(() => {
+    if (initialCategory) {
+      setSelectedCategory(initialCategory);
+    }
+  }, [initialCategory]);
+
+  useEffect(() => {
+    if (!searchQuery || searchQuery.trim() === '') return;
+
+    const timeoutId = setTimeout(() => {
+      fetch('/api/search/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyword: searchQuery })
+      }).catch(err => console.error('Failed to log search:', err));
+    }, 1500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
 
   let filteredProducts = [...products];
 
@@ -64,7 +87,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
   };
 
   const handleCollectionChange = (collection: string) => {
-    setSelectedCollections(prev => 
+    setSelectedCollections(prev =>
       prev.includes(collection) ? prev.filter(c => c !== collection) : [...prev, collection]
     );
     setCurrentPage(1);
@@ -90,7 +113,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
             </h3>
             <div className="flex flex-col gap-1">
               {categories.map(cat => (
-                <button 
+                <button
                   key={cat}
                   onClick={() => {
                     setSelectedCategory(cat);
@@ -114,9 +137,9 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
             <div className="flex flex-wrap lg:flex-col gap-2">
               {collections.map(collection => (
                 <label key={collection} className="flex items-center gap-3 cursor-pointer group">
-                  <input 
-                    className="rounded border-slate-300 text-jade-900 focus:ring-jade-900" 
-                    type="checkbox" 
+                  <input
+                    className="rounded border-slate-300 text-jade-900 focus:ring-jade-900"
+                    type="checkbox"
                     checked={selectedCollections.includes(collection)}
                     onChange={() => handleCollectionChange(collection)}
                   />
@@ -131,16 +154,16 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
             </h3>
             <div className="px-2">
               <div className="relative h-1.5 w-full bg-jade-100 rounded-full mb-6 mt-4 flex items-center">
-                <div 
-                  className="absolute h-full bg-jade-700 rounded-full" 
+                <div
+                  className="absolute h-full bg-jade-700 rounded-full"
                   style={{ left: `${(minPrice / 7000) * 100}%`, right: `${100 - (maxPrice / 7000) * 100}%` }}
                 ></div>
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="7000" 
-                  step="100" 
-                  value={minPrice} 
+                <input
+                  type="range"
+                  min="0"
+                  max="7000"
+                  step="100"
+                  value={minPrice}
                   onChange={(e) => {
                     const value = Math.min(Number(e.target.value), maxPrice - 100);
                     setMinPrice(value);
@@ -148,12 +171,12 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
                   }}
                   className={`absolute w-full h-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-jade-700 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:-mt-1.5 [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-jade-700 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:-mt-1.5 ${minPrice > 7000 - 200 ? 'z-20' : 'z-10'}`}
                 />
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="7000" 
-                  step="100" 
-                  value={maxPrice} 
+                <input
+                  type="range"
+                  min="0"
+                  max="7000"
+                  step="100"
+                  value={maxPrice}
                   onChange={(e) => {
                     const value = Math.max(Number(e.target.value), minPrice + 100);
                     setMaxPrice(value);
@@ -177,7 +200,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
               {t('col.showing')} {filteredProducts.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} - {Math.min(currentPage * itemsPerPage, filteredProducts.length)}{t('col.of')}{filteredProducts.length}{t('col.items')}
             </span>
             <div className="flex gap-2">
-              <select 
+              <select
                 value={itemsPerPage}
                 onChange={(e) => {
                   setItemsPerPage(Number(e.target.value));
@@ -185,11 +208,11 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
                 }}
                 className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-jade-100 bg-white text-jade-900 rounded-sm focus:ring-jade-900 focus:border-jade-900 outline-none"
               >
-                <option value={6}>{t('col.show')} 6</option>
                 <option value={12}>{t('col.show')} 12</option>
                 <option value={24}>{t('col.show')} 24</option>
+                <option value={36}>{t('col.show')} 36</option>
               </select>
-              <select 
+              <select
                 value={sortOrder}
                 onChange={(e) => {
                   setSortOrder(e.target.value);
@@ -220,7 +243,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="mt-12 flex justify-center items-center gap-4">
-              <button 
+              <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
                 className="size-10 flex items-center justify-center border border-jade-100 text-slate-400 hover:bg-jade-50 transition-all rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
@@ -229,7 +252,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
               </button>
               <div className="flex gap-2">
                 {Array.from({ length: totalPages }).map((_, idx) => (
-                  <button 
+                  <button
                     key={idx}
                     onClick={() => setCurrentPage(idx + 1)}
                     className={`size-10 flex items-center justify-center rounded-sm transition-all ${currentPage === idx + 1 ? 'bg-jade-900 text-white font-bold' : 'border border-jade-100 text-slate-600 hover:bg-jade-50'}`}
@@ -238,7 +261,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
                   </button>
                 ))}
               </div>
-              <button 
+              <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
                 className="size-10 flex items-center justify-center border border-jade-100 text-slate-400 hover:bg-jade-50 transition-all rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"

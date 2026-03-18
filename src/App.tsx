@@ -16,6 +16,11 @@ import { AuthView } from './views/AuthView';
 import { ProfileView } from './views/ProfileView';
 import { CheckoutView } from './views/CheckoutView';
 import { AdminView } from './views/AdminView';
+import { BlogListView } from './views/BlogListView';
+import { BlogDetailView } from './views/BlogDetailView';
+import { ResetPasswordView } from './views/ResetPasswordView';
+import { AdminResetPasswordView } from './views/AdminResetPasswordView';
+import { FeedbackView } from './views/FeedbackView';
 import { motion, AnimatePresence } from 'motion/react';
 
 const App: React.FC = () => {
@@ -26,9 +31,19 @@ const App: React.FC = () => {
     if (path === '/collections') return 'collections';
     if (path === '/auth') return 'auth';
     if (path === '/profile') return 'profile';
+    if (path === '/blog') return 'blog';
+    
+    // Parse query params for direct links
+    const params = new URLSearchParams(window.location.search);
+    const viewParam = params.get('view');
+    if (viewParam === 'reset-password') return 'reset-password';
+    if (viewParam === 'admin-reset-password') return 'admin-reset-password' as View;
+    if (viewParam === 'feedback') return 'feedback';
+
     return 'home';
   });
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedBlog, setSelectedBlog] = useState<any>(null);
   const [cartItems, setCartItems] = useState<{ product: Product; quantity: number }[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('token'));
   const [user, setUser] = useState<User | null>(() => {
@@ -47,6 +62,7 @@ const App: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [showToast, setShowToast] = useState(false);
 
   const fetchProducts = () => {
@@ -73,7 +89,15 @@ const App: React.FC = () => {
       else if (currentPath === '/collections') setCurrentView('collections');
       else if (currentPath === '/auth') setCurrentView('auth');
       else if (currentPath === '/profile') setCurrentView('profile');
-      else setCurrentView('home');
+      else if (currentPath === '/blog') setCurrentView('blog');
+      else {
+        const params = new URLSearchParams(window.location.search);
+        const viewParam = params.get('view');
+        if (viewParam === 'reset-password') setCurrentView('reset-password');
+        else if (viewParam === 'admin-reset-password') setCurrentView('admin-reset-password' as View);
+        else if (viewParam === 'feedback') setCurrentView('feedback');
+        else setCurrentView('home');
+      }
     };
     
     window.addEventListener('popstate', handlePopState);
@@ -82,12 +106,31 @@ const App: React.FC = () => {
 
   // Update URL when view changes
   useEffect(() => {
-    const path = currentView === 'home' ? '/' : `/${currentView}`;
-    if (window.location.pathname !== path && currentView !== 'detail' && currentView !== 'checkout') {
-      window.history.pushState({}, '', path);
+    let path = '/';
+    let search = '';
+    
+    if (currentView === 'home') {
+      path = '/';
+    } else if (currentView === 'blog-detail' && selectedBlog) {
+      path = `/blog/${selectedBlog.slug}`;
+    } else if (currentView === 'reset-password' || currentView === 'admin-reset-password' || currentView === 'feedback') {
+      // Keep existing token/orderId query params if present, otherwise just set view param
+      const existingParams = new URLSearchParams(window.location.search);
+      existingParams.set('view', currentView);
+      search = `?${existingParams.toString()}`;
+    } else {
+      path = `/${currentView}`;
     }
-    window.scrollTo(0, 0);
-  }, [currentView]);
+    
+    const fullUrl = path + search;
+    if (window.location.pathname + window.location.search !== fullUrl && currentView !== 'detail' && currentView !== 'checkout') {
+      window.history.pushState({}, '', fullUrl);
+    }
+    
+    if (currentView !== 'reset-password' && currentView !== 'admin-reset-password' && currentView !== 'feedback') {
+       window.scrollTo(0, 0);
+    }
+  }, [currentView, selectedBlog]);
 
   // Redirect from auth to profile if already logged in
   useEffect(() => {
@@ -193,7 +236,7 @@ const App: React.FC = () => {
       case 'home':
         return <HomeView setView={setCurrentView} setSelectedProduct={setSelectedProduct} products={products} />;
       case 'collections':
-        return <CollectionsView setView={setCurrentView} setSelectedProduct={setSelectedProduct} products={products} searchQuery={searchQuery} />;
+        return <CollectionsView setView={setCurrentView} setSelectedProduct={setSelectedProduct} products={products} searchQuery={searchQuery} initialCategory={selectedCategory} onCategoryChange={setSelectedCategory} />;
       case 'detail':
         return selectedProduct ? (
           <ProductDetailView 
@@ -244,21 +287,34 @@ const App: React.FC = () => {
         return isLoggedIn && user && token ? (
           <ProfileView onLogout={handleLogout} setView={setCurrentView} user={user} token={token} />
         ) : <AuthView setView={setCurrentView} onLogin={handleLogin} />;
+      case 'blog':
+        return <BlogListView setView={setCurrentView} setSelectedBlog={setSelectedBlog} />;
+      case 'blog-detail':
+        return selectedBlog ? <BlogDetailView blog={selectedBlog} setView={setCurrentView} /> : <BlogListView setView={setCurrentView} setSelectedBlog={setSelectedBlog} />;
+      case 'reset-password':
+        return <ResetPasswordView setView={setCurrentView} />;
+      case 'admin-reset-password':
+        return <AdminResetPasswordView setView={setCurrentView} />;
+      case 'feedback':
+        return <FeedbackView setView={setCurrentView} />;
       default:
-        return <HomeView setView={setCurrentView} setSelectedProduct={setSelectedProduct} products={products} />;
+        return <HomeView setView={setCurrentView} products={products} setSelectedProduct={setSelectedProduct} />;
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <Navbar 
-        currentView={currentView} 
-        setView={setCurrentView} 
-        cartCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)} 
-        isLoggedIn={isLoggedIn}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-      />
+      {currentView !== 'admin' && currentView !== 'admin-reset-password' && (
+        <Navbar 
+          currentView={currentView} 
+          setView={setCurrentView} 
+          cartCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)} 
+          isLoggedIn={isLoggedIn}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          setSelectedCategory={setSelectedCategory}
+        />
+      )}
       
       <main className="flex-1 w-full">
         <AnimatePresence mode="wait">
@@ -274,7 +330,7 @@ const App: React.FC = () => {
         </AnimatePresence>
       </main>
 
-      <Footer />
+      {currentView !== 'admin' && currentView !== 'admin-reset-password' && <Footer />}
 
       {showToast && (
         <Toast 

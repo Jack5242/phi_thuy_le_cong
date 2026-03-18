@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Product, View, User } from '../types';
 import { useLanguage } from '../context/LanguageContext';
+import { validatePhone, validateAddress } from '../utils/validation';
 
 interface CartViewProps {
   cartItems: { product: Product; quantity: number }[];
@@ -20,7 +21,79 @@ export const CartView: React.FC<CartViewProps> = ({
 }) => {
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherError, setVoucherError] = useState('');
+  const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false);
+  const [availableVouchers, setAvailableVouchers] = useState<any[]>([]);
+  const [isLoadingVouchers, setIsLoadingVouchers] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
   const { t } = useLanguage();
+
+  useEffect(() => {
+    if (isVoucherModalOpen && user) {
+      const fetchAvailableVouchers = async () => {
+        setIsLoadingVouchers(true);
+        try {
+          const res = await fetch(`/api/vouchers/available?email=${encodeURIComponent(user.email)}`);
+          if (res.ok) {
+            const data = await res.json();
+            setAvailableVouchers(data);
+          }
+        } catch (error) {
+          console.error('Failed to fetch vouchers:', error);
+        } finally {
+          setIsLoadingVouchers(false);
+        }
+      };
+      fetchAvailableVouchers();
+    }
+  }, [isVoucherModalOpen, user]);
+
+  const handleOpenVoucherModal = () => {
+    if (!user) {
+      if (window.confirm(t('cart.voucher.loginPrompt'))) {
+        setView('auth');
+      }
+      return;
+    }
+    setIsVoucherModalOpen(true);
+  };
+
+  const executeApplyVoucherCode = async (codeToApply: string) => {
+    setVoucherError('');
+    if (!codeToApply) {
+      setVoucherError(t('cart.voucher.empty'));
+      return;
+    }
+
+    const emailToUse = user ? user.email : checkoutFormData.email;
+    if (!emailToUse) {
+      setVoucherError(t('cart.voucher.emailRequired'));
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/api/vouchers/validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: codeToApply, email: emailToUse })
+      });
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        setAppliedVoucher({ 
+          code: data.voucher.code, 
+          discount: data.voucher.discount, 
+          type: data.voucher.type 
+        });
+        setVoucherCode(codeToApply);
+      } else {
+        setAppliedVoucher(null);
+        setVoucherError(data.error || t('cart.voucher.invalid'));
+      }
+    } catch (err) {
+      setAppliedVoucher(null);
+      setVoucherError(t('cart.voucher.error'));
+    }
+  };
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   
@@ -36,32 +109,33 @@ export const CartView: React.FC<CartViewProps> = ({
   const total = Math.max(0, subtotal - discountAmount);
 
   const applyVoucher = async () => {
-    setVoucherError('');
     const code = voucherCode.trim().toUpperCase();
-    
-    if (!code) {
-      setVoucherError(t('cart.voucher.empty'));
-      return;
-    }
-    
-    try {
-      const res = await fetch(`/api/vouchers/${code}`);
-      if (res.ok) {
-        const voucher = await res.json();
-        setAppliedVoucher({ code: voucher.code, discount: voucher.discount, type: voucher.type });
-      } else {
-        setAppliedVoucher(null);
-        setVoucherError(t('cart.voucher.invalid'));
-      }
-    } catch (err) {
-      setVoucherError(t('cart.voucher.error'));
-    }
+    await executeApplyVoucherCode(code);
   };
 
   const removeVoucher = () => {
     setAppliedVoucher(null);
     setVoucherCode('');
     setVoucherError('');
+  };
+
+  const handleCheckoutSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCheckoutError('');
+
+    const phoneVal = validatePhone(checkoutFormData.phone);
+    if (!phoneVal.isValid) {
+      setCheckoutError(phoneVal.message);
+      return;
+    }
+
+    const addressVal = validateAddress(checkoutFormData.address);
+    if (!addressVal.isValid) {
+      setCheckoutError(addressVal.message);
+      return;
+    }
+
+    setView('checkout');
   };
 
   if (cartItems.length === 0) {
@@ -84,7 +158,9 @@ export const CartView: React.FC<CartViewProps> = ({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-20">
       <h1 className="text-3xl font-extrabold text-jade-900 mb-10">{t('cart.title')}</h1>
       
-      <form onSubmit={(e) => { e.preventDefault(); setView('checkout'); }} className="flex flex-col lg:flex-row gap-12">
+      {checkoutError && <div className="mb-6 p-4 bg-red-50 text-red-600 text-sm rounded-sm text-center font-bold border border-red-100">{checkoutError}</div>}
+
+      <form onSubmit={handleCheckoutSubmit} className="flex flex-col lg:flex-row gap-12">
         {/* User Info Form */}
         <div className="flex-1 space-y-6">
           <div className="bg-white p-8 rounded-sm border border-jade-100">
@@ -146,19 +222,6 @@ export const CartView: React.FC<CartViewProps> = ({
                   className="w-full px-4 py-3 border border-jade-200 rounded-sm focus:outline-none focus:border-jade-500 min-h-[80px]"
                   placeholder={t('checkout.details.notes.placeholder') || 'Any special requests for your order?'}
                 />
-              </div>
-              
-              <div className="flex items-center mt-4">
-                <input
-                  type="checkbox"
-                  id="without_receipt"
-                  checked={checkoutFormData.without_receipt}
-                  onChange={(e) => setCheckoutFormData({...checkoutFormData, without_receipt: e.target.checked})}
-                  className="w-4 h-4 text-jade-600 border-jade-300 rounded focus:ring-jade-500"
-                />
-                <label htmlFor="without_receipt" className="ml-2 text-sm text-jade-900">
-                  {t('checkout.details.without_receipt') || 'Order without physical receipt'}
-                </label>
               </div>
             </div>
           </div>
@@ -228,7 +291,17 @@ export const CartView: React.FC<CartViewProps> = ({
 
             {/* Voucher Section */}
             <div className="mb-6 pb-6 border-b border-jade-200">
-              <label className="block text-sm font-bold text-jade-900 mb-2">{t('cart.voucher.label')}</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-bold text-jade-900">{t('cart.voucher.label')}</label>
+                <button 
+                  type="button" 
+                  onClick={handleOpenVoucherModal}
+                  className="text-sm text-jade-600 hover:text-jade-800 font-medium flex items-center gap-1"
+                >
+                  <span className="material-symbols-outlined text-[16px]">local_activity</span>
+                  {t('cart.voucher.view')}
+                </button>
+              </div>
               <div className="flex gap-2 mb-2">
                 <input 
                   type="text" 
@@ -290,6 +363,65 @@ export const CartView: React.FC<CartViewProps> = ({
           </div>
         </div>
       </form>
+      {/* Voucher Modal */}
+      {isVoucherModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[80vh] flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b border-gray-100">
+              <h3 className="text-xl font-bold text-jade-900 flex items-center gap-2">
+                <span className="material-symbols-outlined">local_activity</span>
+                {t('cart.voucher.modal.title')}
+              </h3>
+              <button onClick={() => setIsVoucherModalOpen(false)} className="text-gray-500 hover:text-gray-700">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <div className="p-4 overflow-y-auto flex-1 bg-gray-50">
+              {isLoadingVouchers ? (
+                <div className="flex justify-center py-8">
+                  <span className="material-symbols-outlined animate-spin text-jade-600 text-3xl">progress_activity</span>
+                </div>
+              ) : availableVouchers.length > 0 ? (
+                <div className="space-y-3">
+                  {availableVouchers.map(voucher => {
+                    const isEligible = voucher.min_user_spending ? false : true; // Could do more complex eligibility here if needed before applying
+                    return (
+                      <div key={voucher.id} className="bg-white border text-left border-jade-100 rounded-lg p-4 shadow-sm hover:shadow transition-shadow flex justify-between items-center">
+                        <div>
+                          <div className="font-bold text-jade-900 text-lg mb-1">{voucher.code}</div>
+                          <div className="text-sm font-medium text-jade-700 mb-1">
+                            {t('cart.voucher.modal.off')} {voucher.type === 'percent' ? `${voucher.discount * 100}%` : `${voucher.discount.toLocaleString()} đ`}
+                          </div>
+                          {voucher.min_user_spending > 0 && (
+                            <div className="text-xs text-slate-500">
+                              {t('cart.voucher.modal.min')} {voucher.min_user_spending.toLocaleString()} đ
+                            </div>
+                          )}
+                        </div>
+                        <button 
+                          onClick={() => {
+                            executeApplyVoucherCode(voucher.code);
+                            setIsVoucherModalOpen(false);
+                          }}
+                          className="bg-jade-100 text-jade-800 hover:bg-jade-200 px-4 py-2 rounded-md font-bold text-sm transition-colors whitespace-nowrap ml-4"
+                        >
+                          {t('cart.voucher.modal.use')}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-slate-500">
+                  <span className="material-symbols-outlined text-4xl mb-2 text-slate-300">sentiment_dissatisfied</span>
+                  <p>{t('cart.voucher.modal.empty')}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

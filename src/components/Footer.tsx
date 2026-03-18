@@ -18,8 +18,8 @@ export const Footer: React.FC = () => {
           <h4 className="font-bold mb-6 text-white uppercase text-xs tracking-widest">{t('footer.links')}</h4>
           <ul className="space-y-4 text-sm text-white/70">
             <li><button onClick={() => window.scrollTo(0,0)} className="hover:text-white transition-colors">{t('col.filter.all')}</button></li>
-            <li><button onClick={() => window.scrollTo(0,0)} className="hover:text-white transition-colors">Chủng tầm trung</button></li>
-            <li><button onClick={() => window.scrollTo(0,0)} className="hover:text-white transition-colors">Chủng tầm cao</button></li>
+            <li><button onClick={() => window.scrollTo(0,0)} className="hover:text-white transition-colors">{t('footer.links.midRange')}</button></li>
+            <li><button onClick={() => window.scrollTo(0,0)} className="hover:text-white transition-colors">{t('footer.links.highEnd')}</button></li>
           </ul>
         </div>
         <div>
@@ -31,7 +31,7 @@ export const Footer: React.FC = () => {
           </ul>
         </div>
         <div>
-          <h4 className="font-bold mb-6 text-white uppercase text-xs tracking-widest">Công Ty</h4>
+          <h4 className="font-bold mb-6 text-white uppercase text-xs tracking-widest">{t('footer.company')}</h4>
           <ul className="space-y-4 text-sm text-white/70">
             <li><a className="hover:text-white transition-colors" href="#">{t('nav.about')}</a></li>
             <li><a className="hover:text-white transition-colors" href="#">{t('nav.contact')}</a></li>
@@ -41,8 +41,8 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-white/50">
         <p>{t('footer.rights')}</p>
         <div className="flex gap-8">
-          <a className="hover:underline" href="#">Chính Sách Bảo Mật</a>
-          <a className="hover:underline" href="#">Điều Khoản Dịch Vụ</a>
+          <a className="hover:underline" href="#">{t('footer.privacy')}</a>
+          <a className="hover:underline" href="#">{t('footer.terms')}</a>
         </div>
         <div className="flex gap-4">
           <span className="material-symbols-outlined cursor-pointer hover:text-white">public</span>

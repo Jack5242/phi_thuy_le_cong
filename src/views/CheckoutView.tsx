@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, User } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -16,7 +16,24 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ setView, totalAmount
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [bankInfo, setBankInfo] = useState({ bankName: 'Vietcombank', bankOwner: 'CÔNG TY TNHH THIÊN MỘC', bankNumber: '0123456789', bankQR: '' });
   const { t } = useLanguage();
+
+  useEffect(() => {
+    fetch('/api/settings/bank')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.bankName) {
+          setBankInfo({
+            bankName: data.bankName || 'Vietcombank',
+            bankOwner: data.bankOwner || 'CÔNG TY TNHH THIÊN MỘC',
+            bankNumber: data.bankNumber || '0123456789',
+            bankQR: data.bankQR || ''
+          });
+        }
+      })
+      .catch(err => console.error('Failed to load bank settings', err));
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -54,6 +71,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ setView, totalAmount
           items: cartItems,
           user_id: user ? user.id : undefined,
           voucher_id: appliedVoucher ? appliedVoucher.id : undefined,
+          voucher_code: appliedVoucher ? appliedVoucher.code : undefined,
           receipt: receiptBase64
         }),
       });
@@ -114,16 +132,16 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ setView, totalAmount
             <div className="bg-jade-50 p-6 rounded-sm space-y-4 border border-jade-100">
               <div className="flex justify-between items-center border-b border-jade-200 pb-3">
                 <span className="text-slate-500">{t('checkout.bank.name')}</span>
-                <span className="font-bold text-jade-900">Vietcombank</span>
+                <span className="font-bold text-jade-900">{bankInfo.bankName}</span>
               </div>
               <div className="flex justify-between items-center border-b border-jade-200 pb-3">
                 <span className="text-slate-500">{t('checkout.bank.owner')}</span>
-                <span className="font-bold text-jade-900">CÔNG TY TNHH THIÊN MỘC</span>
+                <span className="font-bold text-jade-900">{bankInfo.bankOwner}</span>
               </div>
               <div className="flex justify-between items-center border-b border-jade-200 pb-3">
                 <span className="text-slate-500">{t('checkout.bank.number')}</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-jade-900 font-mono text-lg">0123456789</span>
+                  <span className="font-bold text-jade-900 font-mono text-lg">{bankInfo.bankNumber}</span>
                   <button className="text-jade-600 hover:text-jade-800" title="Copy">
                     <span className="material-symbols-outlined text-sm">content_copy</span>
                   </button>
@@ -144,12 +162,19 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ setView, totalAmount
             <h2 className="text-xl font-bold text-jade-900 mb-4">{t('checkout.qr.title')}</h2>
             <div className="bg-white p-6 rounded-sm border border-jade-100 flex flex-col items-center justify-center">
               <div className="w-48 h-48 bg-slate-100 mb-4 p-2 border-2 border-jade-200 rounded-sm">
-                {/* Dummy QR Code using an image placeholder */}
-                <img 
-                  src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=ThienMocPayment" 
-                  alt="QR Code" 
-                  className="w-full h-full object-contain"
-                />
+                {bankInfo.bankQR ? (
+                  <img 
+                    src={bankInfo.bankQR} 
+                    alt="Bank QR" 
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <img 
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=ThienMocPayment" 
+                    alt="QR Code" 
+                    className="w-full h-full object-contain"
+                  />
+                )}
               </div>
               <p className="text-sm text-slate-500 text-center">{t('checkout.qr.desc')}</p>
             </div>
@@ -202,21 +227,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ setView, totalAmount
                   </>
                 ) : (
                   t('checkout.submit.done')
-                )}
-              </button>
-              
-              <button 
-                onClick={() => handleSubmit(true)}
-                disabled={isSubmitting}
-                className="w-full py-4 font-bold rounded-sm transition-all flex items-center justify-center gap-2 bg-white border border-jade-900 text-jade-900 hover:bg-jade-50"
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                    {t('checkout.submit.processing')}
-                  </>
-                ) : (
-                  'Đặt hàng không cần biên lai'
                 )}
               </button>
             </div>
