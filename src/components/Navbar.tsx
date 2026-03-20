@@ -81,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
             onClick={() => setView('home')}
           >
             <h2 className="text-2xl md:text-3xl font-serif italic tracking-widest uppercase leading-none text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] group-hover:text-jade-200 transition-colors duration-300 text-center">
-              Phỉ thúy Lê Công
+              Phỉ Thúy Lê Công
             </h2>
             <div className="flex items-center gap-3 w-full mt-2">
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/40 to-transparent" />

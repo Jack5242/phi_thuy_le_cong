@@ -6,6 +6,8 @@ import { useLanguage } from '../context/LanguageContext';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 
 interface AdminViewProps {
   setView: (view: View) => void;
@@ -47,6 +49,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
   const [socialSettings, setSocialSettings] = useState({ facebook: '', tiktok: '', instagram: '', telegram: '' });
   const [isSavingSocialSettings, setIsSavingSocialSettings] = useState(false);
   const [socialSettingsMessage, setSocialSettingsMessage] = useState({ type: '', text: '' });
+
+  // Contact Settings State
+  const [contactSettings, setContactSettings] = useState({ address: '', phone: '', email: '', workingHours: '' });
+  const [isSavingContactSettings, setIsSavingContactSettings] = useState(false);
+  const [contactSettingsMessage, setContactSettingsMessage] = useState({ type: '', text: '' });
 
   // Registration Voucher Settings State
   const [registrationDiscount, setRegistrationDiscount] = useState(0.1);
@@ -267,6 +274,28 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
     }
   };
 
+  const handleSaveContactSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingContactSettings(true);
+    setContactSettingsMessage({ type: '', text: '' });
+    try {
+      const res = await fetch('/api/admin/settings/contact', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        body: JSON.stringify(contactSettings)
+      });
+      if (res.ok) {
+        setContactSettingsMessage({ type: 'success', text: 'Cập nhật thông tin liên hệ thành công!' });
+      } else {
+        setContactSettingsMessage({ type: 'error', text: 'Cập nhật thất bại' });
+      }
+    } catch (err) {
+      setContactSettingsMessage({ type: 'error', text: 'Lỗi khi cập nhật thông tin liên hệ' });
+    } finally {
+      setIsSavingContactSettings(false);
+    }
+  };
+
   const handleSaveRegistrationDiscount = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSavingRegistrationDiscount(true);
@@ -395,6 +424,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
     if (activeTab === 'settings') {
       fetchBankSettings();
       fetchSocialSettings();
+      fetchContactSettings();
       fetchRegistrationDiscount();
     }
   }, [activeTab]);
@@ -500,6 +530,18 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
       }
     } catch (err) {
       console.error('Failed to fetch social settings', err);
+    }
+  };
+
+  const fetchContactSettings = async () => {
+    try {
+      const res = await fetch('/api/settings/contact');
+      if (res.ok) {
+        const data = await res.json();
+        if (data) setContactSettings(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch contact settings', err);
     }
   };
 
@@ -2545,9 +2587,16 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                     <label className="block text-sm font-bold text-gray-800 mb-2">Đoạn trích (Excerpt)</label>
                     <textarea value={blogForm.excerpt} onChange={e => setBlogForm({ ...blogForm, excerpt: e.target.value })} rows={3} className="w-full border border-gray-300 rounded-lg p-3 text-gray-900 focus:ring-2 focus:ring-jade-500 outline-none"></textarea>
                   </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-bold text-gray-800 mb-2">Nội dung bài viết (Hỗ trợ HTML)</label>
-                    <textarea value={blogForm.content} onChange={e => setBlogForm({ ...blogForm, content: e.target.value })} rows={10} className="w-full border border-gray-300 rounded-lg p-3 text-gray-900 focus:ring-2 focus:ring-jade-500 outline-none font-mono text-sm"></textarea>
+                  <div className="md:col-span-2 mb-12">
+                    <label className="block text-sm font-bold text-gray-800 mb-2">Nội dung bài viết (Rich Text)</label>
+                    <div className="bg-white" style={{ minHeight: '400px' }}>
+                      <ReactQuill 
+                        theme="snow" 
+                        value={blogForm.content} 
+                        onChange={(content) => setBlogForm({ ...blogForm, content })} 
+                        style={{ height: '350px' }}
+                      />
+                    </div>
                   </div>
                   <div className="md:col-span-2 flex items-center">
                     <input type="checkbox" id="is_published" checked={blogForm.is_published} onChange={e => setBlogForm({ ...blogForm, is_published: e.target.checked })} className="w-5 h-5 text-jade-600 border-gray-300 rounded focus:ring-jade-500 mr-3" />
@@ -2827,6 +2876,46 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
               <div className="pt-4 flex justify-end">
                 <button type="submit" disabled={isSavingBankSettings} className="bg-jade-800 text-white px-6 py-2 rounded-md hover:bg-jade-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium">
                   {isSavingBankSettings && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
+                  Lưu Thay Đổi
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Contact Settings */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <span className="material-symbols-outlined text-jade-700 text-2xl">contact_page</span>
+              Thông Tin Liên Hệ
+            </h2>
+            <p className="text-sm text-gray-500 mb-6">Cập nhật thông tin liên hệ hiển thị ở trang Liên Hệ.</p>
+
+            <form onSubmit={handleSaveContactSettings} className="space-y-6">
+              {contactSettingsMessage.text && (
+                <div className={`p-4 rounded-md text-sm ${contactSettingsMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                  {contactSettingsMessage.text}
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>
+                <input type="text" placeholder="Ví dụ: 123 Nguyễn Huệ, Quận 1..." value={contactSettings.address} onChange={e => setContactSettings({ ...contactSettings, address: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Điện thoại</label>
+                <input type="text" placeholder="Ví dụ: 0901 234 567" value={contactSettings.phone} onChange={e => setContactSettings({ ...contactSettings, phone: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" placeholder="Ví dụ: contact@phithuylecong.vn" value={contactSettings.email} onChange={e => setContactSettings({ ...contactSettings, email: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Giờ làm việc</label>
+                <input type="text" placeholder="Ví dụ: Thứ 2 – Thứ 7: 8:00 – 18:00" value={contactSettings.workingHours} onChange={e => setContactSettings({ ...contactSettings, workingHours: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500" />
+              </div>
+
+              <div className="pt-4 flex justify-end">
+                <button type="submit" disabled={isSavingContactSettings} className="bg-jade-800 text-white px-6 py-2 rounded-md hover:bg-jade-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium">
+                  {isSavingContactSettings && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
                   Lưu Thay Đổi
                 </button>
               </div>

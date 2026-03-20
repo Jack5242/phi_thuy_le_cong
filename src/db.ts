@@ -55,8 +55,8 @@ const db = {
 
 
 export async function initDb() {
-// Initialize tables
-await db.exec(`
+  // Initialize tables
+  await db.exec(`
   CREATE TABLE IF NOT EXISTS products (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -178,9 +178,8 @@ await db.exec(`
     FOREIGN KEY(order_id) REFERENCES orders(id)
   );
 
-  DROP TABLE IF EXISTS admins;
-  CREATE TABLE admins (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+  CREATE TABLE IF NOT EXISTS admins (
+    id SERIAL PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL
   );
@@ -200,115 +199,115 @@ await db.exec(`
   );
 `);
 
-// Migration for promotions localized fields
-const promotionsCols = await db.prepare("SELECT column_name as name FROM information_schema.columns WHERE table_name = 'promotions'").all();
-if (!promotionsCols.some((col: any) => col.name === 'title_en')) {
-  try { await db.exec("ALTER TABLE promotions ADD COLUMN title_en TEXT").catch(() => {}); } catch(e){}
-}
-if (!promotionsCols.some((col: any) => col.name === 'subtitle_en')) {
-  try { await db.exec("ALTER TABLE promotions ADD COLUMN subtitle_en TEXT").catch(() => {}); } catch(e){}
-}
-if (!promotionsCols.some((col: any) => col.name === 'cta_en')) {
-  try { await db.exec("ALTER TABLE promotions ADD COLUMN cta_en TEXT").catch(() => {}); } catch(e){}
-}
+  // Migration for promotions localized fields
+  const promotionsCols = await db.prepare("SELECT column_name as name FROM information_schema.columns WHERE table_name = 'promotions'").all();
+  if (!promotionsCols.some((col: any) => col.name === 'title_en')) {
+    try { await db.exec("ALTER TABLE promotions ADD COLUMN title_en TEXT").catch(() => { }); } catch (e) { }
+  }
+  if (!promotionsCols.some((col: any) => col.name === 'subtitle_en')) {
+    try { await db.exec("ALTER TABLE promotions ADD COLUMN subtitle_en TEXT").catch(() => { }); } catch (e) { }
+  }
+  if (!promotionsCols.some((col: any) => col.name === 'cta_en')) {
+    try { await db.exec("ALTER TABLE promotions ADD COLUMN cta_en TEXT").catch(() => { }); } catch (e) { }
+  }
 
-try {
-  await db.exec('ALTER TABLE collections ADD COLUMN description TEXT;');
-} catch (e) { /* Column already exists */ }
-try {
-  await db.exec('ALTER TABLE collections ADD COLUMN description_en TEXT;');
-} catch (e) { /* Column already exists */ }
-try {
-  await db.exec('ALTER TABLE collections ADD COLUMN slug TEXT UNIQUE;');
-} catch (e) { /* Column already exists */ }
-try {
-  await db.exec('ALTER TABLE collections ADD UNIQUE (name);');
-} catch (e) { /* Constraint already exists */ }
+  try {
+    await db.exec('ALTER TABLE collections ADD COLUMN description TEXT;');
+  } catch (e) { /* Column already exists */ }
+  try {
+    await db.exec('ALTER TABLE collections ADD COLUMN description_en TEXT;');
+  } catch (e) { /* Column already exists */ }
+  try {
+    await db.exec('ALTER TABLE collections ADD COLUMN slug TEXT UNIQUE;');
+  } catch (e) { /* Column already exists */ }
+  try {
+    await db.exec('ALTER TABLE collections ADD UNIQUE (name);');
+  } catch (e) { /* Constraint already exists */ }
 
-try {
-  await db.exec('ALTER TABLE vouchers ALTER COLUMN id TYPE TEXT;');
-  await db.exec('ALTER TABLE vouchers ALTER COLUMN id DROP DEFAULT;');
-} catch (e) { /* Incompatible or already altered */ }
+  try {
+    await db.exec('ALTER TABLE vouchers ALTER COLUMN id TYPE TEXT;');
+    await db.exec('ALTER TABLE vouchers ALTER COLUMN id DROP DEFAULT;');
+  } catch (e) { /* Incompatible or already altered */ }
 
-// Seed default admin if none exists
-const checkAdmin = await db.prepare('SELECT count(*) as count FROM admins').get() as { count: number };
-if (checkAdmin.count === 0) {
-  const adminEmail = process.env.ADMIN_EMAIL || 'cpuram0001@gmail.com';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
-  const defaultHash = bcrypt.hashSync(adminPassword, 10);
-  db.prepare('INSERT INTO admins (email, password) VALUES (?, ?)').run(adminEmail, defaultHash);
-}
+  // Seed default admin if none exists
+  const checkAdmin = await db.prepare('SELECT count(*) as count FROM admins').get() as { count: number };
+  if (checkAdmin.count === 0) {
+    const adminEmail = process.env.ADMIN_EMAIL || 'cpuram0001@gmail.com';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
+    const defaultHash = bcrypt.hashSync(adminPassword, 10);
+    db.prepare('INSERT INTO admins (email, password) VALUES (?, ?)').run(adminEmail, defaultHash);
+  }
 
-try {
-  await db.exec('ALTER TABLE users ADD COLUMN is_verified INTEGER DEFAULT 0;');
-} catch (e) {
-  // Column already exists
-}
+  try {
+    await db.exec('ALTER TABLE users ADD COLUMN is_verified INTEGER DEFAULT 0;');
+  } catch (e) {
+    // Column already exists
+  }
 
-try {
-  await db.exec('ALTER TABLE products ADD COLUMN images TEXT;');
-} catch (e) {
-  // Column already exists
-}
+  try {
+    await db.exec('ALTER TABLE products ADD COLUMN images TEXT;');
+  } catch (e) {
+    // Column already exists
+  }
 
-try {
-  await db.exec('ALTER TABLE products ADD COLUMN amount INTEGER DEFAULT 1;');
-} catch (e) {
-  // Column already exists
-}
+  try {
+    await db.exec('ALTER TABLE products ADD COLUMN amount INTEGER DEFAULT 1;');
+  } catch (e) {
+    // Column already exists
+  }
 
-try {
-  await db.exec('ALTER TABLE products ADD COLUMN name_en TEXT;');
-} catch (e) {
-  // Column already exists
-}
+  try {
+    await db.exec('ALTER TABLE products ADD COLUMN name_en TEXT;');
+  } catch (e) {
+    // Column already exists
+  }
 
-try {
-  await db.exec('ALTER TABLE products ADD COLUMN description_en TEXT;');
-} catch (e) {
-  // Column already exists
-}
+  try {
+    await db.exec('ALTER TABLE products ADD COLUMN description_en TEXT;');
+  } catch (e) {
+    // Column already exists
+  }
 
-try {
-  await db.exec('ALTER TABLE orders ADD COLUMN name TEXT;');
-  await db.exec('ALTER TABLE orders ADD COLUMN phone TEXT;');
-  await db.exec('ALTER TABLE orders ADD COLUMN address TEXT;');
-} catch (e) {
-  // Columns already exist
-}
+  try {
+    await db.exec('ALTER TABLE orders ADD COLUMN name TEXT;');
+    await db.exec('ALTER TABLE orders ADD COLUMN phone TEXT;');
+    await db.exec('ALTER TABLE orders ADD COLUMN address TEXT;');
+  } catch (e) {
+    // Columns already exist
+  }
 
-try {
-  await db.exec('ALTER TABLE orders ADD COLUMN notes TEXT;');
-} catch (e) {
-  // Column already exists
-}
+  try {
+    await db.exec('ALTER TABLE orders ADD COLUMN notes TEXT;');
+  } catch (e) {
+    // Column already exists
+  }
 
-try {
-  await db.exec('ALTER TABLE orders ADD COLUMN receipt TEXT;');
-} catch (e) {
-  // Column already exists
-}
+  try {
+    await db.exec('ALTER TABLE orders ADD COLUMN receipt TEXT;');
+  } catch (e) {
+    // Column already exists
+  }
 
-try {
-  await db.exec('ALTER TABLE vouchers ADD COLUMN usage_limit INTEGER DEFAULT NULL;');
-  await db.exec('ALTER TABLE vouchers ADD COLUMN usage_count INTEGER DEFAULT 0;');
-  await db.exec('ALTER TABLE vouchers ADD COLUMN min_user_spending REAL DEFAULT 0;');
-} catch (e) {
-  // Columns already exist
-}
+  try {
+    await db.exec('ALTER TABLE vouchers ADD COLUMN usage_limit INTEGER DEFAULT NULL;');
+    await db.exec('ALTER TABLE vouchers ADD COLUMN usage_count INTEGER DEFAULT 0;');
+    await db.exec('ALTER TABLE vouchers ADD COLUMN min_user_spending REAL DEFAULT 0;');
+  } catch (e) {
+    // Columns already exist
+  }
 
-try {
-  await db.exec('ALTER TABLE vouchers ADD COLUMN user_email TEXT DEFAULT NULL;');
-  await db.exec('ALTER TABLE vouchers ADD COLUMN is_registration INTEGER DEFAULT 0;');
-} catch (e) {
-  // Columns already exist
-}
+  try {
+    await db.exec('ALTER TABLE vouchers ADD COLUMN user_email TEXT DEFAULT NULL;');
+    await db.exec('ALTER TABLE vouchers ADD COLUMN is_registration INTEGER DEFAULT 0;');
+  } catch (e) {
+    // Columns already exist
+  }
 
-try {
-  await db.exec('ALTER TABLE blogs ADD COLUMN is_featured INTEGER DEFAULT 0;');
-} catch (e) {
-  // Column already exists
-}
+  try {
+    await db.exec('ALTER TABLE blogs ADD COLUMN is_featured INTEGER DEFAULT 0;');
+  } catch (e) {
+    // Column already exists
+  }
 
 
 }
@@ -543,6 +542,32 @@ export async function updateSocialSettings(settings: { facebook?: string, tiktok
   return { success: true };
 }
 
+export async function getContactSettings() {
+  const settings = await db.prepare('SELECT * FROM settings WHERE key IN (?, ?, ?, ?)').all('contact_address', 'contact_phone', 'contact_email', 'contact_working_hours') as any[];
+  const result: any = { address: '', phone: '', email: '', workingHours: '' };
+  settings.forEach(s => {
+    const field = s.key.replace('contact_', '');
+    if (field === 'working_hours') result.workingHours = s.value;
+    else result[field] = s.value;
+  });
+  return result;
+}
+
+export async function updateContactSettings(settings: { address?: string, phone?: string, email?: string, workingHours?: string }) {
+  const update = db.prepare('UPDATE settings SET value = ? WHERE key = ?');
+  const insert = db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT (key) DO NOTHING');
+
+  const entries = Object.entries(settings);
+  for (const [key, value] of entries) {
+    if (value !== undefined) {
+      const dbKey = key === 'workingHours' ? 'contact_working_hours' : `contact_${key}`;
+      await insert.run(dbKey, value || '');
+      await update.run(value || '', dbKey);
+    }
+  }
+  return { success: true };
+}
+
 export async function getAllProducts(): Promise<Product[]> {
   const rows = await db.prepare(`
     SELECT p.*, c.name_en AS collection_en 
@@ -666,8 +691,8 @@ export async function deleteOrder(id: string) {
 
 export async function getAllVouchers() {
   const vouchers = await db.prepare('SELECT * FROM vouchers WHERE is_registration = 0').all() as any[];
-  return vouchers.map(v => ({ 
-    ...v, 
+  return vouchers.map(v => ({
+    ...v,
     is_active: Boolean(v.is_active),
     discount: parseFloat(v.discount),
     min_user_spending: parseFloat(v.min_user_spending),
@@ -703,8 +728,8 @@ export async function getAllAvailableVouchersForUser(email: string) {
   if (DB_DEBUG) console.log(`[DB Debug] Fetching vouchers for: '${email}'`);
   const vouchers = await db.prepare('SELECT * FROM vouchers WHERE is_active = 1 AND (user_email IS NULL OR TRIM(user_email) = \'\' OR LOWER(user_email) = LOWER(?))').all(email) as any[];
   if (DB_DEBUG) console.log(`[DB Debug] Query matched ${vouchers.length} vouchers`);
-  return vouchers.map(v => ({ 
-    ...v, 
+  return vouchers.map(v => ({
+    ...v,
     is_active: Boolean(v.is_active),
     discount: parseFloat(v.discount),
     min_user_spending: parseFloat(v.min_user_spending),

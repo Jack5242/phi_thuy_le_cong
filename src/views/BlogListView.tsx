@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Blog } from '../types';
 import { BookOpen, Calendar, User, ArrowRight } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface BlogListViewProps {
   setView: (view: View) => void;
@@ -8,6 +9,7 @@ interface BlogListViewProps {
 }
 
 export const BlogListView: React.FC<BlogListViewProps> = ({ setView, setSelectedBlog }) => {
+  const { t } = useLanguage();
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -43,15 +45,15 @@ export const BlogListView: React.FC<BlogListViewProps> = ({ setView, setSelected
 
         <div className="text-center mb-16">
           <BookOpen className="h-12 w-12 text-jade-700 mx-auto mb-4" />
-          <h1 className="text-4xl md:text-5xl font-serif text-jade-900 mb-4 tracking-tight">Cẩm Nang & Kiến Thức</h1>
-          <p className="text-lg text-stone-600 max-w-2xl mx-auto font-medium">Khám phá thế giới phỉ thúy, các câu chuyện văn hóa, kinh nghiệm phân tách ngọc và tư vấn chọn mua trang sức phong thủy.</p>
+          <h1 className="text-4xl font-extrabold text-jade-900 tracking-tight mb-4">{t('blog.list.title')}</h1>
+          <p className="text-lg text-stone-600 max-w-2xl mx-auto font-medium">{t('blog.list.desc')}</p>
         </div>
 
         {blogs.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-stone-100">
             <BookOpen className="h-16 w-16 text-stone-300 mx-auto mb-4" />
-            <h2 className="text-2xl font-serif text-stone-500">Chưa có bài viết nào</h2>
-            <p className="text-stone-400 mt-2">Chúng tôi sẽ sớm cập nhật thêm nhiều thông tin hữu ích.</p>
+            <h2 className="text-2xl font-serif text-stone-500">{t('blog.list.empty.title')}</h2>
+            <p className="text-stone-400 mt-2">{t('blog.list.empty.desc')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -70,7 +72,7 @@ export const BlogListView: React.FC<BlogListViewProps> = ({ setView, setSelected
                   />
                   <div className="absolute top-4 left-4 z-20">
                     <span className="bg-white/90 backdrop-blur-sm text-jade-800 text-xs font-bold px-3 py-1 rounded-full shadow-sm uppercase tracking-wider">
-                      Bài Viết
+                      {t('blog.list.badge')}
                     </span>
                   </div>
                 </div>
@@ -97,7 +99,7 @@ export const BlogListView: React.FC<BlogListViewProps> = ({ setView, setSelected
 
                   <div className="flex items-center text-jade-700 font-bold text-sm group-hover:text-jade-900 transition-colors mt-auto w-fit">
                     <span className="relative">
-                      Đọc Tiếp
+                      {t('home.blog.readMore')}
                       <span className="absolute bottom-0 left-0 w-full h-0.5 bg-jade-400 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
                     </span>
                     <ArrowRight size={16} className="ml-2 transform group-hover:translate-x-1 transition-transform" />

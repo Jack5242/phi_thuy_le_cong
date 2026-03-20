@@ -2,7 +2,7 @@ import './env.js';
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import { PRODUCTS } from './src/constants';
-import db, { initDb, seedProducts, getAllProducts, createOrder, addProduct, updateProduct, deleteProduct, getAllOrders, updateOrderStatus, deleteOrder, getAllVouchers, addVoucher, updateVoucher, deleteVoucher, getVoucherByCode, createUser, getUserByEmail, getUserById, updateUserProfile, getUserOrders, getAllPromotions, addPromotion, updatePromotion, deletePromotion, hasUserUsedVoucher, getUserTotalSpent, logSearchKeyword, getSearchAnalytics, clearSearchAnalytics, getAllBlogs, getBlogBySlug, getBlogById, addBlog, updateBlog, deleteBlog, createEmailVerification, verifyEmailCode, markUserVerified, createPasswordResetToken, verifyPasswordResetToken, updatePassword, saveOrderFeedback, getOrderFeedback, getAdminByEmail, getAdminById, getAllAdmins, addAdmin, updateAdminCredentials, updateAdminPassword, getBankSettings, updateBankSettings, getSocialSettings, updateSocialSettings, getFeaturedBlogs, getRegistrationVoucherDiscount, updateRegistrationVoucherDiscount, getAllAvailableVouchersForUser, getAllCollections, addCollection, updateCollection, deleteCollection } from './src/db';
+import db, { initDb, seedProducts, getAllProducts, createOrder, addProduct, updateProduct, deleteProduct, getAllOrders, updateOrderStatus, deleteOrder, getAllVouchers, addVoucher, updateVoucher, deleteVoucher, getVoucherByCode, createUser, getUserByEmail, getUserById, updateUserProfile, getUserOrders, getAllPromotions, addPromotion, updatePromotion, deletePromotion, hasUserUsedVoucher, getUserTotalSpent, logSearchKeyword, getSearchAnalytics, clearSearchAnalytics, getAllBlogs, getBlogBySlug, getBlogById, addBlog, updateBlog, deleteBlog, createEmailVerification, verifyEmailCode, markUserVerified, createPasswordResetToken, verifyPasswordResetToken, updatePassword, saveOrderFeedback, getOrderFeedback, getAdminByEmail, getAdminById, getAllAdmins, addAdmin, updateAdminCredentials, updateAdminPassword, getBankSettings, updateBankSettings, getSocialSettings, updateSocialSettings, getContactSettings, updateContactSettings, getFeaturedBlogs, getRegistrationVoucherDiscount, updateRegistrationVoucherDiscount, getAllAvailableVouchersForUser, getAllCollections, addCollection, updateCollection, deleteCollection } from './src/db';
 import { sendVerificationEmail, sendPasswordResetEmail, sendFeedbackRequestEmail, sendWelcomeVoucherEmail } from './email';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -623,6 +623,20 @@ async function startServer() {
     }
   });
 
+  app.put('/api/admin/settings/contact', authenticateToken, async (req: any, res: any) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Truy cập bị từ chối. Cần quyền quản trị.' });
+      }
+
+      const { address, phone, email, workingHours } = req.body;
+      const result = await updateContactSettings({ address, phone, email, workingHours });
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: 'Cập nhật thông tin liên hệ thất bại.' });
+    }
+  });
+
 
   app.get('/api/admin/admins', authenticateToken, async (req: any, res: any) => {
     try {
@@ -1123,6 +1137,14 @@ async function startServer() {
       res.json(await getSocialSettings());
     } catch (error) {
       res.status(500).json({ error: 'Lấy liên kết mạng xã hội thất bại' });
+    }
+  });
+
+  app.get('/api/settings/contact', async (req, res) => {
+    try {
+      res.json(await getContactSettings());
+    } catch (error) {
+      res.status(500).json({ error: 'Lấy thông tin liên hệ thất bại' });
     }
   });
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -9,6 +9,29 @@ interface ContactViewProps {
 export const ContactView: React.FC<ContactViewProps> = () => {
   const { language } = useLanguage();
   const isVi = language === 'vi';
+  
+  const [contactSettings, setContactSettings] = useState({ 
+    address: '123 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh', 
+    phone: '0901 234 567', 
+    email: 'contact@phithuylecong.vn', 
+    workingHours: isVi ? 'Thứ 2 – Thứ 7: 8:00 – 18:00' : 'Mon – Sat: 8:00 AM – 6:00 PM' 
+  });
+
+  useEffect(() => {
+    fetch('/api/settings/contact')
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          setContactSettings({
+             address: data.address || '123 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh',
+             phone: data.phone || '0901 234 567',
+             email: data.email || 'contact@phithuylecong.vn',
+             workingHours: data.workingHours || (isVi ? 'Thứ 2 – Thứ 7: 8:00 – 18:00' : 'Mon – Sat: 8:00 AM – 6:00 PM')
+          });
+        }
+      })
+      .catch(err => console.error('Failed to fetch contact settings', err));
+  }, [isVi]);
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 pb-24">
@@ -28,10 +51,10 @@ export const ContactView: React.FC<ContactViewProps> = () => {
 
       <div className="grid sm:grid-cols-2 gap-6">
         {[
-          { icon: 'location_on', label: isVi ? 'Địa chỉ' : 'Address', value: '123 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh' },
-          { icon: 'phone', label: isVi ? 'Điện thoại' : 'Phone', value: '0901 234 567' },
-          { icon: 'mail', label: 'Email', value: 'contact@phithuylecong.vn' },
-          { icon: 'schedule', label: isVi ? 'Giờ làm việc' : 'Business Hours', value: isVi ? 'Thứ 2 – Thứ 7: 8:00 – 18:00' : 'Mon – Sat: 8:00 AM – 6:00 PM' },
+          { icon: 'location_on', label: isVi ? 'Địa chỉ' : 'Address', value: contactSettings.address },
+          { icon: 'phone', label: isVi ? 'Điện thoại' : 'Phone', value: contactSettings.phone },
+          { icon: 'mail', label: 'Email', value: contactSettings.email },
+          { icon: 'schedule', label: isVi ? 'Giờ làm việc' : 'Business Hours', value: contactSettings.workingHours },
         ].map(item => (
           <div key={item.label} className="bg-white border border-jade-100 rounded-2xl p-6 shadow-sm flex items-start gap-4">
             <div className="w-10 h-10 bg-jade-100 rounded-full flex items-center justify-center flex-shrink-0">

@@ -31,19 +31,28 @@ const translations = {
     'home.story.title': 'Hành Trình Tìm Kiếm Vẻ Đẹp Vĩnh Cửu',
     'home.story.p1': 'Khởi nguồn từ niềm đam mê mãnh liệt với những viên ngọc quý từ vùng đất Myanmar huyền bí, Phỉ Thúy Lê Công đã trải qua hơn hai thập kỷ để xây dựng nên một thương hiệu uy tín, nơi mỗi sản phẩm đều là một kiệt tác nghệ thuật.',
     'home.story.p2': 'Chúng tôi không chỉ bán trang sức, chúng tôi chia sẻ những câu chuyện về văn hóa, tâm linh và sự bình an mà ngọc phỉ thúy mang lại cho chủ nhân của nó.',
+    'home.story.quote': 'Ngọc phỉ thúy không chỉ là món đồ trang sức, nó là một phần linh hồn của thiên nhiên được gọt giũa bởi bàn tay con người.',
+    'home.story.author': '— Lê Công',
     'home.story.btn': 'Khám Phá Thêm',
     'home.blog.subtitle': 'Kiến Thức Ngọc',
     'home.blog.title': 'Blog & Tin Tức',
     'home.blog.readMore': 'Đọc Tiếp',
     'home.sub.subtitle': 'Tham Gia Cùng Chúng Tôi',
     'home.sub.title': 'Nhận Ưu Đãi Độc Quyền',
-    'home.sub.desc': 'Đăng ký bản tin để nhận thông tin về bộ sưu tập mới nhất và các kiến thức chuyên sâu về ngọc phỉ thúy.',
+    'home.sub.desc': 'Đăng ký bản tin để nhận thông tin về bộ sưu tập mới nhất và các kiến thức chuyên sâu về Phỉ Thúy Lê Công.',
     'home.sub.placeholder': 'Địa chỉ email của bạn',
     'home.sub.btn': 'Đăng Ký Ngay',
     'home.sub.note': 'Chúng tôi tôn trọng quyền riêng tư của bạn. Hủy đăng ký bất cứ lúc nào.',
     'home.blog.empty': 'Bài viết đang được cập nhật...',
     'home.blog.viewAllBtn': 'Xem Tất Cả Bài Viết',
     'home.blog.viewAllLink': 'Xem tất cả bài viết →',
+
+    // BlogListView
+    'blog.list.title': 'Cẩm Nang & Kiến Thức',
+    'blog.list.desc': 'Khám phá thế giới phỉ thúy, các câu chuyện văn hóa, kinh nghiệm phân tách ngọc và tư vấn chọn mua trang sức phong thủy.',
+    'blog.list.empty.title': 'Chưa có bài viết nào',
+    'blog.list.empty.desc': 'Chúng tôi sẽ sớm cập nhật thêm nhiều thông tin hữu ích.',
+    'blog.list.badge': 'Bài Viết',
 
     // CollectionsView
     'col.title': 'Bộ Sưu Tập',
@@ -246,7 +255,7 @@ const translations = {
     // CheckoutView
     'checkout.error': 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.',
     'checkout.success.title': 'Đặt Hàng Thành Công!',
-    'checkout.success.desc': 'Cảm ơn bạn đã mua sắm tại Phỉ thúy Lê Công. Chúng tôi đã nhận được thông tin thanh toán và sẽ xử lý đơn hàng của bạn trong thời gian sớm nhất.',
+    'checkout.success.desc': 'Cảm ơn bạn đã mua sắm tại Phỉ Thúy Lê Công. Chúng tôi đã nhận được thông tin thanh toán và sẽ xử lý đơn hàng của bạn trong thời gian sớm nhất.',
     'checkout.success.home': 'Trở Về Trang Chủ',
     'checkout.title': 'Thanh Toán',
     'checkout.bank.title': 'Thông Tin Chuyển Khoản',
@@ -322,6 +331,8 @@ const translations = {
     'home.story.title': 'The Journey to Eternal Beauty',
     'home.story.p1': 'Originating from a fierce passion for precious gems from the mystical land of Myanmar, Le Cong Jade has spent over two decades building a reputable brand where every product is an artistic masterpiece.',
     'home.story.p2': 'We do not just sell jewelry, we share stories of culture, spirituality, and the peace that jade brings to its owner.',
+    'home.story.quote': 'Jadeite is not just jewelry, it is a piece of nature’s soul refined by human hands.',
+    'home.story.author': '— Le Cong',
     'home.story.btn': 'Explore More',
     'home.blog.subtitle': 'Jade Knowledge',
     'home.blog.title': 'Blog & News',
@@ -335,6 +346,13 @@ const translations = {
     'home.blog.empty': 'Posts are being updated...',
     'home.blog.viewAllBtn': 'View All Posts',
     'home.blog.viewAllLink': 'View all posts →',
+
+    // BlogListView
+    'blog.list.title': 'Jade Knowledge & Guide',
+    'blog.list.desc': 'Discover the world of jadeite, cultural stories, jade parting experiences, and advice on buying feng shui jewelry.',
+    'blog.list.empty.title': 'No posts yet',
+    'blog.list.empty.desc': 'We will update with more useful information soon.',
+    'blog.list.badge': 'Article',
 
     // CollectionsView
     'col.title': 'Collections',

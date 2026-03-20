@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Blog } from '../types';
-import { Calendar, User, ArrowLeft, Share2, Facebook, Twitter, Link as LinkIcon, ArrowRight } from 'lucide-react';
+import { Calendar, User, ArrowLeft, Share2, Link as LinkIcon, ArrowRight } from 'lucide-react';
 
 interface BlogDetailViewProps {
   blog: Blog;
@@ -88,12 +88,6 @@ export const BlogDetailView: React.FC<BlogDetailViewProps> = ({ blog, setView })
           <div className="mt-16 pt-8 border-t border-stone-200 flex flex-col sm:flex-row justify-between items-center">
             <div className="flex items-center space-x-4 mb-4 sm:mb-0">
               <span className="font-bold text-stone-900 uppercase tracking-widest text-xs">Chia sẻ bài viết</span>
-              <button className="p-2 bg-stone-100 hover:bg-facebook text-stone-600 hover:text-white rounded-full transition-all duration-300">
-                <Facebook size={18} />
-              </button>
-              <button className="p-2 bg-stone-100 hover:bg-twitter text-stone-600 hover:text-white rounded-full transition-all duration-300">
-                <Twitter size={18} />
-              </button>
               <button onClick={handleShare} className="p-2 bg-stone-100 hover:bg-jade-600 text-stone-600 hover:text-white rounded-full transition-all duration-300">
                 <LinkIcon size={18} />
               </button>

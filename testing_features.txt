@@ -1,0 +1,69 @@
+PHỈ THÚY LÊ CÔNG - TESTING CHECKLIST
+
+### I. ADMIN MANAGEMENT (Quản Trị)
+1.  **Đăng Nhập Quản Trị (Admin Login)**:
+    - Kiểm tra đăng nhập với email (huynhgiahuy071003@gmail.com) và mật khẩu (admin).
+    - Session-bound: Tự động đăng xuất khi thoát trình duyệt.
+2.  **Đặt Lại Mật Khẩu (Password Reset)**:
+    - Gửi email yêu cầu đặt lại mật khẩu cho tài khoản quản trị.
+3.  **Quản Lý Tài Khoản (Account Management)**:
+    - Thêm tài khoản quản trị mới thành công.
+    - Cập nhật thông tin email/mật khẩu quản trị.
+
+### II. QUẢN LÝ SẢN PHẨM (Product Management)
+1.  **Sản Phẩm (Products)**:
+    - Thêm sản phẩm mới kèm hình ảnh (tối đa nhiều ảnh).
+    - Chỉnh sửa thông tin sản phẩm (tên, giá, mô tả bằng cả tiếng Việt và tiếng Anh).
+    - Xóa sản phẩm.
+2.  **Trạng Thái Sản Phẩm (Product Status)**:
+    - Kiểm tra tick chọn isNew, isPremium, isBestSeller có hiển thị đúng trong popup và trang chủ.
+    - Kiểm tra số lượng tồn kho (Amount).
+3.  **Dòng Sản Phẩm & Phân Loại (Collections & Categories)**:
+    - Thêm/Sửa/Xóa dòng sản phẩm (Collections - Nếp băng chủng, đậu chủng, v.v.).
+    - Thêm/Sửa/Xóa chủng loại (Categories - Nhẫn, vòng tay, v.v.).
+
+### III. QUẢN LÝ ĐƠN HÀNG (Order Management)
+1.  **Duyệt Đơn Hàng**:
+    - Xem danh sách đơn hàng đã đặt.
+    - Cập nhật trạng thái đơn hàng (Đang xử lý, Đã giao, Hủy).
+    - Xóa đơn hàng lỗi.
+2.  **Phản Hồi (Feedback)**:
+    - Xem đánh giá/phản hồi của khách hàng theo từng đơn hàng cụ thể.
+
+### IV. QUẢN LÝ KHUYẾN MÃI (Marketing & Vouchers)
+1.  **Mã Giảm Giá (Vouchers)**:
+    - Tạo mã giảm giá (theo phần trăm hoặc giá tiền cố định).
+    - Giới hạn số lần sử dụng và chi tiêu tối thiểu.
+    - Tự động tặng voucher khi người dùng đăng ký tài khoản mới.
+2.  **Chương Trình Khuyến Mãi (Promotions)**:
+    - Quản lý banner khuyến mãi hiển thị trên Slider trang chủ.
+
+### V. CÀI ĐẶT HỆ THỐNG (System Settings)
+1.  **Thông Tin Ngân Hàng**:
+    - Cập nhật số tài khoản, tên ngân hàng và tải lên QR code thanh toán.
+2.  **Mạng Xã Hội (Social Media Icons)**:
+    - Cập nhật link Facebook, TikTok, Instagram, Telegram từ Admin (icons phải hiển thị to và trên một hàng tại Home page).
+
+### VI. BÀI VIẾT & TIN TỨC (Blog Management)
+- Thêm bài viết mới kèm hình ảnh.
+- Đặt bài viết làm 'Nổi bật' (Featured) để hiển thị ở trang chủ.
+- Xem danh sách bài viết quản trị.
+- display more than 3 blogs in home page
+
+### VII. TRẢI NGHIỆM NGƯỜI DÙNG (Public Site Experience)
+1.  **Đăng Ký & Xác Thực**:
+    - Đăng ký tài khoản người dùng kèm mã xác nhận gửi qua email.
+2.  **Giỏ Hàng & Thanh Toán (Checkout)**:
+    - Thêm/Xóa sản phẩm trong giỏ hàng.
+    - Áp dụng mã giảm giá (Voucher).
+    - Điền thông tin giao hàng (Kiểm tra xác thực số điện thoại và địa chỉ).
+    - Xem thông tin thanh toán (Bank QR).
+3.  **Tìm Kiếm (Search)**:
+    - Tìm kiếm sản phẩm theo tên.
+    - Kiểm tra nhật ký tìm kiếm trong Admin (Search Analytics).
+4.  **Đa Ngôn Ngữ (Localization)**:
+    - Chuyển đổi ngôn ngữ Tiếng Việt/Tiếng Anh.
+    - Kiểm tra tất cả thông báo lỗi (Error messages) đã được dịch sang Tiếng Việt.
+
+---
+Ngày tạo: 2026-03-20
