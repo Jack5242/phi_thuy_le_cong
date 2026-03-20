@@ -1069,4 +1069,9 @@ export async function updateAdminPassword(email: string, hash: string) {
   return { success: true };
 }
 
+export async function deleteAdmin(id: number) {
+  await db.prepare('DELETE FROM admins WHERE id = ?').run(id);
+  return { success: true };
+}
+
 export default db;

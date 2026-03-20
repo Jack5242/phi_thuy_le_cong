@@ -126,7 +126,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
         body: JSON.stringify({ email: loginEmail })
       });
       if (res.ok) {
-        setSettingsMessage({ type: 'success', text: 'Email khôi phục mật khẩu đã được gửi.' });
+        alert('Email khôi phục mật khẩu đã được gửi.');
         setIsAdminForgotPassword(false);
       }
     } catch (err) {
@@ -148,7 +148,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
     if (settingNewPassword) {
       const passVal = validatePassword(settingNewPassword);
       if (!passVal.isValid) {
-        setSettingsMessage({ type: 'error', text: passVal.message });
+        alert(passVal.message);
         return;
       }
     }
@@ -168,17 +168,17 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
       });
       const data = await res.json();
       if (res.ok) {
-        setSettingsMessage({ type: 'success', text: 'Cập nhật thành công!' });
+        alert('Cập nhật thành công!');
         setAdminToken(data.token);
         sessionStorage.setItem('adminToken', data.token);
         sessionStorage.setItem('adminUser', JSON.stringify(data.admin));
         setSettingCurrentPassword('');
         setSettingNewPassword('');
       } else {
-        setSettingsMessage({ type: 'error', text: data.error || 'Cập nhật thất bại' });
+        alert(data.error || 'Cập nhật thất bại');
       }
     } catch (err) {
-      setSettingsMessage({ type: 'error', text: 'Lỗi máy chủ' });
+      alert('Lỗi máy chủ');
     }
   };
 
@@ -188,7 +188,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
 
     const passVal = validatePassword(newAdminPassword);
     if (!passVal.isValid) {
-      setAdminManagementMsg({ type: 'error', text: passVal.message });
+      alert(passVal.message);
       return;
     }
 
@@ -203,15 +203,49 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
       });
       const data = await res.json();
       if (res.ok) {
-        setAdminManagementMsg({ type: 'success', text: 'Tạo tài khoản quản trị mới thành công!' });
+        alert('Tạo tài khoản quản trị mới thành công!');
         setNewAdminEmail('');
         setNewAdminPassword('');
         fetchAllAdmins();
       } else {
-        setAdminManagementMsg({ type: 'error', text: data.error || 'Không thể tạo tài khoản' });
+        alert(data.error || 'Không thể tạo tài khoản');
       }
     } catch (err) {
-      setAdminManagementMsg({ type: 'error', text: 'Lỗi máy chủ' });
+      alert('Lỗi máy chủ');
+    }
+  };
+
+  const handleDeleteAdmin = async (id: number, email: string) => {
+    if (email === settingEmail) {
+      alert('Bạn không thể tự xóa tài khoản của chính mình!');
+      return;
+    }
+
+    if (allAdmins.length <= 1) {
+      alert('Không thể xóa quản trị viên cuối cùng!');
+      return;
+    }
+
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa quản trị viên "${email}" không?`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/admins/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        }
+      });
+      if (res.ok) {
+        alert('Đã xóa quản trị viên thành công!');
+        fetchAllAdmins();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Không thể xóa quản trị viên');
+      }
+    } catch (err) {
+      alert('Lỗi máy chủ');
     }
   };
 
@@ -1028,11 +1062,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                   {loginError}
                 </div>
               )}
-              {settingsMessage.text && settingsMessage.type === 'success' && (
-                <div className="bg-green-50 text-green-700 p-3 rounded-md text-sm text-center mb-4">
-                  {settingsMessage.text}
-                </div>
-              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700">Email</label>
                 <div className="mt-1 relative rounded-md shadow-sm">
@@ -2732,11 +2762,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
               Cài Đặt Tài Khoản
             </h2>
             <form onSubmit={handleSaveSettings} className="space-y-6">
-              {settingsMessage.text && (
-                <div className={`p-4 rounded-md text-sm ${settingsMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                  {settingsMessage.text}
-                </div>
-              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700">Email Đăng Nhập</label>
                 <input type="email" value={settingEmail} onChange={e => setSettingEmail(e.target.value)} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-jade-500 focus:border-jade-500 sm:text-sm" />
@@ -2770,6 +2796,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">ID</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Email</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Hành động</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -2777,6 +2804,15 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                     <tr key={admin.id}>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{admin.id}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{admin.email}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => handleDeleteAdmin(admin.id, admin.email)}
+                          className="text-red-600 hover:text-red-900 transition-colors p-1"
+                          title="Xóa quản trị viên"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -2786,11 +2822,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
             <div className="border-t border-gray-200 pt-6">
               <h3 className="text-lg font-bold text-jade-900 mb-4">Thêm Quản Trị Viên Mới</h3>
               <form onSubmit={handleCreateAdmin} className="space-y-4">
-                {adminManagementMsg.text && (
-                  <div className={`p-4 rounded-md text-sm ${adminManagementMsg.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                    {adminManagementMsg.text}
-                  </div>
-                )}
+
                 <div>
                   <input
                     type="email"
