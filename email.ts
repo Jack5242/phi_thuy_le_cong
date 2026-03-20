@@ -17,12 +17,12 @@ const transporter = nodemailer.createTransport({
 export const sendVerificationEmail = async (email: string, code: string) => {
   try {
     const info = await transporter.sendMail({
-      from: `"Jade Elegance" <${process.env.FROM_EMAIL || 'no-reply@jade.example.com'}>`,
+      from: `"thủy phí lê công" <${process.env.FROM_EMAIL || 'no-reply@jade.example.com'}>`,
       to: email,
-      subject: "Jade Elegance - Mã Xác Nhận Đăng Ký",
+      subject: "thủy phí lê công - Mã Xác Nhận Đăng Ký",
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-          <h2 style="color: #0f5132;">Chào mừng bạn đến với Jade Elegance</h2>
+          <h2 style="color: #0f5132;">Chào mừng bạn đến với thủy phí lê công</h2>
           <p>Mã xác nhận đăng ký tài khoản của bạn là:</p>
           <div style="font-size: 24px; font-weight: bold; margin: 20px 0; padding: 10px; background-color: #f8f9fa; border-radius: 5px; display: inline-block;">
             ${code}
@@ -41,13 +41,13 @@ export const sendVerificationEmail = async (email: string, code: string) => {
 export const sendPasswordResetEmail = async (email: string, link: string) => {
   try {
     const info = await transporter.sendMail({
-      from: `"Jade Elegance" <${process.env.FROM_EMAIL || 'no-reply@jade.example.com'}>`,
+      from: `"thủy phí lê công" <${process.env.FROM_EMAIL || 'no-reply@jade.example.com'}>`,
       to: email,
-      subject: "Jade Elegance - Khôi Phục Mật Khẩu",
+      subject: "thủy phí lê công - Khôi Phục Mật Khẩu",
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
           <h2 style="color: #0f5132;">Yêu cầu Khôi Phục Mật Khẩu</h2>
-          <p>Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản Jade Elegance.</p>
+          <p>Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản thủy phí lê công.</p>
           <p>Vui lòng click vào nút bên dưới để đặt lại mật khẩu của bạn:</p>
           <a href="${link}" style="display: inline-block; padding: 12px 24px; background-color: #198754; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold;">
             Đặt Lại Mật Khẩu
@@ -71,12 +71,12 @@ export const sendFeedbackRequestEmail = async (email: string, orderId: string) =
 
   try {
     const info = await transporter.sendMail({
-      from: `"Jade Elegance" <${process.env.FROM_EMAIL || 'no-reply@jade.example.com'}>`,
+      from: `"thủy phí lê công" <${process.env.FROM_EMAIL || 'no-reply@jade.example.com'}>`,
       to: email,
-      subject: "Jade Elegance - Đánh Giá Đơn Hàng Của Bạn",
+      subject: "thủy phí lê công - Đánh Giá Đơn Hàng Của Bạn",
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-          <h2 style="color: #0f5132;">Cảm ơn bạn đã mua sắm tại Jade Elegance!</h2>
+          <h2 style="color: #0f5132;">Cảm ơn bạn đã mua sắm tại thủy phí lê công!</h2>
           <p>Đơn hàng <strong>${orderId}</strong> của bạn đã được ghi nhận.</p>
           <p>Chúng tôi rất trân trọng ý kiến đóng góp của bạn để cải thiện chất lượng dịch vụ và sản phẩm. Xin vui lòng dành ít phút để đánh giá trải nghiệm mua sắm của bạn:</p>
           <a href="${feedbackLink}" style="display: inline-block; padding: 12px 24px; background-color: #198754; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold;">
@@ -98,13 +98,13 @@ export const sendWelcomeVoucherEmail = async (email: string, voucherCode: string
   
   try {
     const info = await transporter.sendMail({
-      from: `"Jade Elegance" <${process.env.FROM_EMAIL || 'no-reply@jade.example.com'}>`,
+      from: `"thủy phí lê công" <${process.env.FROM_EMAIL || 'no-reply@jade.example.com'}>`,
       to: email,
-      subject: "Jade Elegance - Quà Tặng Chào Mừng Thành Viên Mới",
+      subject: "thủy phí lê công - Quà Tặng Chào Mừng Thành Viên Mới",
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 600px; margin: auto; border: 1px solid #eee;">
-          <h2 style="color: #0f5132; text-align: center;">Chào Mừng Bạn Đến Với Jade Elegance!</h2>
-          <p>Cảm ơn bạn đã đăng ký trở thành thành viên của gia đình Jade Elegance. Để chào mừng bạn, chúng tôi xin gửi tặng bạn một mã giảm giá đặc biệt:</p>
+          <h2 style="color: #0f5132; text-align: center;">Chào Mừng Bạn Đến Với thủy phí lê công!</h2>
+          <p>Cảm ơn bạn đã đăng ký trở thành thành viên của gia đình thủy phí lê công. Để chào mừng bạn, chúng tôi xin gửi tặng bạn một mã giảm giá đặc biệt:</p>
           
           <div style="text-align: center; margin: 30px 0; padding: 20px; background-color: #f0fdf4; border: 2px dashed #15803d; border-radius: 10px;">
             <p style="margin: 0; color: #15803d; font-weight: bold; text-transform: uppercase;">Mã Giảm Giá Của Bạn</p>

@@ -55,8 +55,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
   const [registrationDiscountMessage, setRegistrationDiscountMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    const savedAdmin = localStorage.getItem('adminUser');
+    const token = sessionStorage.getItem('adminToken');
+    const savedAdmin = sessionStorage.getItem('adminUser');
     if (token && savedAdmin) {
       setIsAdminAuth(true);
       setAdminToken(token);
@@ -98,8 +98,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
       if (res.ok) {
         setIsAdminAuth(true);
         setAdminToken(data.token);
-        localStorage.setItem('adminToken', data.token);
-        localStorage.setItem('adminUser', JSON.stringify(data.admin));
+        sessionStorage.setItem('adminToken', data.token);
+        sessionStorage.setItem('adminUser', JSON.stringify(data.admin));
         setSettingEmail(data.admin.email);
       } else {
         setLoginError(data.error || 'Sai thông tin đăng nhập');
@@ -130,8 +130,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
   const handleAdminLogout = () => {
     setIsAdminAuth(false);
     setAdminToken('');
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminUser');
+    sessionStorage.removeItem('adminToken');
+    sessionStorage.removeItem('adminUser');
   };
 
   const handleSaveSettings = async (e: React.FormEvent) => {
@@ -163,8 +163,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
       if (res.ok) {
         setSettingsMessage({ type: 'success', text: 'Cập nhật thành công!' });
         setAdminToken(data.token);
-        localStorage.setItem('adminToken', data.token);
-        localStorage.setItem('adminUser', JSON.stringify(data.admin));
+        sessionStorage.setItem('adminToken', data.token);
+        sessionStorage.setItem('adminUser', JSON.stringify(data.admin));
         setSettingCurrentPassword('');
         setSettingNewPassword('');
       } else {
