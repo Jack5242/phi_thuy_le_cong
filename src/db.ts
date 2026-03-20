@@ -10,7 +10,9 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS products (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
+    name_en TEXT,
     description TEXT,
+    description_en TEXT,
     price REAL NOT NULL,
     category TEXT,
     collection TEXT,
@@ -18,7 +20,8 @@ db.exec(`
     images TEXT,
     isNew INTEGER DEFAULT 0,
     isPremium INTEGER DEFAULT 0,
-    isBestSeller INTEGER DEFAULT 0
+    isBestSeller INTEGER DEFAULT 0,
+    amount INTEGER DEFAULT 1
   );
 
   CREATE TABLE IF NOT EXISTS orders (
@@ -50,7 +53,9 @@ db.exec(`
     is_active INTEGER DEFAULT 1,
     usage_limit INTEGER DEFAULT NULL,
     usage_count INTEGER DEFAULT 0,
-    min_user_spending REAL DEFAULT 0
+    min_user_spending REAL DEFAULT 0,
+    user_email TEXT DEFAULT NULL,
+    is_registration INTEGER DEFAULT 0
   );
 
   CREATE TABLE IF NOT EXISTS used_vouchers (
@@ -75,9 +80,12 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS promotions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
+    title_en TEXT,
     subtitle TEXT NOT NULL,
+    subtitle_en TEXT,
     image TEXT NOT NULL,
     cta TEXT NOT NULL,
+    cta_en TEXT,
     order_index INTEGER DEFAULT 0
   );
 
@@ -131,7 +139,34 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS collections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    name_en TEXT,
+    description TEXT,
+    description_en TEXT
+  );
 `);
+
+// Migration for promotions localized fields
+const promotionsCols = db.prepare("PRAGMA table_info(promotions)").all();
+if (!promotionsCols.some((col: any) => col.name === 'title_en')) {
+  db.prepare("ALTER TABLE promotions ADD COLUMN title_en TEXT").run();
+}
+if (!promotionsCols.some((col: any) => col.name === 'subtitle_en')) {
+  db.prepare("ALTER TABLE promotions ADD COLUMN subtitle_en TEXT").run();
+}
+if (!promotionsCols.some((col: any) => col.name === 'cta_en')) {
+  db.prepare("ALTER TABLE promotions ADD COLUMN cta_en TEXT").run();
+}
+
+try {
+  db.exec('ALTER TABLE collections ADD COLUMN description TEXT;');
+} catch (e) { /* Column already exists */ }
+try {
+  db.exec('ALTER TABLE collections ADD COLUMN description_en TEXT;');
+} catch (e) { /* Column already exists */ }
 
 // Seed default admin if none exists
 const checkAdmin = db.prepare('SELECT count(*) as count FROM admins').get() as { count: number };
@@ -148,6 +183,24 @@ try {
 
 try {
   db.exec('ALTER TABLE products ADD COLUMN images TEXT;');
+} catch (e) {
+  // Column already exists
+}
+
+try {
+  db.exec('ALTER TABLE products ADD COLUMN amount INTEGER DEFAULT 1;');
+} catch (e) {
+  // Column already exists
+}
+
+try {
+  db.exec('ALTER TABLE products ADD COLUMN name_en TEXT;');
+} catch (e) {
+  // Column already exists
+}
+
+try {
+  db.exec('ALTER TABLE products ADD COLUMN description_en TEXT;');
 } catch (e) {
   // Column already exists
 }
@@ -181,6 +234,13 @@ try {
 }
 
 try {
+  db.exec('ALTER TABLE vouchers ADD COLUMN user_email TEXT DEFAULT NULL;');
+  db.exec('ALTER TABLE vouchers ADD COLUMN is_registration INTEGER DEFAULT 0;');
+} catch (e) {
+  // Columns already exist
+}
+
+try {
   db.exec('ALTER TABLE blogs ADD COLUMN is_featured INTEGER DEFAULT 0;');
 } catch (e) {
   // Column already exists
@@ -190,8 +250,8 @@ export function seedProducts(products: Product[]) {
   const check = db.prepare('SELECT count(*) as count FROM products').get() as { count: number };
   if (check.count === 0) {
     const insert = db.prepare(`
-      INSERT INTO products (id, name, description, price, category, collection, image, images, isNew, isPremium, isBestSeller)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO products (id, name, name_en, description, description_en, price, category, collection, image, images, isNew, isPremium, isBestSeller, amount)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const insertMany = db.transaction((items: Product[]) => {
@@ -199,7 +259,9 @@ export function seedProducts(products: Product[]) {
         insert.run(
           item.id,
           item.name,
+          item.name_en || null,
           item.description,
+          item.description_en || null,
           item.price,
           item.category,
           item.collection,
@@ -207,7 +269,8 @@ export function seedProducts(products: Product[]) {
           JSON.stringify(item.images || [item.image]),
           item.isNew ? 1 : 0,
           item.isPremium ? 1 : 0,
-          item.isBestSeller ? 1 : 0
+          item.isBestSeller ? 1 : 0,
+          item.amount !== undefined ? item.amount : 1
         );
       }
     });
@@ -289,7 +352,9 @@ export function seedProducts(products: Product[]) {
       { key: 'bankName', value: 'Vietcombank' },
       { key: 'bankOwner', value: 'CÔNG TY TNHH THIÊN MỘC' },
       { key: 'bankNumber', value: '0123456789' },
-      { key: 'bankQR', value: '' }
+      { key: 'bankQR', value: '' },
+      { key: 'registration_voucher_discount', value: '0.1' },
+      { key: 'registration_voucher_type', value: 'percent' }
     ];
     const insertMany = db.transaction((settings: { key: string, value: string }[]) => {
       for (const setting of settings) {
@@ -299,6 +364,44 @@ export function seedProducts(products: Product[]) {
     insertMany(defaultSettings);
     console.log('Database seeded with default settings.');
   }
+
+  // Seed collections from existing products if none exist
+  const checkCollections = db.prepare('SELECT count(*) as count FROM collections').get() as { count: number };
+  if (checkCollections.count === 0) {
+    const allProducts = db.prepare('SELECT DISTINCT collection FROM products WHERE collection IS NOT NULL AND collection != \'\'').all() as { collection: string }[];
+    const insertCollection = db.prepare('INSERT OR IGNORE INTO collections (name, slug) VALUES (?, ?)');
+    const insertMany = db.transaction((items: { collection: string }[]) => {
+      for (const item of items) {
+        const slug = item.collection.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+        insertCollection.run(item.collection, slug);
+      }
+    });
+    insertMany(allProducts);
+    console.log(`Database seeded with ${allProducts.length} product line(s) from existing products.`);
+  }
+}
+
+// Collections
+export function getAllCollections() {
+  return db.prepare('SELECT * FROM collections ORDER BY id ASC').all();
+}
+
+export function addCollection(collection: { name: string; name_en?: string; description?: string; description_en?: string; slug?: string }) {
+  const { name, name_en, description, description_en, slug } = collection;
+  const autoSlug = slug || name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+  return db.prepare('INSERT INTO collections (name, name_en, description, description_en, slug) VALUES (?, ?, ?, ?, ?)')
+    .run(name, name_en || null, description || null, description_en || null, autoSlug);
+}
+
+export function updateCollection(id: string | number, collection: { name: string; name_en?: string; description?: string; description_en?: string; slug?: string }) {
+  const { name, name_en, description, description_en, slug } = collection;
+  const autoSlug = slug || name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+  return db.prepare('UPDATE collections SET name = ?, name_en = ?, description = ?, description_en = ?, slug = ? WHERE id = ?')
+    .run(name, name_en || null, description || null, description_en || null, autoSlug, id);
+}
+
+export function deleteCollection(id: string | number) {
+  return db.prepare('DELETE FROM collections WHERE id = ?').run(id);
 }
 
 export function getBankSettings() {
@@ -333,6 +436,21 @@ export function updateBankSettings(settings: { bankName?: string, bankOwner?: st
   return { success: true };
 }
 
+export function getRegistrationVoucherDiscount() {
+  const discountSetting = db.prepare('SELECT value FROM settings WHERE key = ?').get('registration_voucher_discount') as { value: string };
+  const typeSetting = db.prepare('SELECT value FROM settings WHERE key = ?').get('registration_voucher_type') as { value: string };
+  return {
+    discount: discountSetting ? parseFloat(discountSetting.value) : 0.1,
+    type: typeSetting ? typeSetting.value : 'percent'
+  };
+}
+
+export function updateRegistrationVoucherDiscount(discount: number, type: string) {
+  db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('registration_voucher_discount', discount.toString());
+  db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('registration_voucher_type', type);
+  return { success: true };
+}
+
 export function getSocialSettings() {
   const settings = db.prepare('SELECT * FROM settings WHERE key IN (?, ?, ?, ?)').all('social_facebook', 'social_tiktok', 'social_instagram', 'social_telegram') as any[];
   const result: any = { facebook: '', tiktok: '', instagram: '', telegram: '' };
@@ -359,7 +477,11 @@ export function updateSocialSettings(settings: { facebook?: string, tiktok?: str
 }
 
 export function getAllProducts(): Product[] {
-  const rows = db.prepare('SELECT * FROM products').all() as any[];
+  const rows = db.prepare(`
+    SELECT p.*, c.name_en AS collection_en 
+    FROM products p
+    LEFT JOIN collections c ON p.collection = c.name
+  `).all() as any[];
   return rows.map(row => {
     let images = [];
     try {
@@ -406,13 +528,15 @@ export function createOrder(order: { id: string; email: string; name: string; ph
 
 export function addProduct(product: Product) {
   const insert = db.prepare(`
-    INSERT INTO products (id, name, description, price, category, collection, image, images, isNew, isPremium, isBestSeller)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO products (id, name, name_en, description, description_en, price, category, collection, image, images, isNew, isPremium, isBestSeller, amount)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   insert.run(
     product.id,
     product.name,
+    product.name_en || null,
     product.description,
+    product.description_en || null,
     product.price,
     product.category,
     product.collection,
@@ -420,25 +544,23 @@ export function addProduct(product: Product) {
     JSON.stringify(product.images || [product.image]),
     product.isNew ? 1 : 0,
     product.isPremium ? 1 : 0,
-    product.isBestSeller ? 1 : 0
+    product.isBestSeller ? 1 : 0,
+    product.amount !== undefined ? product.amount : 1
   );
   return { success: true, product };
 }
 
 export function updateProduct(id: string, product: Partial<Product>) {
-  const setClause = Object.keys(product)
-    .filter(k => k !== 'id')
-    .map(k => `${k} = ?`)
-    .join(', ');
+  const allowedKeys = ['name', 'name_en', 'description', 'description_en', 'price', 'category', 'collection', 'image', 'images', 'isNew', 'isPremium', 'isBestSeller', 'amount'];
+  const filteredKeys = Object.keys(product).filter(k => allowedKeys.includes(k) && k !== 'id');
+  const setClause = filteredKeys.map(k => `${k} = ?`).join(', ');
 
-  const values = Object.keys(product)
-    .filter(k => k !== 'id')
-    .map(k => {
-      const val = (product as any)[k];
-      if (typeof val === 'boolean') return val ? 1 : 0;
-      if (k === 'images') return JSON.stringify(val);
-      return val;
-    });
+  const values = filteredKeys.map(k => {
+    const val = (product as any)[k];
+    if (typeof val === 'boolean') return val ? 1 : 0;
+    if (k === 'images') return JSON.stringify(val);
+    return val;
+  });
 
   const update = db.prepare(`UPDATE products SET ${setClause} WHERE id = ?`);
   update.run(...values, id);
@@ -454,9 +576,10 @@ export function getAllOrders() {
   const orders = db.prepare('SELECT * FROM orders ORDER BY created_at DESC').all() as any[];
   return orders.map(order => {
     const items = db.prepare(`
-      SELECT oi.*, p.name, p.image, p.category, p.collection
+      SELECT oi.*, p.name, p.name_en, p.image, p.category, p.collection, c.name_en AS collection_en
       FROM order_items oi
       JOIN products p ON oi.product_id = p.id
+      LEFT JOIN collections c ON p.collection = c.name
       WHERE oi.order_id = ?
     `).all(order.id);
     return { ...order, items };
@@ -479,9 +602,9 @@ export function getAllVouchers() {
   return vouchers.map(v => ({ ...v, is_active: Boolean(v.is_active) }));
 }
 
-export function addVoucher(voucher: { id: string; code: string; discount: number; type: string; is_active: boolean; usage_limit?: number; min_user_spending?: number }) {
-  db.prepare('INSERT INTO vouchers (id, code, discount, type, is_active, usage_limit, min_user_spending, usage_count) VALUES (?, ?, ?, ?, ?, ?, ?, 0)')
-    .run(voucher.id, voucher.code, voucher.discount, voucher.type, voucher.is_active ? 1 : 0, voucher.usage_limit || null, voucher.min_user_spending || 0);
+export function addVoucher(voucher: { id: string; code: string; discount: number; type: string; is_active: boolean; usage_limit?: number; min_user_spending?: number; user_email?: string; is_registration?: boolean }) {
+  db.prepare('INSERT INTO vouchers (id, code, discount, type, is_active, usage_limit, min_user_spending, usage_count, user_email, is_registration) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)')
+    .run(voucher.id, voucher.code, voucher.discount, voucher.type, voucher.is_active ? 1 : 0, voucher.usage_limit || null, voucher.min_user_spending || 0, voucher.user_email || null, voucher.is_registration ? 1 : 0);
   return { success: true };
 }
 
@@ -503,13 +626,18 @@ export function updateVoucher(id: string, voucher: Partial<{ code: string; disco
   return { success: true };
 }
 
+export function getAllAvailableVouchersForUser(email: string) {
+  const vouchers = db.prepare('SELECT * FROM vouchers WHERE is_active = 1 AND is_registration = 0').all() as any[];
+  return vouchers.map(v => ({ ...v, is_active: Boolean(v.is_active) }));
+}
+
 export function deleteVoucher(id: string) {
   db.prepare('DELETE FROM vouchers WHERE id = ?').run(id);
   return { success: true };
 }
 
 export function getVoucherByCode(code: string) {
-  const voucher = db.prepare('SELECT * FROM vouchers WHERE code = ? AND is_active = 1').get() as any;
+  const voucher = db.prepare('SELECT * FROM vouchers WHERE code = ? AND is_active = 1').get(code) as any;
   if (!voucher) return null;
   return { ...voucher, is_active: Boolean(voucher.is_active) };
 }
@@ -564,9 +692,10 @@ export function getUserOrders(email: string) {
   const orders = db.prepare('SELECT * FROM orders WHERE user_email = ? ORDER BY created_at DESC').all(email) as any[];
   return orders.map(order => {
     const items = db.prepare(`
-      SELECT oi.*, p.name as product_name, p.image as product_image 
+      SELECT oi.*, p.name as product_name, p.name_en as product_name_en, p.image as product_image, p.collection, c.name_en AS collection_en
       FROM order_items oi
       JOIN products p ON oi.product_id = p.id
+      LEFT JOIN collections c ON p.collection = c.name
       WHERE oi.order_id = ?
     `).all(order.id);
     return { ...order, items };
@@ -579,14 +708,14 @@ export function getAllPromotions() {
 }
 
 export function addPromotion(promo: any) {
-  const insert = db.prepare('INSERT INTO promotions (title, subtitle, image, cta, order_index) VALUES (?, ?, ?, ?, ?)');
-  const info = insert.run(promo.title, promo.subtitle, promo.image, promo.cta, promo.order_index || 0);
+  const insert = db.prepare('INSERT INTO promotions (title, title_en, subtitle, subtitle_en, image, cta, cta_en, order_index) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+  const info = insert.run(promo.title, promo.title_en || null, promo.subtitle, promo.subtitle_en || null, promo.image, promo.cta, promo.cta_en || null, promo.order_index || 0);
   return { id: info.lastInsertRowid, ...promo };
 }
 
 export function updatePromotion(id: string | number, promo: any) {
-  const update = db.prepare('UPDATE promotions SET title = ?, subtitle = ?, image = ?, cta = ?, order_index = ? WHERE id = ?');
-  update.run(promo.title, promo.subtitle, promo.image, promo.cta, promo.order_index || 0, id);
+  const update = db.prepare('UPDATE promotions SET title = ?, title_en = ?, subtitle = ?, subtitle_en = ?, image = ?, cta = ?, cta_en = ?, order_index = ? WHERE id = ?');
+  update.run(promo.title, promo.title_en || null, promo.subtitle, promo.subtitle_en || null, promo.image, promo.cta, promo.cta_en || null, promo.order_index || 0, id);
   return { id, ...promo };
 }
 
@@ -720,6 +849,12 @@ export function getFeaturedBlogs(): any[] {
 
 export function getBlogBySlug(slug: string): any {
   const row = db.prepare('SELECT * FROM blogs WHERE slug = ?').get(slug) as any;
+  if (!row) return null;
+  return { ...row, is_published: Boolean(row.is_published), is_featured: Boolean(row.is_featured) };
+}
+
+export function getBlogById(id: string): any {
+  const row = db.prepare('SELECT * FROM blogs WHERE id = ?').get(id) as any;
   if (!row) return null;
   return { ...row, is_published: Boolean(row.is_published), is_featured: Boolean(row.is_featured) };
 }

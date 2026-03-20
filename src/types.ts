@@ -1,15 +1,19 @@
 export interface Product {
   id: string;
   name: string;
+  name_en?: string;
   description: string;
+  description_en?: string;
   price: number;
   category: string;
   collection: string;
+  collection_en?: string;
   image: string;
   images?: string[];
   isNew?: boolean;
   isPremium?: boolean;
   isBestSeller?: boolean;
+  amount?: number;
 }
 
 export interface User {
@@ -32,4 +36,4 @@ export interface Blog {
   is_published: boolean;
 }
 
-export type View = 'home' | 'collections' | 'detail' | 'cart' | 'auth' | 'profile' | 'checkout' | 'admin' | 'blog' | 'blog-detail' | 'reset-password' | 'feedback';
+export type View = 'home' | 'collections' | 'detail' | 'cart' | 'auth' | 'profile' | 'checkout' | 'admin' | 'blog' | 'blog-detail' | 'reset-password' | 'feedback' | 'about' | 'contact' | 'shopping-guide' | 'return-policy' | 'faq' | 'privacy-policy' | 'terms-of-service';

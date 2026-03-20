@@ -46,7 +46,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ setView, onLogin }) => {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
-        setSuccessMsg('Đường dẫn khôi phục mật khẩu đã được gửi đến email của bạn.');
+        setSuccessMsg(t('auth.forgot.success'));
       } else if (isLogin) {
         // Login Flow
         const res = await fetch('/api/auth/login', {
@@ -72,12 +72,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ setView, onLogin }) => {
         const res = await fetch('/api/auth/request-verification', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          // body: JSON.stringify({ email }), // Wait, is email enough? The backend expected email and password?
+          // Actually, /api/auth/request-verification only needs email in server.ts
           body: JSON.stringify({ email }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
         setIsVerifying(true);
-        setSuccessMsg('Mã xác nhận đã được gửi đến email của bạn. Vui lòng kiểm tra.');
+        setSuccessMsg(t('auth.verify.success'));
       } else {
         // Final Registration Flow - Verify Code
         const res = await fetch('/api/auth/register', {
@@ -91,7 +93,15 @@ export const AuthView: React.FC<AuthViewProps> = ({ setView, onLogin }) => {
         setView('profile');
       }
     } catch (err: any) {
-      setError(err.message || 'Có lỗi xảy ra, vui lòng thử lại.');
+      const msg = err.message || '';
+      if (msg.includes('Invalid email or password')) setError(t('auth.error.invalidCredentials'));
+      else if (msg.includes('Email already registered')) setError(t('auth.error.emailExists'));
+      else if (msg.includes('Invalid or expired verification code')) setError(t('auth.error.invalidCode'));
+      else if (msg.includes('Email is required')) setError(t('auth.error.emailRequired'));
+      else if (msg.includes('Mật khẩu phải có ít nhất 8 ký tự')) setError(t('auth.error.passwordRequirement'));
+      else if (msg.includes('User not found')) setError(t('auth.error.invalidCredentials'));
+      else if (msg.includes('User not verified')) setError(t('auth.error.unverified'));
+      else setError(msg || t('auth.error.generic'));
     } finally {
       setLoading(false);
     }
@@ -102,10 +112,10 @@ export const AuthView: React.FC<AuthViewProps> = ({ setView, onLogin }) => {
       <div className="w-full max-w-md bg-white border border-jade-100 p-10 rounded-sm shadow-sm">
         <div className="text-center mb-10">
           <h2 className="text-2xl font-extrabold text-jade-900">
-            {isForgotPassword ? 'Khôi Phục Mật Khẩu' : (isLogin ? t('auth.login.title') : (isVerifying ? 'Xác Nhận Email' : t('auth.register.title')))}
+            {isForgotPassword ? t('auth.forgot.title') : (isLogin ? t('auth.login.title') : (isVerifying ? t('auth.verify.title') : t('auth.register.title')))}
           </h2>
           <p className="text-slate-500 mt-2">
-            {isForgotPassword ? 'Nhập email để nhận link khôi phục' : (isLogin ? t('auth.login.desc') : (isVerifying ? 'Nhập mã 6 số được gửi tới email của bạn' : t('auth.register.desc')))}
+            {isForgotPassword ? t('auth.forgot.desc') : (isLogin ? t('auth.login.desc') : (isVerifying ? t('auth.verify.desc') : t('auth.register.desc')))}
           </p>
         </div>
 
@@ -165,7 +175,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ setView, onLogin }) => {
 
           {isVerifying && !isForgotPassword && (
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Mã Xác Nhận (6 Số)</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('auth.verify.label')}</label>
               <input 
                 className="w-full px-4 py-3 bg-jade-50 border-none focus:ring-2 focus:ring-jade-900 rounded-sm text-jade-900text-center tracking-[0.5em] font-bold" 
                 placeholder="000000" 
@@ -183,7 +193,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ setView, onLogin }) => {
             disabled={loading}
             className="w-full bg-jade-900 text-white font-bold py-4 hover:opacity-90 transition-all rounded-sm mt-4 disabled:opacity-50"
           >
-            {loading ? t('auth.loading') : (isForgotPassword ? 'Gửi Link' : (isLogin ? t('auth.login.btn') : (isVerifying ? 'Xác Nhận Đăng Ký' : 'Gửi Mã Xác Nhận')))}
+            {loading ? t('auth.loading') : (isForgotPassword ? t('auth.forgot.btn') : (isLogin ? t('auth.login.btn') : (isVerifying ? t('auth.verify.btn') : t('auth.verify.sendBtn'))))}
           </button>
         </form>
 
@@ -195,7 +205,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ setView, onLogin }) => {
                 className="font-bold text-jade-900 hover:underline"
                 type="button"
               >
-                Quay lại đăng nhập
+                {t('auth.backToLogin')}
               </button>
             ) : (
               <>

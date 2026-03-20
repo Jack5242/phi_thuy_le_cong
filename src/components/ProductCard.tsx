@@ -8,7 +8,9 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
+  const displayName = language === 'en' && product.name_en ? product.name_en : product.name;
+  
   return (
     <div 
       className="group cursor-pointer"
@@ -17,7 +19,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) =>
       <div className="relative aspect-square overflow-hidden mb-4 bg-jade-100 rounded-sm">
         <img 
           src={product.image} 
-          alt={product.name}
+          alt={displayName}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
         {product.isNew && (
@@ -31,9 +33,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) =>
           </span>
         )}
       </div>
-      <h3 className="font-bold text-slate-900 group-hover:text-jade-700 transition-colors">{product.name}</h3>
-      <p className="text-slate-500 text-sm mb-2">{product.category} - {product.collection}</p>
-      <p className="text-jade-900 font-bold">{product.price.toLocaleString()} VND</p>
+      <h3 className="font-bold text-slate-900 group-hover:text-jade-700 transition-colors tracking-tight">{displayName}</h3>
+      <p className="text-slate-500 text-sm mb-2">
+        {product.category === 'Chủng tầm trung' ? t('category.midRange') : product.category === 'Chủng tầm cao' ? t('category.highEnd') : product.category} - {language === 'en' && product.collection_en ? product.collection_en : product.collection}
+      </p>
+      <p className="text-jade-900 font-bold">
+        {product.amount === 0 ? t('prod.outOfStock') : `${product.price.toLocaleString()} VND`}
+      </p>
     </div>
   );
 };

@@ -1,14 +1,16 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import { PRODUCTS } from './src/constants';
-import { seedProducts, getAllProducts, createOrder, addProduct, updateProduct, deleteProduct, getAllOrders, updateOrderStatus, deleteOrder, getAllVouchers, addVoucher, updateVoucher, deleteVoucher, getVoucherByCode, createUser, getUserByEmail, getUserById, updateUserProfile, getUserOrders, getAllPromotions, addPromotion, updatePromotion, deletePromotion, hasUserUsedVoucher, getUserTotalSpent, logSearchKeyword, getSearchAnalytics, clearSearchAnalytics, getAllBlogs, getBlogBySlug, addBlog, updateBlog, deleteBlog, createEmailVerification, verifyEmailCode, markUserVerified, createPasswordResetToken, verifyPasswordResetToken, updatePassword, saveOrderFeedback, getOrderFeedback, getAdminByEmail, getAdminById, getAllAdmins, addAdmin, updateAdminCredentials, updateAdminPassword, getBankSettings, updateBankSettings, getSocialSettings, updateSocialSettings, getFeaturedBlogs } from './src/db';
-import { sendVerificationEmail, sendPasswordResetEmail, sendFeedbackRequestEmail } from './email';
+import db, { seedProducts, getAllProducts, createOrder, addProduct, updateProduct, deleteProduct, getAllOrders, updateOrderStatus, deleteOrder, getAllVouchers, addVoucher, updateVoucher, deleteVoucher, getVoucherByCode, createUser, getUserByEmail, getUserById, updateUserProfile, getUserOrders, getAllPromotions, addPromotion, updatePromotion, deletePromotion, hasUserUsedVoucher, getUserTotalSpent, logSearchKeyword, getSearchAnalytics, clearSearchAnalytics, getAllBlogs, getBlogBySlug, getBlogById, addBlog, updateBlog, deleteBlog, createEmailVerification, verifyEmailCode, markUserVerified, createPasswordResetToken, verifyPasswordResetToken, updatePassword, saveOrderFeedback, getOrderFeedback, getAdminByEmail, getAdminById, getAllAdmins, addAdmin, updateAdminCredentials, updateAdminPassword, getBankSettings, updateBankSettings, getSocialSettings, updateSocialSettings, getFeaturedBlogs, getRegistrationVoucherDiscount, updateRegistrationVoucherDiscount, getAllAvailableVouchersForUser, getAllCollections, addCollection, updateCollection, deleteCollection } from './src/db';
+import { sendVerificationEmail, sendPasswordResetEmail, sendFeedbackRequestEmail, sendWelcomeVoucherEmail } from './email';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
+
+import { translate } from 'google-translate-api-x';
 
 dotenv.config();
 
@@ -270,6 +272,28 @@ async function startServer() {
       createUser({ id: userId, email, password: hashedPassword, name });
       markUserVerified(email);
 
+      // Issue Welcome Voucher
+      try {
+        const regConfig = getRegistrationVoucherDiscount();
+        const voucherCode = `WELCOME-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+        const voucherId = `reg-vouch-${Date.now()}`;
+
+        addVoucher({
+          id: voucherId,
+          code: voucherCode,
+          discount: regConfig.discount,
+          type: regConfig.type,
+          is_active: true,
+          usage_limit: 1,
+          user_email: email,
+          is_registration: true
+        });
+
+        sendWelcomeVoucherEmail(email, voucherCode, regConfig.discount, regConfig.type).catch(console.error);
+      } catch (vouchErr) {
+        console.error('Failed to issue welcome voucher:', vouchErr);
+      }
+
       const token = jwt.sign({ id: userId, email }, JWT_SECRET, { expiresIn: '24h' });
       res.json({ token, user: { id: userId, email, name, is_verified: true } });
     } catch (error) {
@@ -342,7 +366,7 @@ async function startServer() {
   // User Profile Routes
   app.get('/api/users/profile', authenticateToken, (req: any, res: any) => {
     try {
-      const user = getUserById(req.user.id);
+      let user = getUserById(req.user.id); if (!user && req.user.email) { user = (db.prepare('SELECT * FROM users WHERE email = ?').all(req.user.email) as any[])[0]; } if (!user) return res.status(404).json({ error: 'User not found (Token ID: ' + req.user.id + ', Token Email: ' + req.user.email + ')' });
       if (!user) return res.status(404).json({ error: 'User not found' });
 
       const { password, ...userWithoutPassword } = user;
@@ -368,9 +392,95 @@ async function startServer() {
     }
   });
 
+  app.put('/api/users/profile/password', authenticateToken, async (req: any, res: any) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Mật khẩu hiện tại và mật khẩu mới là bắt buộc.' });
+      }
+
+      if (!validatePassword(newPassword)) {
+        return res.status(400).json({ error: 'Mật khẩu mới không đủ độ mạnh.' });
+      }
+
+      let user = getUserById(req.user.id);
+      if (!user && req.user.email) {
+        user = (db.prepare('SELECT * FROM users WHERE email = ?').all(req.user.email) as any[])[0];
+      }
+      if (!user) {
+        return res.status(404).json({ error: `User not found (ID: ${req.user.id}, Email: ${req.user.email})` });
+      }
+
+      const validPassword = await bcrypt.compare(currentPassword, user.password);
+      if (!validPassword) {
+        return res.status(400).json({ error: 'Mật khẩu hiện tại không chính xác.' });
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      updatePassword(user.email, hashedPassword);
+
+      res.json({ success: true, message: 'Password updated successfully' });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update password' });
+    }
+  });
+
+  app.post('/api/auth/profile/forgot-password', authenticateToken, async (req: any, res: any) => {
+    try {
+      let user = getUserById(req.user.id);
+      if (!user && req.user.email) {
+        user = (db.prepare('SELECT * FROM users WHERE email = ?').all(req.user.email) as any[])[0];
+      }
+      if (!user) {
+        return res.status(404).json({ error: `User not found (ID: ${req.user.id}, Email: ${req.user.email})` });
+      }
+
+      const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
+      const expiresAt = new Date(Date.now() + 15 * 60000); // 15 mins
+      createEmailVerification(user.email, code, expiresAt);
+
+      await sendVerificationEmail(user.email, code);
+      res.json({ success: true, message: 'Verification code sent to your email' });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to send verification code' });
+    }
+  });
+
+  app.post('/api/auth/profile/reset-password-with-code', authenticateToken, async (req: any, res: any) => {
+    try {
+      const { code, newPassword } = req.body;
+      if (!code || !newPassword) {
+        return res.status(400).json({ error: 'Code and new password are required' });
+      }
+
+      if (!validatePassword(newPassword)) {
+        return res.status(400).json({ error: 'Mật khẩu mới không hợp lệ.' });
+      }
+
+      let user = getUserById(req.user.id);
+      if (!user && req.user.email) {
+        user = (db.prepare('SELECT * FROM users WHERE email = ?').all(req.user.email) as any[])[0];
+      }
+      if (!user) {
+        return res.status(404).json({ error: `User not found (ID: ${req.user.id}, Email: ${req.user.email})` });
+      }
+
+      if (!verifyEmailCode(user.email, code)) {
+        return res.status(400).json({ error: 'Mã xác nhận không chính xác hoặc đã hết hạn.' });
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      updatePassword(user.email, hashedPassword);
+
+      res.json({ success: true, message: 'Password reset successfully' });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to reset password' });
+    }
+  });
+
   app.get('/api/users/orders', authenticateToken, (req: any, res: any) => {
     try {
-      const user = getUserById(req.user.id);
+      let user = getUserById(req.user.id); if (!user && req.user.email) { user = (db.prepare('SELECT * FROM users WHERE email = ?').all(req.user.email) as any[])[0]; } if (!user) return res.status(404).json({ error: 'User not found (Token ID: ' + req.user.id + ', Token Email: ' + req.user.email + ')' });
       if (!user) return res.status(404).json({ error: 'User not found' });
 
       const orders = getUserOrders(user.email);
@@ -481,9 +591,25 @@ async function startServer() {
 
       const { bankName, bankOwner, bankNumber, bankQR_url } = req.body;
       let bankQR = bankQR_url || '';
-      
+
       if (req.file) {
+        // Fetch current settings to get the old image path
+        const currentSettings = getBankSettings();
+        const oldBankQR = currentSettings.bankQR;
+
         bankQR = `/uploads/bank/${req.file.filename}`;
+
+        // Remove old file if it exists and is a local file
+        if (oldBankQR && oldBankQR !== bankQR && oldBankQR.startsWith('/uploads/')) {
+          const oldPath = path.join(process.cwd(), oldBankQR);
+          if (fs.existsSync(oldPath)) {
+            try {
+              fs.unlinkSync(oldPath);
+            } catch (err) {
+              console.error(`Failed to delete old bank QR: ${oldPath}`, err);
+            }
+          }
+        }
       }
 
       const result = updateBankSettings({ bankName, bankOwner, bankNumber, bankQR });
@@ -619,6 +745,19 @@ async function startServer() {
     }
   });
 
+  app.post('/api/admin/translate', async (req, res) => {
+    try {
+      const { text, from = 'vi', to = 'en' } = req.body;
+      if (!text) return res.status(400).json({ error: 'No text provided' });
+
+      const result = await translate(text, { from, to }) as any;
+      res.json({ translatedText: result.text });
+    } catch (error) {
+      console.error('Translation error:', error);
+      res.status(500).json({ error: 'Translation failed' });
+    }
+  });
+
   app.delete('/api/admin/products/:id', (req, res) => {
     try {
       deleteProductFolder(req.params.id);
@@ -683,6 +822,24 @@ async function startServer() {
     }
   });
 
+  app.get('/api/admin/settings/registration-discount', authenticateToken, (req: any, res: any) => {
+    try {
+      res.json(getRegistrationVoucherDiscount());
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch registration discount' });
+    }
+  });
+
+  app.put('/api/admin/settings/registration-discount', authenticateToken, (req: any, res: any) => {
+    try {
+      const { discount, type } = req.body;
+      const result = updateRegistrationVoucherDiscount(parseFloat(discount), type || 'percent');
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update registration discount' });
+    }
+  });
+
   app.delete('/api/admin/vouchers/:id', (req, res) => {
     try {
       const result = deleteVoucher(req.params.id);
@@ -727,6 +884,11 @@ async function startServer() {
         return res.status(400).json({ error: 'You have already used this voucher' });
       }
 
+      // Check if voucher is tied to this user
+      if (voucher.user_email && voucher.user_email !== email) {
+        return res.status(403).json({ error: 'This voucher is not valid for your account.' });
+      }
+
       // Check minimum spending eligibility
       const totalSpent = getUserTotalSpent(email);
       if (voucher.min_user_spending && totalSpent < voucher.min_user_spending) {
@@ -747,11 +909,12 @@ async function startServer() {
         return res.status(400).json({ error: 'Email query parameter is required' });
       }
 
-      const allVouchers = getAllVouchers();
+      const allVouchers = getAllAvailableVouchersForUser(email);
       const availableVouchers = allVouchers.filter(v => {
         if (!v.is_active) return false;
         if (v.usage_limit && v.usage_count >= v.usage_limit) return false;
         if (hasUserUsedVoucher(email, v.code)) return false;
+        if (v.is_registration) return false;
         return true;
       });
 
@@ -864,8 +1027,25 @@ async function startServer() {
   app.put('/api/admin/blogs/:id', uploadBlog.single('image'), (req, res) => {
     try {
       const blogData = req.body;
+
+      // Fetch the existing blog to get its current image path
+      const oldBlog = getBlogById(req.params.id);
+      const oldImage = oldBlog?.image;
+
       if (req.file) {
         blogData.image = `/uploads/blogs/${req.file.filename}`;
+
+        // Remove the old image file if it exists and is different from the new one
+        if (oldImage && oldImage !== blogData.image && oldImage.startsWith('/uploads/')) {
+          const oldPath = path.join(process.cwd(), oldImage);
+          if (fs.existsSync(oldPath)) {
+            try {
+              fs.unlinkSync(oldPath);
+            } catch (err) {
+              console.error(`Failed to delete old blog image: ${oldPath}`, err);
+            }
+          }
+        }
       } else if (blogData.image_url) {
         // Keep existing image — image_url is the fallback sent when no new file is selected
         blogData.image = blogData.image_url;
@@ -891,7 +1071,24 @@ async function startServer() {
 
   app.delete('/api/admin/blogs/:id', (req, res) => {
     try {
+      // Get the current blog to find the image path before deleting it
+      const blog = getBlogById(req.params.id);
+      const blogImage = blog?.image;
+
       const result = deleteBlog(req.params.id);
+
+      // If deletion was successful and there was a local image, remove it
+      if (result.success && blogImage && blogImage.startsWith('/uploads/')) {
+        const imagePath = path.join(process.cwd(), blogImage);
+        if (fs.existsSync(imagePath)) {
+          try {
+            fs.unlinkSync(imagePath);
+          } catch (err) {
+            console.error(`Failed to delete blog image file: ${imagePath}`, err);
+          }
+        }
+      }
+
       res.json(result);
     } catch (error) {
       res.status(500).json({ error: 'Failed to delete blog' });
@@ -924,6 +1121,49 @@ async function startServer() {
       res.json(result);
     } catch (error) {
       res.status(500).json({ error: 'Failed to clear search analytics' });
+    }
+  });
+
+  // Public settings endpoint for social links
+  app.get('/api/settings/social', (req, res) => {
+    try {
+      res.json(getSocialSettings());
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch social settings' });
+    }
+  });
+
+  // Collections Routes
+  app.get('/api/collections', (req, res) => {
+    try {
+      res.json(getAllCollections());
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch collections' });
+    }
+  });
+
+  app.post('/api/admin/collections', authenticateToken, (req, res) => {
+    try {
+      res.json(addCollection(req.body));
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to add collection' });
+    }
+  });
+
+  app.put('/api/admin/collections/:id', authenticateToken, (req, res) => {
+    try {
+      res.json(updateCollection(req.params.id, req.body));
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update collection' });
+    }
+  });
+
+  app.delete('/api/admin/collections/:id', authenticateToken, (req, res) => {
+    try {
+      deleteCollection(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to delete collection' });
     }
   });
 

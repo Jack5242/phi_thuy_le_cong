@@ -15,7 +15,9 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'details' | 'shipping'>('details');
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
+  const displayName = language === 'en' && product.name_en ? product.name_en : product.name;
+  const displayDescription = language === 'en' && product.description_en ? product.description_en : product.description;
 
   const relatedProducts = products.filter(p => p.id !== product.id).slice(0, 4);
 
@@ -27,29 +29,29 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-20">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-20 font-sans">
       <nav className="flex items-center gap-2 text-sm text-slate-500 mb-8">
-        <button onClick={() => setView('home')} className="hover:text-jade-900">{t('nav.home')}</button>
+        <button onClick={() => setView('home')} className="hover:text-jade-900 transition-colors">{t('nav.home')}</button>
         <span className="material-symbols-outlined text-xs">chevron_right</span>
-        <button onClick={() => setView('collections')} className="hover:text-jade-900">{t('col.title')}</button>
+        <button onClick={() => setView('collections')} className="hover:text-jade-900 transition-colors">{t('col.title')}</button>
         <span className="material-symbols-outlined text-xs">chevron_right</span>
-        <span className="text-jade-900 font-bold">{product.name}</span>
+        <span className="text-jade-900 font-bold">{displayName}</span>
       </nav>
 
       <div className="flex flex-col lg:flex-row gap-12 mb-20">
         {/* Image Gallery */}
         <div className="w-full lg:w-1/2 space-y-4">
-          <div className="aspect-[1/1] bg-jade-50 rounded-sm overflow-hidden">
-            <img src={displayImages[activeImageIndex]} alt={product.name} className="w-full h-full object-cover" />
+          <div className="aspect-[1/1] bg-jade-50 rounded-sm overflow-hidden shadow-sm">
+            <img src={displayImages[activeImageIndex]} alt={displayName} className="w-full h-full object-cover" />
           </div>
           <div className="grid grid-cols-4 gap-4">
             {displayImages.map((img, index) => (
               <div 
                 key={index} 
-                className={`aspect-square bg-jade-50 rounded-sm overflow-hidden cursor-pointer border-2 ${index === activeImageIndex ? 'border-jade-900' : 'border-transparent'}`}
+                className={`aspect-square bg-jade-50 rounded-sm overflow-hidden cursor-pointer border-2 transition-all ${index === activeImageIndex ? 'border-jade-900 scale-95 shadow-inner' : 'border-transparent opacity-70 hover:opacity-100'}`}
                 onClick={() => setActiveImageIndex(index)}
               >
-                <img src={img} alt={`${product.name} view ${index + 1}`} className="w-full h-full object-cover opacity-60 hover:opacity-100 transition-opacity" />
+                <img src={img} alt={`${displayName} view ${index + 1}`} className="w-full h-full object-cover" />
               </div>
             ))}
           </div>
@@ -58,31 +60,40 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
         {/* Product Info */}
         <div className="w-full lg:w-1/2 flex flex-col gap-6">
           <div>
-            <span className="text-jade-700 font-bold text-xs uppercase tracking-widest mb-2 block">{product.category}</span>
-            <h1 className="text-4xl font-black text-jade-900 mb-2 tracking-tight drop-shadow-sm">{product.name}</h1>
-            <p className="text-2xl font-bold text-jade-900">{product.price.toLocaleString()} VND</p>
+            <span className="text-jade-700 font-bold text-xs uppercase tracking-widest mb-2 block">
+              {product.category === 'Chủng tầm trung' ? t('category.midRange') : product.category === 'Chủng tầm cao' ? t('category.highEnd') : product.category}
+            </span>
+            <h1 className="text-4xl font-serif text-jade-900 mb-2 tracking-tight drop-shadow-sm">{displayName}</h1>
+            <p className="text-2xl font-bold text-jade-900">
+              {product.amount === 0 ? t('prod.outOfStock') : `${product.price.toLocaleString()} VND`}
+            </p>
           </div>
 
           <p className="text-slate-600 leading-relaxed">
-            {product.description}
+            {displayDescription}
           </p>
 
           <div className="space-y-4 py-6 border-y border-jade-100">
             <div className="flex justify-between text-sm">
               <span className="text-slate-500 font-medium">{t('prod.category')}</span>
-              <span className="text-jade-900 font-bold">{product.category}</span>
+              <span className="text-jade-900 font-bold">
+                {product.category === 'Chủng tầm trung' ? t('category.midRange') : product.category === 'Chủng tầm cao' ? t('category.highEnd') : product.category}
+              </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-slate-500 font-medium">{t('prod.collection')}</span>
-              <span className="text-jade-900 font-bold">{product.collection}</span>
+              <span className="text-jade-900 font-bold">
+                {language === 'en' && product.collection_en ? product.collection_en : product.collection}
+              </span>
             </div>
           </div>
 
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
-              <div className="flex items-center border border-jade-100 rounded-sm">
+              <div className={`flex items-center border border-jade-100 rounded-sm ${product.amount === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
                 <button 
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={product.amount === 0}
                   className="px-4 py-2 hover:bg-jade-50 transition-colors"
                 >
                   <span className="material-symbols-outlined text-sm">remove</span>
@@ -90,6 +101,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
                 <span className="w-12 text-center font-bold text-jade-900">{quantity}</span>
                 <button 
                   onClick={() => setQuantity(quantity + 1)}
+                  disabled={product.amount === 0}
                   className="px-4 py-2 hover:bg-jade-50 transition-colors"
                 >
                   <span className="material-symbols-outlined text-sm">add</span>
@@ -97,7 +109,8 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
               </div>
               <button 
                 onClick={() => addToCart(product)}
-                className="flex-1 bg-jade-900 text-white font-bold py-3 hover:opacity-90 transition-all rounded-sm flex items-center justify-center gap-2"
+                disabled={product.amount === 0}
+                className="flex-1 bg-jade-900 text-white font-bold py-3 hover:bg-jade-800 transition-all rounded-sm flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:cursor-not-allowed shadow-md hover:shadow-lg active:scale-[0.98]"
               >
                 <span className="material-symbols-outlined text-xl">shopping_bag</span>
                 {t('prod.addCart')}
@@ -105,21 +118,23 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
             </div>
             <button 
               onClick={() => {
+                if (product.amount === 0) return;
                 for (let i = 0; i < quantity; i++) addToCart(product);
                 setView('cart');
               }}
-              className="w-full border border-jade-900 text-jade-900 font-bold py-3 hover:bg-jade-900/5 transition-all rounded-sm">
-              {t('prod.buyNow')}
+              disabled={product.amount === 0}
+              className="w-full border border-jade-900 text-jade-900 font-bold py-3 hover:bg-jade-900 transition-all rounded-sm disabled:border-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed group">
+              <span className="group-hover:text-white transition-colors">{t('prod.buyNow')}</span>
             </button>
           </div>
 
           <div className="flex items-center gap-6 text-xs font-bold text-slate-500 mt-4">
-            <div className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-sm text-jade-700">local_shipping</span>
+            <div className="flex items-center gap-1 group">
+              <span className="material-symbols-outlined text-sm text-jade-700 group-hover:scale-110 transition-transform">local_shipping</span>
               {t('prod.shipping.free')}
             </div>
-            <div className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-sm text-jade-700">verified_user</span>
+            <div className="flex items-center gap-1 group">
+              <span className="material-symbols-outlined text-sm text-jade-700 group-hover:scale-110 transition-transform">verified_user</span>
               {t('prod.guarantee')}
             </div>
           </div>
@@ -147,7 +162,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
             <div className="space-y-4">
               <h3 className="font-bold text-jade-900">{t('prod.details.desc.title')}</h3>
               <p className="text-slate-600 text-sm leading-relaxed">
-                {t('prod.details.desc.content1')}{product.name}{t('prod.details.desc.content2')}
+                {t('prod.details.desc.content1')}<span className="font-bold text-jade-800">{displayName}</span>{t('prod.details.desc.content2')}
               </p>
             </div>
             <div className="space-y-4">

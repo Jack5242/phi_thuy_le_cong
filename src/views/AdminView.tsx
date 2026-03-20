@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Product } from '../types';
 import { Plus, Edit, Trash2, Check, X, Tag, Package, ShoppingBag, Search, Filter, ArrowUpDown, LayoutTemplate, BarChart3, FileText, Settings, User, Mail, Lock, ShieldCheck } from 'lucide-react';
 import { validatePassword } from '../utils/validation';
+import { useLanguage } from '../context/LanguageContext';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
@@ -13,7 +14,8 @@ interface AdminViewProps {
 }
 
 export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refreshProducts }) => {
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'vouchers' | 'promotions' | 'analytics' | 'blogs' | 'settings'>('products');
+  const { t } = useLanguage();
+  const [activeTab, setActiveTab] = useState<'products' | 'collections' | 'orders' | 'vouchers' | 'promotions' | 'analytics' | 'blogs' | 'settings'>('products');
 
   // Admin Auth State
   const [isAdminAuth, setIsAdminAuth] = useState(false);
@@ -45,6 +47,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
   const [socialSettings, setSocialSettings] = useState({ facebook: '', tiktok: '', instagram: '', telegram: '' });
   const [isSavingSocialSettings, setIsSavingSocialSettings] = useState(false);
   const [socialSettingsMessage, setSocialSettingsMessage] = useState({ type: '', text: '' });
+
+  // Registration Voucher Settings State
+  const [registrationDiscount, setRegistrationDiscount] = useState(0.1);
+  const [registrationDiscountType, setRegistrationDiscountType] = useState('percent');
+  const [isSavingRegistrationDiscount, setIsSavingRegistrationDiscount] = useState(false);
+  const [registrationDiscountMessage, setRegistrationDiscountMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
@@ -141,14 +149,14 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
     try {
       const res = await fetch('/api/admin/settings', {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${adminToken}`
         },
-        body: JSON.stringify({ 
-          newEmail: settingEmail, 
-          currentPassword: settingCurrentPassword, 
-          newPassword: settingNewPassword 
+        body: JSON.stringify({
+          newEmail: settingEmail,
+          currentPassword: settingCurrentPassword,
+          newPassword: settingNewPassword
         })
       });
       const data = await res.json();
@@ -180,7 +188,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
     try {
       const res = await fetch('/api/admin/admins', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${adminToken}`
         },
@@ -259,6 +267,28 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
     }
   };
 
+  const handleSaveRegistrationDiscount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingRegistrationDiscount(true);
+    setRegistrationDiscountMessage({ type: '', text: '' });
+    try {
+      const res = await fetch('/api/admin/settings/registration-discount', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        body: JSON.stringify({ discount: registrationDiscount, type: registrationDiscountType })
+      });
+      if (res.ok) {
+        setRegistrationDiscountMessage({ type: 'success', text: 'Cập nhật mức giảm giá đăng ký mới thành công!' });
+      } else {
+        setRegistrationDiscountMessage({ type: 'error', text: 'Cập nhật thất bại' });
+      }
+    } catch (err) {
+      setRegistrationDiscountMessage({ type: 'error', text: 'Lỗi khi cập nhật mức giảm giá' });
+    } finally {
+      setIsSavingRegistrationDiscount(false);
+    }
+  };
+
   // Orders State
   const [orders, setOrders] = useState<any[]>([]);
   const [exportMonth, setExportMonth] = useState<string>(() => {
@@ -296,7 +326,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
   const [editingPromotion, setEditingPromotion] = useState<any | null>(null);
   const [isAddingPromotion, setIsAddingPromotion] = useState(false);
   const [promotionToDelete, setPromotionToDelete] = useState<string | null>(null);
-  const [promotionForm, setPromotionForm] = useState({ title: '', subtitle: '', image: '', cta: '', order_index: 0 });
+  const [promotionForm, setPromotionForm] = useState({ title: '', title_en: '', subtitle: '', subtitle_en: '', image: '', cta: '', cta_en: '', order_index: 0 });
 
   // Analytics State
   const [searchAnalytics, setSearchAnalytics] = useState<any[]>([]);
@@ -314,12 +344,21 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [productForm, setProductForm] = useState<Partial<Product>>({
-    name: '', description: '', price: 0, category: 'Chủng tầm trung', collection: 'Nếp băng chủng', image: '', images: [], isNew: false, isPremium: false, isBestSeller: false
+    name: '', name_en: '', description: '', description_en: '', price: 0, category: 'Chủng tầm trung', collection: 'Nếp băng chủng', image: '', images: [], isNew: false, isPremium: false, isBestSeller: false, amount: 1
   });
   const [isDragging, setIsDragging] = useState(false);
   const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
   const [isAddingNewCollection, setIsAddingNewCollection] = useState(false);
-  
+
+  // Collections State
+  const [dbCollections, setDbCollections] = useState<any[]>([]);
+  const [editingCollection, setEditingCollection] = useState<any | null>(null);
+  const [isAddingCollection, setIsAddingCollection] = useState(false);
+  const [collectionToDelete, setCollectionToDelete] = useState<number | null>(null);
+  const [collectionForm, setCollectionForm] = useState({ name: '', name_en: '', description: '', description_en: '', slug: '' });
+  const [collectionMsg, setCollectionMsg] = useState({ type: '', text: '' });
+  const [isSavingCollection, setIsSavingCollection] = useState(false);
+
   // Product Filter & Sort State
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
@@ -352,11 +391,83 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
     if (activeTab === 'promotions') fetchPromotions();
     if (activeTab === 'analytics') fetchAnalytics();
     if (activeTab === 'blogs') fetchBlogs();
+    if (activeTab === 'collections') fetchDbCollections();
     if (activeTab === 'settings') {
       fetchBankSettings();
       fetchSocialSettings();
+      fetchRegistrationDiscount();
     }
   }, [activeTab]);
+
+  // Also fetch collections on products tab load so dropdown is populated
+  useEffect(() => {
+    if (activeTab === 'products') fetchDbCollections();
+  }, [activeTab]);
+
+  const fetchDbCollections = async () => {
+    try {
+      const res = await fetch('/api/collections');
+      if (res.ok) setDbCollections(await res.json());
+    } catch (err) {
+      console.error('Failed to fetch collections', err);
+    }
+  };
+
+  const handleSaveCollection = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingCollection(true);
+    setCollectionMsg({ type: '', text: '' });
+    try {
+      const method = editingCollection ? 'PUT' : 'POST';
+      const url = editingCollection ? `/api/admin/collections/${editingCollection.id}` : '/api/admin/collections';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        body: JSON.stringify(collectionForm)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCollectionMsg({ type: 'success', text: editingCollection ? 'Cập nhật thành công!' : 'Thêm mới thành công!' });
+        setEditingCollection(null);
+        setIsAddingCollection(false);
+        setCollectionForm({ name: '', name_en: '', description: '', description_en: '', slug: '' });
+        fetchDbCollections();
+      } else {
+        setCollectionMsg({ type: 'error', text: data.error || 'Thao tác thất bại' });
+      }
+    } catch (err) {
+      setCollectionMsg({ type: 'error', text: 'Lỗi máy chủ' });
+    } finally {
+      setIsSavingCollection(false);
+    }
+  };
+
+  const confirmDeleteCollection = async (id: number) => {
+    try {
+      const res = await fetch(`/api/admin/collections/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      if (res.ok) { fetchDbCollections(); setCollectionToDelete(null); }
+    } catch (err) {
+      console.error('Failed to delete collection', err);
+    }
+  };
+
+  const fetchRegistrationDiscount = async () => {
+    try {
+      const res = await fetch('/api/admin/settings/registration-discount', {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRegistrationDiscount(data.discount);
+        setRegistrationDiscountType(data.type || 'percent');
+      }
+    } catch (err) {
+      console.error('Failed to fetch registration discount', err);
+    }
+  };
 
   const fetchBankSettings = async () => {
     try {
@@ -454,21 +565,52 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
       return;
     }
 
-    const headers = ['Mã ĐH', 'Email', 'Tên', 'SĐT', 'Địa Chỉ', 'Ngày Đặt', 'Trạng Thái', 'Tổng (VND)', 'Sản Phẩm'];
+    const headers = ['Mã ĐH', 'Email', 'Tên KH', 'SĐT', 'Địa Chỉ', 'Ngày Đặt', 'Trạng Thái', 'Tên Sản Phẩm', 'Số Lượng', 'Đơn Giá (VND)', 'Thành Tiền (VND)', 'Tổng Đơn KH (VND)'];
     const escape = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const rows = filtered.map(o => {
-      const items = (() => { try { return JSON.parse(o.items || '[]').map((i: any) => `${i.name || i.product?.name || ''} x${i.quantity}`).join('; '); } catch { return ''; } })();
-      return [
-        escape(o.id),
-        escape(o.user_email?.replace?.('guest_', '') ?? ''),
-        escape(o.name ?? ''),
-        escape(o.phone ?? ''),
-        escape(o.address ?? ''),
-        escape(new Date(o.created_at).toLocaleString('vi-VN')),
-        escape(o.status),
-        escape(o.total),
-        escape(items)
-      ].join(',');
+
+    const rows: string[] = [];
+    filtered.forEach(o => {
+      const items = Array.isArray(o.items) ? o.items : [];
+
+      if (items.length === 0) {
+        // Fallback for orders with no items (should not happen normally)
+        rows.push([
+          escape(o.id),
+          escape(o.user_email?.replace?.('guest_', '') ?? ''),
+          escape(o.name ?? ''),
+          escape(o.phone ?? ''),
+          escape(o.address ?? ''),
+          escape(new Date(o.created_at).toLocaleString('vi-VN')),
+          escape(o.status),
+          escape(''),
+          escape(0),
+          escape(0),
+          escape(0),
+          escape(o.total)
+        ].join(','));
+      } else {
+        items.forEach((item: any) => {
+          const productName = item.product_name || item.name || item.product?.name || '';
+          const quantity = item.quantity || 0;
+          const price = item.price || 0;
+          const subtotal = price * quantity;
+
+          rows.push([
+            escape(o.id),
+            escape(o.user_email?.replace?.('guest_', '') ?? ''),
+            escape(o.name ?? ''),
+            escape(o.phone ?? ''),
+            escape(o.address ?? ''),
+            escape(new Date(o.created_at).toLocaleString('vi-VN')),
+            escape(o.status),
+            escape(productName),
+            escape(quantity),
+            escape(price),
+            escape(subtotal),
+            escape(o.total)
+          ].join(','));
+        });
+      }
     });
 
     const bom = '\uFEFF'; // UTF-8 BOM for Excel Vietnamese support
@@ -721,7 +863,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
       formData.append('author', blogForm.author);
       formData.append('is_published', String(blogForm.is_published));
       formData.append('is_featured', String((blogForm as any).is_featured || false));
-      
+
       if (selectedBlogImage) {
         formData.append('image', selectedBlogImage);
       } else if (blogForm.image) {
@@ -814,8 +956,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
               </form>
             </div>
             <div className="mt-4 text-center">
-              <button 
-                onClick={() => { setIsAdminForgotPassword(false); setLoginError(''); }} 
+              <button
+                onClick={() => { setIsAdminForgotPassword(false); setLoginError(''); }}
                 className="text-sm font-medium text-jade-700 hover:text-jade-800"
               >
                 &larr; Quay lại đăng nhập
@@ -869,9 +1011,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
               <div>
                 <div className="flex justify-between items-center">
                   <label className="block text-sm font-medium text-gray-700">Mật khẩu</label>
-                  <button 
-                    type="button" 
-                    onClick={() => { setIsAdminForgotPassword(true); setSettingsMessage({type:'',text:''}); }}
+                  <button
+                    type="button"
+                    onClick={() => { setIsAdminForgotPassword(true); setSettingsMessage({ type: '', text: '' }); }}
                     className="text-xs font-medium text-jade-700 hover:underline"
                   >
                     Quên mật khẩu?
@@ -935,6 +1077,13 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
           <span>Sản Phẩm</span>
         </button>
         <button
+          onClick={() => setActiveTab('collections')}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${activeTab === 'collections' ? 'bg-jade-100 text-jade-900 font-bold' : 'text-gray-700 hover:bg-gray-100 font-medium'}`}
+        >
+          <Tag size={18} />
+          <span>Dòng Sản Phẩm</span>
+        </button>
+        <button
           onClick={() => setActiveTab('orders')}
           className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${activeTab === 'orders' ? 'bg-jade-100 text-jade-900 font-bold' : 'text-gray-700 hover:bg-gray-100 font-medium'}`}
         >
@@ -987,7 +1136,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
               onClick={() => {
                 setIsAddingProduct(true);
                 setEditingProduct(null);
-                setProductForm({ name: '', description: '', price: 0, category: existingCategories[0] || 'Chủng tầm trung', collection: existingCollections[0] || 'Nếp băng chủng', image: '', images: [], isNew: false, isPremium: false, isBestSeller: false });
+                setProductForm({ name: '', name_en: '', description: '', description_en: '', price: 0, category: existingCategories[0] || 'Chủng tầm trung', collection: existingCollections[0] || 'Nếp băng chủng', image: '', images: [], isNew: false, isPremium: false, isBestSeller: false });
                 setIsAddingNewCategory(false);
                 setIsAddingNewCollection(false);
               }}
@@ -1018,9 +1167,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                 onChange={(e) => setFilterCategory(e.target.value)}
                 className="border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none"
               >
-                <option value="">Tất cả loại</option>
-                <option value="Chủng tầm trung">Chủng tầm trung</option>
-                <option value="Chủng tầm cao">Chủng tầm cao</option>
+                <option value="">{t('col.filter.all')}</option>
+                <option value="Chủng tầm trung">{t('category.midRange')}</option>
+                <option value="Chủng tầm cao">{t('category.highEnd')}</option>
               </select>
             </div>
             <div className="flex items-center space-x-2">
@@ -1030,14 +1179,14 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                 className="border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none"
               >
                 <option value="">Tất cả dòng</option>
-                <option value="Nếp băng chủng">Nếp băng chủng</option>
-                <option value="Băng chủng">Băng chủng</option>
-                <option value="Thủy tinh chủng">Thủy tinh chủng</option>
-                <option value="Mực dục">Mực dục</option>
-                <option value="Hoa bay">Hoa bay</option>
-                <option value="Tím tử la lan">Tím tử la lan</option>
-                <option value="Xanh táo">Xanh táo</option>
-                <option value="Xanh cây">Xanh cây</option>
+                {dbCollections.map(col => (
+                  <option key={col.id} value={col.name}>
+                    {col.name}{col.name_en ? ` (${col.name_en})` : ''}
+                  </option>
+                ))}
+                {existingCollections.filter(ec => !dbCollections.some(c => c.name === ec)).map(ec => (
+                  <option key={ec} value={ec}>{ec}</option>
+                ))}
               </select>
             </div>
             <div className="flex items-center space-x-2">
@@ -1066,64 +1215,82 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                   </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold text-gray-800 mb-1">Tên</label>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-bold text-gray-800 mb-1">Tên (Tiếng Việt)</label>
                     <input type="text" value={productForm.name || ''} onChange={e => setProductForm({ ...productForm, name: e.target.value })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-sm font-bold text-gray-800">Tên (Tiếng Anh)</label>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!productForm.name) return;
+                          try {
+                            const res = await fetch('/api/admin/translate', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ text: productForm.name })
+                            });
+                            const data = await res.json();
+                            if (data.translatedText) setProductForm(prev => ({ ...prev, name_en: data.translatedText }));
+                          } catch (err) { console.error('Translation failed', err); }
+                        }}
+                        className="text-xs text-jade-700 hover:text-jade-900 font-bold flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-xs">translate</span>
+                        Tự động dịch
+                      </button>
+                    </div>
+                    <input type="text" value={productForm.name_en || ''} onChange={e => setProductForm({ ...productForm, name_en: e.target.value })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none shadow-inner bg-gray-50" placeholder="English name..." />
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-800 mb-1">Giá (VND)</label>
                     <input type="number" value={productForm.price || 0} onChange={e => setProductForm({ ...productForm, price: Number(e.target.value) })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none" />
                   </div>
                   <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-1">Số Lượng</label>
+                    <input type="number" value={productForm.amount !== undefined ? productForm.amount : 1} onChange={e => setProductForm({ ...productForm, amount: Number(e.target.value) })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none" min="0" />
+                  </div>
+                  <div>
                     <label className="block text-sm font-bold text-gray-800 mb-1">Loại Sản Phẩm</label>
                     <select value={productForm.category || ''} onChange={e => setProductForm({ ...productForm, category: e.target.value })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none">
-                      <option value="Chủng tầm trung">Chủng tầm trung</option>
-                      <option value="Chủng tầm cao">Chủng tầm cao</option>
+                      <option value="Chủng tầm trung">{t('category.midRange')}</option>
+                      <option value="Chủng tầm cao">{t('category.highEnd')}</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-800 mb-1">Dòng Sản Phẩm</label>
-                    {isAddingNewCollection ? (
-                      <div className="flex gap-2">
-                        <input 
-                          type="text" 
-                          value={productForm.collection || ''} 
-                          onChange={e => setProductForm({ ...productForm, collection: e.target.value })} 
-                          className="flex-1 w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none" 
-                          placeholder="Nhập dòng mới..."
-                          autoFocus
-                        />
-                        <button 
-                          type="button"
-                          onClick={() => {
-                            setIsAddingNewCollection(false);
-                            setProductForm({...productForm, collection: existingCollections[0] || 'Nếp băng chủng'});
-                          }} 
-                          className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded-md transition-colors font-bold text-sm"
-                        >
-                          Hủy
-                        </button>
-                      </div>
-                    ) : (
-                      <select 
-                        value={productForm.collection || ''} 
-                        onChange={e => {
-                          if (e.target.value === 'NEW_COLLECTION') {
-                            setIsAddingNewCollection(true);
-                            setProductForm({...productForm, collection: ''});
-                          } else {
-                            setProductForm({...productForm, collection: e.target.value});
-                          }
-                        }} 
-                        className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none"
+                    <div className="flex gap-2">
+                      <select
+                        value={productForm.collection || ''}
+                        onChange={e => setProductForm({ ...productForm, collection: e.target.value })}
+                        className="flex-1 border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none"
                       >
-                        {existingCollections.map(col => (
-                          <option key={col} value={col}>{col}</option>
+                        <option value="">Chọn dòng sản phẩm...</option>
+                        {dbCollections.map(col => (
+                          <option key={col.id} value={col.name}>
+                            {col.name}{col.name_en ? ` (${col.name_en})` : ''}
+                          </option>
                         ))}
-                        {existingCollections.length === 0 && !productForm.collection && <option value="" disabled>Chọn dòng sản phẩm</option>}
-                        <option value="NEW_COLLECTION" className="font-bold text-jade-700">+ Thêm dòng sản phẩm mới</option>
+                        {/* Fallback: show any product collections not yet in the managed table */}
+                        {existingCollections.filter(ec => !dbCollections.some(c => c.name === ec)).map(ec => (
+                          <option key={ec} value={ec}>{ec}</option>
+                        ))}
                       </select>
-                    )}
+                      <button
+                        type="button"
+                        title="Quản lý dòng sản phẩm"
+                        onClick={() => {
+                          setIsAddingProduct(false);
+                          setEditingProduct(null);
+                          setActiveTab('collections');
+                        }}
+                        className="bg-jade-50 text-jade-700 p-2 rounded-md hover:bg-jade-100 transition-colors border border-jade-200 flex-shrink-0"
+                      >
+                        <Settings size={18} />
+                      </button>
+                    </div>
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-bold text-gray-800 mb-1">Hình Ảnh</label>
@@ -1166,8 +1333,33 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                     )}
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-bold text-gray-800 mb-1">Mô Tả</label>
-                    <textarea value={productForm.description || ''} onChange={e => setProductForm({ ...productForm, description: e.target.value })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none" rows={3}></textarea>
+                    <label className="block text-sm font-bold text-gray-800 mb-1">Mô tả (Tiếng Việt)</label>
+                    <textarea value={productForm.description || ''} onChange={e => setProductForm({ ...productForm, description: e.target.value })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none h-24" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-sm font-bold text-gray-800">Mô tả (Tiếng Anh)</label>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!productForm.description) return;
+                          try {
+                            const res = await fetch('/api/admin/translate', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ text: productForm.description })
+                            });
+                            const data = await res.json();
+                            if (data.translatedText) setProductForm(prev => ({ ...prev, description_en: data.translatedText }));
+                          } catch (err) { console.error('Translation failed', err); }
+                        }}
+                        className="text-xs text-jade-700 hover:text-jade-900 font-bold flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-xs">translate</span>
+                        Tự động dịch
+                      </button>
+                    </div>
+                    <textarea value={productForm.description_en || ''} onChange={e => setProductForm({ ...productForm, description_en: e.target.value })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none shadow-inner bg-gray-50 h-24" placeholder="English description..." />
                   </div>
                   <div className="flex items-center space-x-4 mt-2">
                     <label className="flex items-center space-x-2 cursor-pointer">
@@ -1213,6 +1405,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Loại Sản Phẩm</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Dòng Sản Phẩm</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Giá</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Số Lượng</th>
                   <th className="px-6 py-3 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Hành Động</th>
                 </tr>
               </thead>
@@ -1231,8 +1424,16 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">{product.category}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">{product.collection}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
+                      {product.collection}
+                      {product.collection_en && <div className="text-xs text-gray-500 italic">{product.collection_en}</div>}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-jade-900">{product.price.toLocaleString()} VND</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${product.amount === 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                        {product.amount !== undefined ? product.amount : 1}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => {
@@ -1272,6 +1473,170 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
         </div>
       )}
 
+      {/* Collections Tab */}
+      {activeTab === 'collections' && (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Quản Lý Dòng Sản Phẩm</h2>
+              <p className="text-sm text-gray-500 mt-1">Quản lý tên và mô tả các dòng sản phẩm bằng cả tiếng Việt và tiếng Anh.</p>
+            </div>
+            <button
+              onClick={() => {
+                setIsAddingCollection(true);
+                setEditingCollection(null);
+                setCollectionForm({ name: '', name_en: '', description: '', description_en: '', slug: '' });
+                setCollectionMsg({ type: '', text: '' });
+              }}
+              className="flex items-center space-x-2 bg-jade-800 text-white px-4 py-2 rounded-md hover:bg-jade-900 transition-colors font-medium shadow-sm"
+            >
+              <Plus size={18} />
+              <span>Thêm Dòng Mới</span>
+            </button>
+          </div>
+
+          {/* Add/Edit Modal */}
+          {(isAddingCollection || editingCollection) && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+              <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-jade-900">
+                    {editingCollection ? 'Chỉnh Sửa Dòng Sản Phẩm' : 'Thêm Dòng Sản Phẩm Mới'}
+                  </h3>
+                  <button onClick={() => { setIsAddingCollection(false); setEditingCollection(null); }} className="text-gray-500 hover:text-gray-700">
+                    <X size={24} />
+                  </button>
+                </div>
+                {collectionMsg.text && (
+                  <div className={`mb-4 p-3 rounded-md text-sm font-medium ${collectionMsg.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                    {collectionMsg.text}
+                  </div>
+                )}
+                <form onSubmit={handleSaveCollection} className="space-y-5">
+                  {/* Vietnamese & English Names */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <div className="flex items-center h-6 mb-1">
+                        <label className="block text-sm font-bold text-gray-800">Tên (Tiếng Việt) <span className="text-red-500">*</span></label>
+                      </div>
+                      <input
+                        type="text"
+                        value={collectionForm.name}
+                        onChange={e => setCollectionForm({ ...collectionForm, name: e.target.value })}
+                        className="w-full border border-gray-300 rounded-md p-2.5 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none"
+                        placeholder="VD: Nếp băng chủng"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between h-6 mb-1">
+                        <label className="block text-sm font-bold text-gray-800">Tên (Tiếng Anh)</label>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (!collectionForm.name) return;
+                            try {
+                              const res = await fetch('/api/admin/translate', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                                body: JSON.stringify({ text: collectionForm.name, targetLang: 'en' })
+                              });
+                              const data = await res.json();
+                              if (data.translatedText) setCollectionForm(prev => ({ ...prev, name_en: data.translatedText }));
+                            } catch (error) {
+                              console.error('Translation failed', error);
+                            }
+                          }}
+                          className="text-xs text-jade-700 hover:text-jade-900 font-bold flex items-center gap-1"
+                          title="Tự động dịch sang tiếng Anh bằng Google Translate"
+                        >
+                          <span className="material-symbols-outlined text-xs">translate</span>
+                          Tự động dịch
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={collectionForm.name_en}
+                        onChange={e => setCollectionForm({ ...collectionForm, name_en: e.target.value })}
+                        className="w-full border border-gray-300 rounded-md p-2.5 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none"
+                        placeholder="VD: Ice Type Jadeite"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end space-x-3 pt-2 border-t border-gray-100">
+                    <button type="button" onClick={() => { setIsAddingCollection(false); setEditingCollection(null); }} className="px-5 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium">Hủy</button>
+                    <button type="submit" disabled={isSavingCollection} className="px-5 py-2 bg-jade-800 text-white rounded-md hover:bg-jade-900 font-medium disabled:opacity-50">
+                      {isSavingCollection ? 'Đang lưu...' : 'Lưu'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Delete Confirmation Modal */}
+          {collectionToDelete && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+              <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md">
+                <h3 className="text-xl font-bold text-red-600 mb-3">Xác Nhận Xóa</h3>
+                <p className="text-gray-700 mb-6">Bạn có chắc muốn xóa dòng sản phẩm này? Các sản phẩm thuộc dòng này vẫn được giữ nguyên nhưng sẽ không còn liên kết chính thức.</p>
+                <div className="flex justify-end space-x-3">
+                  <button onClick={() => setCollectionToDelete(null)} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium">Hủy</button>
+                  <button onClick={() => confirmDeleteCollection(collectionToDelete)} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-medium">Xóa</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Collections Table */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Tên (VI / EN)</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {dbCollections.length > 0 ? (
+                  dbCollections.map(c => (
+                    <tr key={c.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-gray-900">{c.name}</div>
+                        <div className="text-sm text-gray-500 italic">{c.name_en || <span className="text-gray-300">Chưa có bản dịch</span>}</div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => {
+                            setEditingCollection(c);
+                            setIsAddingCollection(false);
+                            setCollectionForm({ name: c.name, name_en: c.name_en || '', description: c.description || '', description_en: c.description_en || '', slug: c.slug || '' });
+                            setCollectionMsg({ type: '', text: '' });
+                          }}
+                          className="text-jade-700 hover:text-jade-900 mr-3"
+                          title="Chỉnh sửa"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button onClick={() => setCollectionToDelete(c.id)} className="text-red-500 hover:text-red-700" title="Xóa">
+                          <Trash2 size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500 italic">
+                      Chưa có dòng sản phẩm nào. Nhấn "Thêm Dòng Mới" để bắt đầu.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Orders Tab */}
       {activeTab === 'orders' && (
         <div>
@@ -1284,7 +1649,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                 onChange={e => setExportMonth(`${exportMonth.split('-')[0]}-${e.target.value}`)}
                 className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-jade-500"
               >
-                {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => (
+                {['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'].map(m => (
                   <option key={m} value={m}>Tháng {parseInt(m)}</option>
                 ))}
               </select>
@@ -1732,6 +2097,72 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
               </tbody>
             </table>
           </div>
+
+          <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <span className="material-symbols-outlined text-jade-700 text-2xl">local_offer</span>
+              Giảm Giá Chào Mừng Thành Viên
+            </h2>
+            <p className="text-sm text-gray-500 mb-6">Mức giảm giá này được áp dụng cho voucher tự động gửi đến email của thành viên ngay sau khi đăng ký thành công.</p>
+
+            <form onSubmit={handleSaveRegistrationDiscount} className="space-y-6">
+              {registrationDiscountMessage.text && (
+                <div className={`p-4 rounded-md text-sm ${registrationDiscountMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                  {registrationDiscountMessage.text}
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Loại Giảm Giá</label>
+                  <select
+                    value={registrationDiscountType}
+                    onChange={e => {
+                      const newType = e.target.value;
+                      let newDiscount = registrationDiscount;
+                      if (registrationDiscountType === 'fixed' && newType === 'percent') {
+                        newDiscount = Math.min(newDiscount / 100, 1);
+                      } else if (registrationDiscountType === 'percent' && newType === 'fixed') {
+                        newDiscount = newDiscount * 100;
+                      }
+                      setRegistrationDiscountType(newType);
+                      setRegistrationDiscount(newDiscount);
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500"
+                  >
+                    <option value="percent">Phần Trăm (%)</option>
+                    <option value="fixed">Số Tiền (VND)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Mức Giảm Giá</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      step={registrationDiscountType === 'percent' ? "1" : "1000"}
+                      min="0"
+                      value={registrationDiscountType === 'percent' ? Math.round(registrationDiscount * 100) : registrationDiscount}
+                      onChange={e => {
+                        const val = parseFloat(e.target.value);
+                        setRegistrationDiscount(registrationDiscountType === 'percent' ? val / 100 : val);
+                      }}
+                      required
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500 font-mono"
+                    />
+                    <span className="text-lg font-bold text-gray-700">
+                      {registrationDiscountType === 'percent' ? '%' : 'VND'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 flex justify-end">
+                <button type="submit" disabled={isSavingRegistrationDiscount} className="bg-jade-800 text-white px-6 py-2 rounded-md hover:bg-jade-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium">
+                  {isSavingRegistrationDiscount && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
+                  Lưu Thay Đổi
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
@@ -1744,7 +2175,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
               onClick={() => {
                 setIsAddingPromotion(true);
                 setEditingPromotion(null);
-                setPromotionForm({ title: '', subtitle: '', image: '', cta: '', order_index: 0 });
+                setPromotionForm({ title: '', title_en: '', subtitle: '', subtitle_en: '', image: '', cta: '', cta_en: '', order_index: 0 });
               }}
               className="flex items-center space-x-2 bg-jade-800 text-white px-4 py-2 rounded-md hover:bg-jade-900 transition-colors font-medium shadow-sm"
             >
@@ -1763,13 +2194,63 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                   </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold text-gray-800 mb-1">Tiêu Đề</label>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-bold text-gray-800 mb-1">Tiêu Đề (Tiếng Việt)</label>
                     <input type="text" value={promotionForm.title} onChange={e => setPromotionForm({ ...promotionForm, title: e.target.value })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none" />
                   </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-800 mb-1">Tiêu Đề Phụ</label>
+                  <div className="md:col-span-2">
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-sm font-bold text-gray-800">Tiêu Đề (Tiếng Anh)</label>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!promotionForm.title) return;
+                          try {
+                            const res = await fetch('/api/admin/translate', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ text: promotionForm.title })
+                            });
+                            const data = await res.json();
+                            if (data.translatedText) setPromotionForm(prev => ({ ...prev, title_en: data.translatedText }));
+                          } catch (err) { console.error('Translation failed', err); }
+                        }}
+                        className="text-xs text-jade-700 hover:text-jade-900 font-bold flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-xs">translate</span>
+                        Tự động dịch
+                      </button>
+                    </div>
+                    <input type="text" value={promotionForm.title_en || ''} onChange={e => setPromotionForm({ ...promotionForm, title_en: e.target.value })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none bg-gray-50 h-10" placeholder="English title..." />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-bold text-gray-800 mb-1">Tiêu Đề Phụ (Tiếng Việt)</label>
                     <input type="text" value={promotionForm.subtitle} onChange={e => setPromotionForm({ ...promotionForm, subtitle: e.target.value })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-sm font-bold text-gray-800">Tiêu Đề Phụ (Tiếng Anh)</label>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!promotionForm.subtitle) return;
+                          try {
+                            const res = await fetch('/api/admin/translate', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ text: promotionForm.subtitle })
+                            });
+                            const data = await res.json();
+                            if (data.translatedText) setPromotionForm(prev => ({ ...prev, subtitle_en: data.translatedText }));
+                          } catch (err) { console.error('Translation failed', err); }
+                        }}
+                        className="text-xs text-jade-700 hover:text-jade-900 font-bold flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-xs">translate</span>
+                        Tự động dịch
+                      </button>
+                    </div>
+                    <input type="text" value={promotionForm.subtitle_en || ''} onChange={e => setPromotionForm({ ...promotionForm, subtitle_en: e.target.value })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none bg-gray-50 h-10" placeholder="English subtitle..." />
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-bold text-gray-800 mb-1">Hình Ảnh</label>
@@ -1830,9 +2311,38 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                       </div>
                     )}
                   </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-800 mb-1">Nút Kêu Gọi Hành Động (CTA)</label>
-                    <input type="text" value={promotionForm.cta} onChange={e => setPromotionForm({ ...promotionForm, cta: e.target.value })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none" />
+                  <div className="md:col-span-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-800 mb-1">Nút CTA (VN)</label>
+                        <input type="text" value={promotionForm.cta} onChange={e => setPromotionForm({ ...promotionForm, cta: e.target.value })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none" />
+                      </div>
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <label className="block text-sm font-bold text-gray-800">Nút CTA (EN)</label>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (!promotionForm.cta) return;
+                              try {
+                                const res = await fetch('/api/admin/translate', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ text: promotionForm.cta })
+                                });
+                                const data = await res.json();
+                                if (data.translatedText) setPromotionForm(prev => ({ ...prev, cta_en: data.translatedText }));
+                              } catch (err) { console.error('Translation failed', err); }
+                            }}
+                            className="text-xs text-jade-700 hover:text-jade-900 font-bold flex items-center gap-1"
+                          >
+                            <span className="material-symbols-outlined text-xs">translate</span>
+                            Dịch
+                          </button>
+                        </div>
+                        <input type="text" value={promotionForm.cta_en || ''} onChange={e => setPromotionForm({ ...promotionForm, cta_en: e.target.value })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none bg-gray-50 h-10" placeholder="CTA label EN..." />
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="mt-8 flex justify-end space-x-3 border-t pt-4">
@@ -1871,12 +2381,20 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                     <td className="px-6 py-4 whitespace-nowrap">
                       <img src={promo.image} alt={promo.title} className="h-16 w-32 object-cover rounded-md" />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{promo.title}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-bold text-gray-900">{promo.title}</div>
+                      {promo.title_en && <div className="text-xs text-gray-500 italic">{promo.title_en}</div>}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => {
                           setEditingPromotion(promo);
-                          setPromotionForm(promo);
+                          setPromotionForm({
+                            ...promo,
+                            title_en: promo.title_en || '',
+                            subtitle_en: promo.subtitle_en || '',
+                            cta_en: promo.cta_en || ''
+                          });
                           setIsAddingPromotion(false);
                         }}
                         className="text-indigo-600 hover:text-indigo-900 mr-4"
@@ -1937,7 +2455,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                     <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                     <XAxis dataKey="name" tick={{ fill: '#4b5563', fontSize: 12 }} />
                     <YAxis allowDecimals={false} tick={{ fill: '#4b5563', fontSize: 12 }} />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                       cursor={{ fill: '#f3f4f6' }}
                     />
@@ -1947,7 +2465,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                 </ResponsiveContainer>
               </div>
             )}
-           </div>
+          </div>
         </div>
       )}
 
@@ -1996,9 +2514,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                         <label className="bg-white border border-jade-600 text-jade-700 px-4 py-2 rounded-md cursor-pointer hover:bg-jade-50 transition-colors text-sm font-bold flex items-center">
                           <Plus size={16} className="mr-2" />
                           Chọn Ảnh
-                          <input 
-                            type="file" 
-                            className="hidden" 
+                          <input
+                            type="file"
+                            className="hidden"
                             accept="image/*"
                             onChange={(e) => {
                               if (e.target.files && e.target.files[0]) {
@@ -2225,23 +2743,23 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                   </div>
                 )}
                 <div>
-                  <input 
-                    type="email" 
-                    placeholder="Email mới" 
-                    value={newAdminEmail} 
-                    onChange={e => setNewAdminEmail(e.target.value)} 
-                    required 
-                    className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-jade-500 focus:border-jade-500 sm:text-sm" 
+                  <input
+                    type="email"
+                    placeholder="Email mới"
+                    value={newAdminEmail}
+                    onChange={e => setNewAdminEmail(e.target.value)}
+                    required
+                    className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-jade-500 focus:border-jade-500 sm:text-sm"
                   />
                 </div>
                 <div>
-                  <input 
-                    type="password" 
-                    placeholder="Mật khẩu mới (ít nhất 8 ký tự, có chữ hoa & số)" 
-                    value={newAdminPassword} 
-                    onChange={e => setNewAdminPassword(e.target.value)} 
-                    required 
-                    className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-jade-500 focus:border-jade-500 sm:text-sm" 
+                  <input
+                    type="password"
+                    placeholder="Mật khẩu mới (ít nhất 8 ký tự, có chữ hoa & số)"
+                    value={newAdminPassword}
+                    onChange={e => setNewAdminPassword(e.target.value)}
+                    required
+                    className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-jade-500 focus:border-jade-500 sm:text-sm"
                   />
                 </div>
                 <button type="submit" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-jade-800 hover:bg-jade-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-jade-500 transition-colors">
@@ -2258,7 +2776,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
               Thông Tin Thanh Toán (QR Chuyển Khoản)
             </h2>
             <p className="text-sm text-gray-500 mb-6">Thông tin này hiển thị ở trang thanh toán để khách hàng chuyển khoản trực tiếp khi mua hàng.</p>
-            
+
             <form onSubmit={handleSaveBankSettings} className="space-y-6">
               {bankSettingsMessage.text && (
                 <div className={`p-4 rounded-md text-sm ${bankSettingsMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
@@ -2267,15 +2785,15 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
               )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tên Ngân Hàng</label>
-                <input type="text" value={bankSettings.bankName} onChange={e => setBankSettings({...bankSettings, bankName: e.target.value})} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500" />
+                <input type="text" value={bankSettings.bankName} onChange={e => setBankSettings({ ...bankSettings, bankName: e.target.value })} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Chủ Tài Khoản</label>
-                <input type="text" value={bankSettings.bankOwner} onChange={e => setBankSettings({...bankSettings, bankOwner: e.target.value})} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500" />
+                <input type="text" value={bankSettings.bankOwner} onChange={e => setBankSettings({ ...bankSettings, bankOwner: e.target.value })} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Số Tài Khoản</label>
-                <input type="text" value={bankSettings.bankNumber} onChange={e => setBankSettings({...bankSettings, bankNumber: e.target.value})} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500 font-mono" />
+                <input type="text" value={bankSettings.bankNumber} onChange={e => setBankSettings({ ...bankSettings, bankNumber: e.target.value })} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500 font-mono" />
               </div>
 
               <div>
@@ -2290,8 +2808,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                   </div>
                   <div className="flex-1 space-y-2">
                     <p className="text-xs text-gray-500 mb-2">Tải lên hình ảnh mã QR (JPG, PNG). Hình ảnh này sẽ được hiển thị ở bước thanh toán.</p>
-                    <input 
-                      type="file" 
+                    <input
+                      type="file"
                       accept="image/*"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
@@ -2305,7 +2823,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                   </div>
                 </div>
               </div>
-              
+
               <div className="pt-4 flex justify-end">
                 <button type="submit" disabled={isSavingBankSettings} className="bg-jade-800 text-white px-6 py-2 rounded-md hover:bg-jade-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium">
                   {isSavingBankSettings && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
@@ -2322,7 +2840,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
               Liên Kết Mạng Xã Hội
             </h2>
             <p className="text-sm text-gray-500 mb-6">Cập nhật các đường link mạng xã hội để hiển thị ở footer trang web.</p>
-            
+
             <form onSubmit={handleSaveSocialSettings} className="space-y-6">
               {socialSettingsMessage.text && (
                 <div className={`p-4 rounded-md text-sm ${socialSettingsMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
@@ -2331,21 +2849,21 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
               )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Facebook</label>
-                <input type="url" placeholder="https://facebook.com/..." value={socialSettings.facebook} onChange={e => setSocialSettings({...socialSettings, facebook: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500" />
+                <input type="url" placeholder="https://facebook.com/..." value={socialSettings.facebook} onChange={e => setSocialSettings({ ...socialSettings, facebook: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">TikTok</label>
-                <input type="url" placeholder="https://tiktok.com/@..." value={socialSettings.tiktok} onChange={e => setSocialSettings({...socialSettings, tiktok: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500" />
+                <input type="url" placeholder="https://tiktok.com/@..." value={socialSettings.tiktok} onChange={e => setSocialSettings({ ...socialSettings, tiktok: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Instagram</label>
-                <input type="url" placeholder="https://instagram.com/..." value={socialSettings.instagram} onChange={e => setSocialSettings({...socialSettings, instagram: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500" />
+                <input type="url" placeholder="https://instagram.com/..." value={socialSettings.instagram} onChange={e => setSocialSettings({ ...socialSettings, instagram: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Telegram</label>
-                <input type="url" placeholder="https://t.me/..." value={socialSettings.telegram} onChange={e => setSocialSettings({...socialSettings, telegram: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500" />
+                <input type="url" placeholder="https://t.me/..." value={socialSettings.telegram} onChange={e => setSocialSettings({ ...socialSettings, telegram: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-jade-500 focus:border-jade-500" />
               </div>
-              
+
               <div className="pt-4 flex justify-end">
                 <button type="submit" disabled={isSavingSocialSettings} className="bg-jade-800 text-white px-6 py-2 rounded-md hover:bg-jade-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium">
                   {isSavingSocialSettings && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}

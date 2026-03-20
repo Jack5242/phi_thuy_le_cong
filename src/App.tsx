@@ -9,6 +9,7 @@ import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { Toast } from './components/Toast';
 import { HomeView } from './views/HomeView';
+import { useLanguage } from './context/LanguageContext';
 import { CollectionsView } from './views/CollectionsView';
 import { ProductDetailView } from './views/ProductDetailView';
 import { CartView } from './views/CartView';
@@ -21,6 +22,13 @@ import { BlogDetailView } from './views/BlogDetailView';
 import { ResetPasswordView } from './views/ResetPasswordView';
 import { AdminResetPasswordView } from './views/AdminResetPasswordView';
 import { FeedbackView } from './views/FeedbackView';
+import { AboutView } from './views/AboutView';
+import { ContactView } from './views/ContactView';
+import { ShoppingGuideView } from './views/ShoppingGuideView';
+import { ReturnPolicyView } from './views/ReturnPolicyView';
+import { FaqView } from './views/FaqView';
+import { PrivacyPolicyView } from './views/PrivacyPolicyView';
+import { TermsOfServiceView } from './views/TermsOfServiceView';
 import { motion, AnimatePresence } from 'motion/react';
 
 const App: React.FC = () => {
@@ -64,6 +72,7 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [showToast, setShowToast] = useState(false);
+  const { t } = useLanguage();
 
   const fetchProducts = () => {
     fetch('/api/products')
@@ -205,6 +214,11 @@ const App: React.FC = () => {
     localStorage.setItem('user', JSON.stringify(userData));
   };
 
+  const handleUpdateUser = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
+
   const handleLogout = () => {
     setUser(null);
     setToken(null);
@@ -285,7 +299,13 @@ const App: React.FC = () => {
         return <AuthView setView={setCurrentView} onLogin={handleLogin} />;
       case 'profile':
         return isLoggedIn && user && token ? (
-          <ProfileView onLogout={handleLogout} setView={setCurrentView} user={user} token={token} />
+          <ProfileView 
+            onLogout={handleLogout} 
+            setView={setCurrentView} 
+            user={user} 
+            token={token} 
+            onUpdateUser={handleUpdateUser}
+          />
         ) : <AuthView setView={setCurrentView} onLogin={handleLogin} />;
       case 'blog':
         return <BlogListView setView={setCurrentView} setSelectedBlog={setSelectedBlog} />;
@@ -297,6 +317,20 @@ const App: React.FC = () => {
         return <AdminResetPasswordView setView={setCurrentView} />;
       case 'feedback':
         return <FeedbackView setView={setCurrentView} />;
+      case 'about':
+        return <AboutView setView={setCurrentView} />;
+      case 'contact':
+        return <ContactView setView={setCurrentView} />;
+      case 'shopping-guide':
+        return <ShoppingGuideView setView={setCurrentView} />;
+      case 'return-policy':
+        return <ReturnPolicyView setView={setCurrentView} />;
+      case 'faq':
+        return <FaqView setView={setCurrentView} />;
+      case 'privacy-policy':
+        return <PrivacyPolicyView setView={setCurrentView} />;
+      case 'terms-of-service':
+        return <TermsOfServiceView setView={setCurrentView} />;
       default:
         return <HomeView setView={setCurrentView} products={products} setSelectedProduct={setSelectedProduct} />;
     }
@@ -330,11 +364,11 @@ const App: React.FC = () => {
         </AnimatePresence>
       </main>
 
-      {currentView !== 'admin' && currentView !== 'admin-reset-password' && <Footer />}
+      {currentView !== 'admin' && currentView !== 'admin-reset-password' && <Footer setView={setCurrentView} />}
 
       {showToast && (
         <Toast 
-          message="Item added to cart!" 
+          message={t('cart.added')} 
           onClose={() => setShowToast(false)} 
         />
       )}

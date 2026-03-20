@@ -13,17 +13,30 @@ interface CollectionsViewProps {
 }
 
 export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSelectedProduct, products, searchQuery, initialCategory, onCategoryChange }) => {
-  const { t } = useLanguage();
-  const [selectedCategory, setSelectedCategory] = useState(() => initialCategory || t('col.filter.all'));
+  const { t, language } = useLanguage();
+  const [dbCollections, setDbCollections] = useState<any[]>([]);
+  // Compute absolute min/max from available products
+  const priceMin = React.useMemo(() => products.length ? Math.min(...products.map(p => p.price)) : 0, [products]);
+  const priceMax = React.useMemo(() => products.length ? Math.max(...products.map(p => p.price)) : 100000, [products]);
+
   const [minPrice, setMinPrice] = useState<number>(0);
-  const [maxPrice, setMaxPrice] = useState<number>(7000);
+  const [maxPrice, setMaxPrice] = useState<number>(100000);
   const [sortOrder, setSortOrder] = useState<string>('featured');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
   const [itemsPerPage, setItemsPerPage] = useState<number>(12);
-
-  const categories = [t('col.filter.all'), 'Chủng tầm trung', 'Chủng tầm cao'];
-  const collections = React.useMemo(() => Array.from(new Set(products.map(p => p.collection))).filter(Boolean), [products]);
+  const ALL_CAT = 'all';
+  const categories = [
+    { id: ALL_CAT, label: t('col.filter.all') },
+    { id: 'Chủng tầm trung', label: t('category.midRange') },
+    { id: 'Chủng tầm cao', label: t('category.highEnd') }
+  ];
+  const [selectedCategory, setSelectedCategory] = useState(() => initialCategory || ALL_CAT);
+  const collections = React.useMemo(() => {
+    const fromProducts = Array.from(new Set(products.map(p => p.collection))).filter(Boolean);
+    const fromDb = dbCollections.map(c => c.name);
+    return Array.from(new Set([...fromDb, ...fromProducts]));
+  }, [products, dbCollections]);
 
   const removeAccents = (str: string) => {
     return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -31,10 +44,34 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
 
   // Sync when initialCategory changes (e.g. from nav bar click)
   useEffect(() => {
-    if (initialCategory) {
-      setSelectedCategory(initialCategory);
+    if (initialCategory !== undefined) {
+      if (initialCategory === '' || initialCategory === 'Tất cả' || initialCategory === 'All') {
+        setSelectedCategory(ALL_CAT);
+      } else {
+        setSelectedCategory(initialCategory);
+      }
     }
   }, [initialCategory]);
+
+  useEffect(() => {
+    const fetchDbCollections = async () => {
+      try {
+        const res = await fetch('/api/collections');
+        if (res.ok) setDbCollections(await res.json());
+      } catch (err) {
+        console.error('Failed to fetch collections', err);
+      }
+    };
+    fetchDbCollections();
+  }, []);
+
+  // Reset slider bounds when product list changes
+  useEffect(() => {
+    if (products.length > 0) {
+      setMinPrice(priceMin);
+      setMaxPrice(priceMax);
+    }
+  }, [priceMin, priceMax]);
 
   useEffect(() => {
     if (!searchQuery || searchQuery.trim() === '') return;
@@ -60,7 +97,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
     });
   }
 
-  if (selectedCategory !== t('col.filter.all')) {
+  if (selectedCategory !== ALL_CAT) {
     filteredProducts = filteredProducts.filter(p => p.category === selectedCategory);
   }
 
@@ -114,16 +151,16 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
             <div className="flex flex-col gap-1">
               {categories.map(cat => (
                 <button
-                  key={cat}
+                  key={cat.id}
                   onClick={() => {
-                    setSelectedCategory(cat);
+                    setSelectedCategory(cat.id);
                     setCurrentPage(1);
                   }}
-                  className={`flex items-center justify-between px-3 py-2 rounded-sm text-sm transition-colors ${selectedCategory === cat ? 'bg-jade-900 text-white font-bold' : 'text-slate-600 hover:bg-jade-50 font-medium'}`}
+                  className={`flex items-center justify-between px-3 py-2 rounded-sm text-sm transition-colors ${selectedCategory === cat.id ? 'bg-jade-900 text-white font-bold' : 'text-slate-600 hover:bg-jade-50 font-medium'}`}
                 >
-                  {cat}
-                  <span className={`text-xs px-2 py-0.5 rounded-sm ${selectedCategory === cat ? 'bg-white/20' : 'bg-jade-100'}`}>
-                    {cat === t('col.filter.all') ? products.length : products.filter(p => p.category === cat).length}
+                  {cat.label}
+                  <span className={`text-xs px-2 py-0.5 rounded-sm ${selectedCategory === cat.id ? 'bg-white/20' : 'bg-jade-100'}`}>
+                    {cat.id === ALL_CAT ? products.length : products.filter(p => p.category === cat.id).length}
                   </span>
                 </button>
               ))}
@@ -143,7 +180,15 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
                     checked={selectedCollections.includes(collection)}
                     onChange={() => handleCollectionChange(collection)}
                   />
-                  <span className="text-sm font-medium text-slate-700 group-hover:text-jade-900">{collection}</span>
+                  <span className="text-sm font-medium text-slate-700 group-hover:text-jade-900">
+                    {(() => {
+                      const dbCol = dbCollections.find(c => c.name === collection);
+                      if (dbCol) {
+                        return language === 'en' && dbCol.name_en ? dbCol.name_en : dbCol.name;
+                      }
+                      return collection;
+                    })()}
+                  </span>
                 </label>
               ))}
             </div>
@@ -156,29 +201,32 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
               <div className="relative h-1.5 w-full bg-jade-100 rounded-full mb-6 mt-4 flex items-center">
                 <div
                   className="absolute h-full bg-jade-700 rounded-full"
-                  style={{ left: `${(minPrice / 7000) * 100}%`, right: `${100 - (maxPrice / 7000) * 100}%` }}
+                  style={{
+                    left: `${((minPrice - priceMin) / (priceMax - priceMin)) * 100}%`,
+                    right: `${100 - ((maxPrice - priceMin) / (priceMax - priceMin)) * 100}%`
+                  }}
                 ></div>
                 <input
                   type="range"
-                  min="0"
-                  max="7000"
-                  step="100"
+                  min={priceMin}
+                  max={priceMax}
+                  step={Math.max(1, Math.floor((priceMax - priceMin) / 100))}
                   value={minPrice}
                   onChange={(e) => {
-                    const value = Math.min(Number(e.target.value), maxPrice - 100);
+                    const value = Math.min(Number(e.target.value), maxPrice - 1);
                     setMinPrice(value);
                     setCurrentPage(1);
                   }}
-                  className={`absolute w-full h-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-jade-700 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:-mt-1.5 [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-jade-700 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:-mt-1.5 ${minPrice > 7000 - 200 ? 'z-20' : 'z-10'}`}
+                  className={`absolute w-full h-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-jade-700 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:-mt-1.5 [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-jade-700 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:-mt-1.5 ${minPrice > priceMax - (priceMax - priceMin) * 0.05 ? 'z-20' : 'z-10'}`}
                 />
                 <input
                   type="range"
-                  min="0"
-                  max="7000"
-                  step="100"
+                  min={priceMin}
+                  max={priceMax}
+                  step={Math.max(1, Math.floor((priceMax - priceMin) / 100))}
                   value={maxPrice}
                   onChange={(e) => {
-                    const value = Math.max(Number(e.target.value), minPrice + 100);
+                    const value = Math.max(Number(e.target.value), minPrice + 1);
                     setMaxPrice(value);
                     setCurrentPage(1);
                   }}
@@ -186,8 +234,8 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
                 />
               </div>
               <div className="flex justify-between text-xs font-bold text-slate-500 mt-2">
-                <span>{minPrice} VND</span>
-                <span>{maxPrice} VND</span>
+                <span>{minPrice.toLocaleString()} VND</span>
+                <span>{maxPrice.toLocaleString()} VND</span>
               </div>
             </div>
           </div>

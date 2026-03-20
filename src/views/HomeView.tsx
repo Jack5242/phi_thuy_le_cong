@@ -14,23 +14,32 @@ const PROMOTIONS_FALLBACK = [
   {
     id: 1,
     title: "Khuyến Mãi Tết Nguyên Đán",
+    title_en: "Lunar New Year Promotion",
     subtitle: "Giảm giá lên đến 20% cho Bộ Sưu Tập Lục Bảo Hoàng Gia",
+    subtitle_en: "Up to 20% off Royal Emerald Collection",
     image: "https://images.unsplash.com/photo-1615484477778-ca3b77940c25?q=80&w=1920&auto=format&fit=crop",
-    cta: "Mua Ngay"
+    cta: "Mua Ngay",
+    cta_en: "Shop Now"
   },
   {
     id: 2,
     title: "Giấc Mơ Sắc Tím",
+    title_en: "Purple Passion",
     subtitle: "Sản Phẩm Mới: Phỉ Thúy Tím Chạm Khắc Thủ Công",
+    subtitle_en: "New Arrival: Hand-carved Lavender Jadeite",
     image: "https://images.unsplash.com/photo-1588444839799-eb642997a34f?q=80&w=1920&auto=format&fit=crop",
-    cta: "Khám Phá"
+    cta: "Khám Phá",
+    cta_en: "Explore"
   },
   {
     id: 3,
     title: "Di Sản Thủ Công",
+    title_en: "Craft Heritage",
     subtitle: "Khám phá bí mật của Ngọc Phỉ Thúy Myanmar",
+    subtitle_en: "Discover the secrets of Myanmar Jadeite",
     image: "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?q=80&w=1920&auto=format&fit=crop",
-    cta: "Tìm Hiểu Thêm"
+    cta: "Tìm Hiểu Thêm",
+    cta_en: "Learn More"
   }
 ];
 
@@ -42,33 +51,7 @@ function useDraggableAutoScroll(speed: number) {
   const isDraggingRef = useRef(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  useEffect(() => {
-    let animationFrameId: number;
-    let autoScrollLeft = sliderRef.current ? sliderRef.current.scrollLeft : 0;
-
-    const playScroll = () => {
-      if (!isDown && !isHovered && sliderRef.current) {
-        autoScrollLeft += speed;
-        
-        // Loop seamlessly if duplicated exactly once
-        const maxScroll = sliderRef.current.scrollWidth / 2;
-        if (autoScrollLeft >= maxScroll) {
-          autoScrollLeft -= maxScroll;
-        } else if (autoScrollLeft <= 0) {
-          autoScrollLeft += maxScroll;
-        }
-
-        sliderRef.current.scrollLeft = autoScrollLeft;
-      } else if (sliderRef.current) {
-        // sync the internal tracker when manually scrolling
-        autoScrollLeft = sliderRef.current.scrollLeft; 
-      }
-      animationFrameId = requestAnimationFrame(playScroll);
-    };
-    
-    animationFrameId = requestAnimationFrame(playScroll);
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [isDown, isHovered, speed]);
+  // Removed auto-scroll useEffect logic as requested
 
   const onDragStart = (e: React.MouseEvent | React.TouchEvent) => {
     setIsDown(true);
@@ -83,8 +66,22 @@ function useDraggableAutoScroll(speed: number) {
     if (!isDown || !sliderRef.current) return;
     const currentX = 'touches' in e ? e.targetTouches[0].clientX : (e as React.MouseEvent).clientX;
     const walk = (currentX - startX) * 2;
-    sliderRef.current.scrollLeft = scrollLeft - walk;
-    
+    let newScrollLeft = scrollLeft - walk;
+
+    // Infinite wrap-around during manual dragging
+    const maxScroll = sliderRef.current.scrollWidth / 2;
+    if (newScrollLeft >= maxScroll) {
+      newScrollLeft -= maxScroll;
+      setStartX(currentX);
+      setScrollLeft(newScrollLeft);
+    } else if (newScrollLeft <= 0) {
+      newScrollLeft += maxScroll;
+      setStartX(currentX);
+      setScrollLeft(newScrollLeft);
+    }
+
+    sliderRef.current.scrollLeft = newScrollLeft;
+
     if (Math.abs(currentX - startX) > 10) {
       isDraggingRef.current = true;
     }
@@ -93,7 +90,7 @@ function useDraggableAutoScroll(speed: number) {
   const onDragEnd = () => {
     setIsDown(false);
     if (sliderRef.current) {
-        sliderRef.current.style.scrollBehavior = 'auto'; // Stay auto so it doesn't fight RAF
+      sliderRef.current.style.scrollBehavior = 'auto';
     }
     setTimeout(() => {
       isDraggingRef.current = false;
@@ -128,7 +125,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
   const [currentPromo, setCurrentPromo] = useState(0);
   const [promotionsLoaded, setPromotionsLoaded] = useState(false);
   const [featuredBlogs, setFeaturedBlogs] = useState<any[]>([]);
-  const { t } = useLanguage();
+  const [socialSettings, setSocialSettings] = useState<{ facebook?: string; tiktok?: string; instagram?: string; telegram?: string } | null>(null);
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     const fetchPromotions = async () => {
@@ -162,6 +160,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
       }
     };
     fetchFeaturedBlogs();
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/settings/social')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setSocialSettings(data); })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -224,7 +229,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
                     transition={{ delay: 0.3 }}
                     className="text-white text-4xl md:text-7xl font-black tracking-tight mb-4 leading-tight"
                   >
-                    {promotions[currentPromo]?.title}
+                    {language === 'vi' ? promotions[currentPromo]?.title : (promotions[currentPromo]?.title_en || promotions[currentPromo]?.title)}
                   </motion.h2>
                   <motion.p
                     initial={{ y: 20, opacity: 0 }}
@@ -232,7 +237,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
                     transition={{ delay: 0.4 }}
                     className="text-white/90 text-lg md:text-xl font-medium mb-8 max-w-lg"
                   >
-                    {promotions[currentPromo]?.subtitle}
+                    {language === 'vi' ? promotions[currentPromo]?.subtitle : (promotions[currentPromo]?.subtitle_en || promotions[currentPromo]?.subtitle)}
                   </motion.p>
                   <motion.button
                     initial={{ y: 20, opacity: 0 }}
@@ -241,7 +246,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
                     onClick={() => setView('collections')}
                     className="bg-white text-jade-900 px-10 py-4 text-sm md:text-base font-bold rounded-sm hover:bg-jade-50 transition-all uppercase tracking-widest shadow-xl"
                   >
-                    {promotions[currentPromo]?.cta}
+                    {language === 'vi' ? promotions[currentPromo]?.cta : (promotions[currentPromo]?.cta_en || promotions[currentPromo]?.cta)}
                   </motion.button>
                 </div>
               </div>
@@ -305,7 +310,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
           </div>
         </div>
         <div className="relative overflow-hidden w-full">
-          <div 
+          <div
             ref={sliderRef1}
             {...handlers1}
             className={`flex gap-8 overflow-x-auto hide-scrollbar [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-2 py-4 -mx-2 select-none ${isDown1 ? 'cursor-grabbing' : 'cursor-grab'}`}
@@ -342,7 +347,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
             </div>
           </div>
           <div className="relative overflow-hidden w-full">
-            <div 
+            <div
               ref={sliderRef2}
               {...handlers2}
               className={`flex gap-8 overflow-x-auto hide-scrollbar [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-2 py-4 -mx-2 select-none ${isDown2 ? 'cursor-grabbing' : 'cursor-grab'}`}
@@ -403,6 +408,79 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
           </div>
         </div>
       </section>
+
+      {/* Social Media Section */}
+      {socialSettings && (socialSettings.facebook || socialSettings.tiktok || socialSettings.instagram || socialSettings.telegram) && (
+        <section className="py-16 bg-jade-900">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <span className="text-jade-400 font-bold tracking-[0.3em] text-xs uppercase block mb-4">
+              {language === 'vi' ? 'Kết Nối Với Chúng Tôi' : 'Follow Us'}
+            </span>
+            <h2 className="text-4xl font-black text-white tracking-tight mb-3">
+              {language === 'vi' ? 'Mạng Xã Hội' : 'Social Media'}
+            </h2>
+            <p className="text-white/60 mb-10 text-sm max-w-md mx-auto">
+              {language === 'vi'
+                ? 'Theo dõi chúng tôi để cập nhật bộ sưu tập mới nhất, tin tức và ưu đãi độc quyền.'
+                : 'Follow us for the latest collections, news, and exclusive offers.'}
+            </p>
+            <div className="flex items-center justify-center gap-10 flex-wrap">
+              {socialSettings.facebook && (
+                <a
+                  href={socialSettings.facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex flex-col items-center gap-3"
+                >
+                  <div className="w-24 h-24 rounded-3xl bg-white/10 border border-white/20 flex items-center justify-center group-hover:bg-[#1877F2] group-hover:border-[#1877F2] transition-all duration-300 shadow-lg">
+                    <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                  </div>
+                  <span className="text-white/70 text-xs font-bold uppercase tracking-widest group-hover:text-white transition-colors">Facebook</span>
+                </a>
+              )}
+              {socialSettings.instagram && (
+                <a
+                  href={socialSettings.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex flex-col items-center gap-3"
+                >
+                  <div className="w-24 h-24 rounded-3xl bg-white/10 border border-white/20 flex items-center justify-center group-hover:bg-gradient-to-br group-hover:from-[#833AB4] group-hover:via-[#FD1D1D] group-hover:to-[#F77737] group-hover:border-transparent transition-all duration-300 shadow-lg">
+                    <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                  </div>
+                  <span className="text-white/70 text-xs font-bold uppercase tracking-widest group-hover:text-white transition-colors">Instagram</span>
+                </a>
+              )}
+              {socialSettings.tiktok && (
+                <a
+                  href={socialSettings.tiktok}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex flex-col items-center gap-3"
+                >
+                  <div className="w-24 h-24 rounded-3xl bg-white/10 border border-white/20 flex items-center justify-center group-hover:bg-black group-hover:border-black transition-all duration-300 shadow-lg">
+                    <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+                  </div>
+                  <span className="text-white/70 text-xs font-bold uppercase tracking-widest group-hover:text-white transition-colors">TikTok</span>
+                </a>
+              )}
+              {socialSettings.telegram && (
+                <a
+                  href={socialSettings.telegram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex flex-col items-center gap-3"
+                >
+                  <div className="w-24 h-24 rounded-3xl bg-white/10 border border-white/20 flex items-center justify-center group-hover:bg-[#2AABEE] group-hover:border-[#2AABEE] transition-all duration-300 shadow-lg">
+                    <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                  </div>
+                  <span className="text-white/70 text-xs font-bold uppercase tracking-widest group-hover:text-white transition-colors">Telegram</span>
+                </a>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="bg-jade-50/50 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

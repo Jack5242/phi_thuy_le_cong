@@ -92,3 +92,42 @@ export const sendFeedbackRequestEmail = async (email: string, orderId: string) =
     console.error("Error sending feedback email:", error);
   }
 };
+
+export const sendWelcomeVoucherEmail = async (email: string, voucherCode: string, discount: number, type: string) => {
+  const discountDisplay = type === 'percent' ? `${discount * 100}%` : `${discount.toLocaleString()} đ`;
+  
+  try {
+    const info = await transporter.sendMail({
+      from: `"Jade Elegance" <${process.env.FROM_EMAIL || 'no-reply@jade.example.com'}>`,
+      to: email,
+      subject: "Jade Elegance - Quà Tặng Chào Mừng Thành Viên Mới",
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 600px; margin: auto; border: 1px solid #eee;">
+          <h2 style="color: #0f5132; text-align: center;">Chào Mừng Bạn Đến Với Jade Elegance!</h2>
+          <p>Cảm ơn bạn đã đăng ký trở thành thành viên của gia đình Jade Elegance. Để chào mừng bạn, chúng tôi xin gửi tặng bạn một mã giảm giá đặc biệt:</p>
+          
+          <div style="text-align: center; margin: 30px 0; padding: 20px; background-color: #f0fdf4; border: 2px dashed #15803d; border-radius: 10px;">
+            <p style="margin: 0; color: #15803d; font-weight: bold; text-transform: uppercase;">Mã Giảm Giá Của Bạn</p>
+            <div style="font-size: 32px; font-weight: 800; color: #064e3b; margin: 10px 0;">${voucherCode}</div>
+            <p style="margin: 0; color: #065f46; font-size: 18px;">Giảm ngay <strong>${discountDisplay}</strong> cho đơn hàng đầu tiên</p>
+          </div>
+          
+          <p style="font-size: 14px; color: #666;">* Mã giảm giá này chỉ dành riêng cho tài khoản của bạn và có hiệu lực cho 1 lần sử dụng duy nhất.</p>
+          
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="${process.env.APP_URL || 'http://localhost:5173'}" style="display: inline-block; padding: 12px 30px; background-color: #0f5132; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Mua Sắm Ngay
+            </a>
+          </div>
+          
+          <p style="margin-top: 30px; font-size: 12px; color: #999; text-align: center;">
+            Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua <a href="mailto:support@jade.example.com">support@jade.example.com</a>.
+          </p>
+        </div>
+      `,
+    });
+    console.log("Welcome voucher email sent: %s", info.messageId);
+  } catch (error) {
+    console.error("Error sending welcome voucher email:", error);
+  }
+};

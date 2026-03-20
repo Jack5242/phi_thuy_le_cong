@@ -27,9 +27,9 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
   }, []);
 
   const categories = [
-    t('col.filter.all'),
-    'Chủng tầm trung',
-    'Chủng tầm cao'
+    { id: '', label: t('col.filter.all') },
+    { id: 'Chủng tầm trung', label: t('category.midRange') },
+    { id: 'Chủng tầm cao', label: t('category.highEnd') }
   ];
 
   return (
@@ -138,7 +138,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
             >
               {t('nav.home')}
             </button>
-            <button className="text-[11px] font-black uppercase tracking-[0.3em] text-white/80 hover:text-white transition-colors py-1">{t('nav.about')}</button>
+            <button
+              onClick={() => setView('about')}
+              className={`text-[11px] font-black uppercase tracking-[0.3em] hover:text-white transition-colors py-1 ${currentView === 'about' ? 'border-b-2 border-white text-white' : 'text-white/80'}`}
+            >
+              {t('nav.about')}
+            </button>
             
             {/* Products Dropdown */}
             <div 
@@ -147,7 +152,10 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
               onMouseLeave={() => setIsProductDropdownOpen(false)}
             >
               <button 
-                onClick={() => setView('collections')}
+                onClick={() => {
+                  setSelectedCategory('');
+                  setView('collections');
+                }}
                 className={`text-[11px] font-black uppercase tracking-[0.3em] hover:text-white transition-colors relative py-1 flex items-center gap-1 text-white/80 ${currentView === 'collections' ? 'border-b-2 border-white text-white' : ''}`}
               >
                 {t('nav.collections')}
@@ -158,15 +166,15 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
                 <div className="absolute top-full left-1/2 -translate-x-1/2 w-64 bg-jade-900 border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] py-4 z-50 backdrop-blur-md">
                   {categories.map((cat) => (
                     <button
-                      key={cat}
+                      key={cat.id}
                       onClick={() => {
-                        setSelectedCategory(cat);
+                        setSelectedCategory(cat.id);
                         setView('collections');
                         setIsProductDropdownOpen(false);
                       }}
                       className="w-full text-left px-6 py-3 text-[11px] font-black uppercase tracking-widest text-white/70 hover:text-white hover:bg-white/10 transition-all"
                     >
-                      {cat}
+                      {cat.label}
                     </button>
                   ))}
                 </div>
@@ -179,7 +187,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
             >
               Blog
             </button>
-            <button className="text-[11px] font-black uppercase tracking-[0.3em] text-white/80 hover:text-white transition-colors py-1">{t('nav.contact')}</button>
+            <button
+              onClick={() => setView('contact')}
+              className={`text-[11px] font-black uppercase tracking-[0.3em] hover:text-white transition-colors py-1 ${currentView === 'contact' ? 'border-b-2 border-white text-white' : 'text-white/80'}`}
+            >
+              {t('nav.contact')}
+            </button>
           </div>
         </nav>
       </div>
@@ -220,13 +233,20 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
             >
               {t('nav.home')}
             </button>
-            <button className="text-left px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white/80 hover:bg-white/5 hover:text-white transition-colors">
+            <button
+              onClick={() => { setView('about'); setIsMobileMenuOpen(false); }}
+              className={`text-left px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] hover:bg-white/5 hover:text-white transition-colors ${currentView === 'about' ? 'text-white bg-white/5' : 'text-white/80'}`}
+            >
               {t('nav.about')}
             </button>
             
             <div className="flex flex-col">
               <button 
-                onClick={() => { setView('collections'); setIsMobileMenuOpen(false); }}
+                onClick={() => { 
+                  setSelectedCategory('');
+                  setView('collections'); 
+                  setIsMobileMenuOpen(false); 
+                }}
                 className={`text-left px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] hover:bg-white/5 transition-colors flex items-center justify-between ${currentView === 'collections' ? 'text-white bg-white/5' : 'text-white/80'}`}
               >
                 {t('nav.collections')}
@@ -235,15 +255,15 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
               <div className="bg-black/20 py-2">
                 {categories.map((cat) => (
                   <button
-                    key={cat}
+                    key={cat.id}
                     onClick={() => {
-                      setSelectedCategory(cat);
+                      setSelectedCategory(cat.id);
                       setView('collections');
                       setIsMobileMenuOpen(false);
                     }}
                     className="w-full text-left px-10 py-3 text-[10px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/5 transition-all"
                   >
-                    {cat}
+                    {cat.label}
                   </button>
                 ))}
               </div>
@@ -255,7 +275,10 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
             >
               Blog
             </button>
-            <button className="text-left px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white/80 hover:bg-white/5 hover:text-white transition-colors">
+            <button
+              onClick={() => { setView('contact'); setIsMobileMenuOpen(false); }}
+              className={`text-left px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] hover:bg-white/5 hover:text-white transition-colors ${currentView === 'contact' ? 'text-white bg-white/5' : 'text-white/80'}`}
+            >
               {t('nav.contact')}
             </button>
           </div>
