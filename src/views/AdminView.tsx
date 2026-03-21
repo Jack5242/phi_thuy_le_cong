@@ -22,6 +22,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
   // Admin Auth State
   const [isAdminAuth, setIsAdminAuth] = useState(false);
   const [isAdminForgotPassword, setIsAdminForgotPassword] = useState(false);
+  const [isSendingReset, setIsSendingReset] = useState(false);
   const [adminToken, setAdminToken] = useState('');
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -118,7 +119,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
 
   const handleAdminForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSendingReset) return;
     setLoginError('');
+    setIsSendingReset(true);
     try {
       const res = await fetch('/api/admin/auth/forgot-password', {
         method: 'POST',
@@ -128,9 +131,14 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
       if (res.ok) {
         alert('Email khôi phục mật khẩu đã được gửi.');
         setIsAdminForgotPassword(false);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setLoginError(data.error || 'Server error');
       }
     } catch (err) {
       setLoginError('Lỗi máy chủ');
+    } finally {
+      setIsSendingReset(false);
     }
   };
 
@@ -426,6 +434,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterCollection, setFilterCollection] = useState('');
+  const [filterFeature, setFilterFeature] = useState('');
   const [sortBy, setSortBy] = useState('newest');
 
   // Dynamic Options
@@ -438,7 +447,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.id.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = filterCategory ? p.category === filterCategory : true;
       const matchesCollection = filterCollection ? p.collection === filterCollection : true;
-      return matchesSearch && matchesCategory && matchesCollection;
+      let matchesFeature = true;
+      if (filterFeature === 'new') matchesFeature = p.isNew === true;
+      if (filterFeature === 'bestseller') matchesFeature = p.isBestSeller === true;
+      if (filterFeature === 'premium') matchesFeature = p.isPremium === true;
+      return matchesSearch && matchesCategory && matchesCollection && matchesFeature;
     })
     .sort((a, b) => {
       if (sortBy === 'price_asc') return a.price - b.price;
@@ -1024,9 +1037,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                 <div>
                   <button
                     type="submit"
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-jade-800 hover:bg-jade-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-jade-500"
+                    disabled={isSendingReset}
+                    className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${isSendingReset ? 'bg-jade-400 cursor-not-allowed' : 'bg-jade-800 hover:bg-jade-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-jade-500'}`}
                   >
-                    Gửi Link Khôi Phục
+                    {isSendingReset ? 'Đang gửi...' : 'Gửi Link Khôi Phục'}
                   </button>
                 </div>
               </form>
@@ -1259,6 +1273,18 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                 {existingCollections.filter(ec => !dbCollections.some(c => c.name === ec)).map(ec => (
                   <option key={ec} value={ec}>{ec}</option>
                 ))}
+              </select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <select
+                value={filterFeature}
+                onChange={(e) => setFilterFeature(e.target.value)}
+                className="border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-jade-500 focus:border-jade-500 outline-none"
+              >
+                <option value="">Tất cả đặc điểm</option>
+                <option value="new">Hàng Mới Về</option>
+                <option value="bestseller">Bán Chạy Nhất</option>
+                <option value="premium">Cao Cấp</option>
               </select>
             </div>
             <div className="flex items-center space-x-2">

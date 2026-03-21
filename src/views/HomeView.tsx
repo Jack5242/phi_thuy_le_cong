@@ -109,9 +109,6 @@ function useDraggableAutoScroll(speed: number) {
     onMouseMove: onDragMove,
     onMouseUp: onDragEnd,
     onMouseLeave: (e: React.MouseEvent) => { setIsHovered(false); onDragEnd(); },
-    onTouchStart: onDragStart,
-    onTouchMove: onDragMove,
-    onTouchEnd: onDragEnd,
     onClickCapture,
     onDragStart: (e: React.DragEvent) => e.preventDefault(),
     onMouseEnter: () => setIsHovered(true),
@@ -181,8 +178,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
     setView('detail');
   };
 
-  const newArrivals = React.useMemo(() => products.filter(p => p.isNew).slice(0, 8), [products]);
-  const bestSellers = React.useMemo(() => products.filter(p => p.isBestSeller).slice(0, 8), [products]);
+  const newArrivals = React.useMemo(() => products.filter(p => p.isNew).slice(0, 10), [products]);
+  const bestSellers = React.useMemo(() => products.filter(p => p.isBestSeller).slice(0, 10), [products]);
 
   const { sliderRef: sliderRef1, handlers: handlers1, isDown: isDown1 } = useDraggableAutoScroll(0.4);
   const { sliderRef: sliderRef2, handlers: handlers2, isDown: isDown2 } = useDraggableAutoScroll(0.4);
