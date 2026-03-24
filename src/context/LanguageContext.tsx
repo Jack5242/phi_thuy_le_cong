@@ -295,7 +295,7 @@ const translations = {
     'checkout.details.proceed': 'Tiến Hành Thanh Toán',
 
     // Footer
-    'footer.desc': 'Nơi tôn vinh vẻ đẹp vĩnh cửu của ngọc phỉ thúy Myanmar. Mỗi sản phẩm là một kiệt tác nghệ thuật mang đậm giá trị văn hóa và tâm linh.',
+    'footer.desc': 'Không có hai viên ngọc nào trùng lặp, cũng như không có nhân duyên nào giống nhau. Phỉ Thúy Lê Công trao gửi những chế tác Myanmar độc bản - dấu ấn tài lộc được sinh ra để dành riêng cho một người duy nhất.',
     'footer.links': 'Liên Kết Nhanh',
     'footer.support': 'Hỗ Trợ Khách Hàng',
     'footer.support.guide': 'Hướng Dẫn Mua Hàng',
@@ -602,7 +602,7 @@ const translations = {
     'checkout.details.proceed': 'Proceed to Payment',
 
     // Footer
-    'footer.desc': 'Honoring the eternal beauty of Myanmar teal. Each product is an artistic masterpiece rich in cultural and spiritual value.',
+    'footer.desc': 'No two jades are identical, just as no two destinies are the same. Phi Thuy Le Cong delivers unique Myanmar creations - marks of fortune born exclusively for one single person.',
     'footer.links': 'Quick Links',
     'footer.support': 'Customer Support',
     'footer.support.guide': 'Shopping Guide',
