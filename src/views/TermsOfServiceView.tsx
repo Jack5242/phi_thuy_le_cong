@@ -35,10 +35,10 @@ export const TermsOfServiceView: React.FC<TermsOfServiceViewProps> = () => {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 pb-24">
       <div className="text-center mb-14">
-        <p className="text-sm font-bold tracking-widest uppercase text-jade-600 mb-3">
+        <p className="text-sm font-bold tracking-widest uppercase text-teal-600 mb-3">
           {isVi ? 'Pháp Lý' : 'Legal'}
         </p>
-        <h1 className="text-4xl font-extrabold text-jade-900 mb-4">
+        <h1 className="text-4xl font-extrabold text-teal-900 mb-4">
           {isVi ? 'Điều Khoản Dịch Vụ' : 'Terms of Service'}
         </h1>
         <p className="text-slate-500 max-w-lg mx-auto text-sm">
@@ -50,8 +50,8 @@ export const TermsOfServiceView: React.FC<TermsOfServiceViewProps> = () => {
 
       <div className="space-y-6">
         {sections.map(sec => (
-          <div key={sec.title} className="bg-white border border-jade-100 rounded-xl p-6 shadow-sm">
-            <h2 className="font-bold text-jade-900 mb-3">{sec.title}</h2>
+          <div key={sec.title} className="bg-white border border-teal-100 rounded-xl p-6 shadow-sm">
+            <h2 className="font-bold text-teal-900 mb-3">{sec.title}</h2>
             <p className="text-slate-500 text-sm leading-relaxed">{sec.body}</p>
           </div>
         ))}

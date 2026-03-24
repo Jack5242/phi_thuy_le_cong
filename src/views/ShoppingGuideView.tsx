@@ -29,10 +29,10 @@ export const ShoppingGuideView: React.FC<ShoppingGuideViewProps> = ({ setView })
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 pb-24">
       <div className="text-center mb-14">
-        <p className="text-sm font-bold tracking-widest uppercase text-jade-600 mb-3">
+        <p className="text-sm font-bold tracking-widest uppercase text-teal-600 mb-3">
           {isVi ? 'Hướng Dẫn' : 'Guide'}
         </p>
-        <h1 className="text-4xl font-extrabold text-jade-900 mb-4">
+        <h1 className="text-4xl font-extrabold text-teal-900 mb-4">
           {isVi ? 'Hướng Dẫn Mua Hàng' : 'Shopping Guide'}
         </h1>
         <p className="text-slate-500 max-w-lg mx-auto">
@@ -43,18 +43,18 @@ export const ShoppingGuideView: React.FC<ShoppingGuideViewProps> = ({ setView })
       </div>
 
       <div className="relative">
-        <div className="absolute left-7 top-0 bottom-0 w-0.5 bg-jade-100" />
+        <div className="absolute left-7 top-0 bottom-0 w-0.5 bg-teal-100" />
         <div className="space-y-10">
           {steps.map((step, i) => (
             <div key={i} className="flex gap-6 items-start relative">
-              <div className="w-14 h-14 bg-jade-900 text-white rounded-full flex items-center justify-center flex-shrink-0 z-10 shadow-lg">
+              <div className="w-14 h-14 bg-teal-900 text-white rounded-full flex items-center justify-center flex-shrink-0 z-10 shadow-lg">
                 <span className="material-symbols-outlined">{step.icon}</span>
               </div>
-              <div className="bg-white border border-jade-100 rounded-xl p-5 flex-1 shadow-sm">
+              <div className="bg-white border border-teal-100 rounded-xl p-5 flex-1 shadow-sm">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-bold text-jade-500 uppercase tracking-widest">Step {i + 1}</span>
+                  <span className="text-xs font-bold text-teal-500 uppercase tracking-widest">Step {i + 1}</span>
                 </div>
-                <h3 className="font-bold text-jade-900 text-lg mb-2">{step.title}</h3>
+                <h3 className="font-bold text-teal-900 text-lg mb-2">{step.title}</h3>
                 <p className="text-slate-500 text-sm leading-relaxed">{step.body}</p>
               </div>
             </div>
@@ -62,15 +62,15 @@ export const ShoppingGuideView: React.FC<ShoppingGuideViewProps> = ({ setView })
         </div>
       </div>
 
-      <div className="mt-16 bg-jade-50 border border-jade-100 rounded-2xl p-8 text-center">
-        <span className="material-symbols-outlined text-4xl text-jade-600 mb-3 block">support_agent</span>
-        <h3 className="font-bold text-jade-900 text-xl mb-2">
+      <div className="mt-16 bg-teal-50 border border-teal-100 rounded-2xl p-8 text-center">
+        <span className="material-symbols-outlined text-4xl text-teal-600 mb-3 block">support_agent</span>
+        <h3 className="font-bold text-teal-900 text-xl mb-2">
           {isVi ? 'Cần Hỗ Trợ?' : 'Need Help?'}
         </h3>
         <p className="text-slate-500 mb-5 text-sm">
           {isVi ? 'Đội ngũ tư vấn của chúng tôi luôn sẵn sàng giải đáp mọi thắc mắc.' : 'Our team is always ready to answer all your questions.'}
         </p>
-        <button onClick={() => setView('contact')} className="bg-jade-900 text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-jade-800 transition-colors">
+        <button onClick={() => setView('contact')} className="bg-teal-900 text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-teal-800 transition-colors">
           {isVi ? 'Liên Hệ Ngay' : 'Contact Us'}
         </button>
       </div>

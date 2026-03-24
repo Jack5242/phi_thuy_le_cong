@@ -95,10 +95,10 @@ export const ReturnPolicyView: React.FC<ReturnPolicyViewProps> = ({ setView }) =
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 pb-24">
       <div className="text-center mb-14">
-        <p className="text-sm font-bold tracking-widest uppercase text-jade-600 mb-3">
+        <p className="text-sm font-bold tracking-widest uppercase text-teal-600 mb-3">
           {isVi ? 'Chính Sách' : 'Policy'}
         </p>
-        <h1 className="text-4xl font-extrabold text-jade-900 mb-4">
+        <h1 className="text-4xl font-extrabold text-teal-900 mb-4">
           {isVi ? 'Chính Sách Đổi Trả' : 'Return Policy'}
         </h1>
         <p className="text-slate-500 max-w-lg mx-auto text-sm">
@@ -110,17 +110,17 @@ export const ReturnPolicyView: React.FC<ReturnPolicyViewProps> = ({ setView }) =
 
       <div className="space-y-8">
         {sections.map(sec => (
-          <div key={sec.title} className="bg-white border border-jade-100 rounded-2xl p-7 shadow-sm">
+          <div key={sec.title} className="bg-white border border-teal-100 rounded-2xl p-7 shadow-sm">
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 bg-jade-50 rounded-full flex items-center justify-center">
-                <span className="material-symbols-outlined text-jade-700">{sec.icon}</span>
+              <div className="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center">
+                <span className="material-symbols-outlined text-teal-700">{sec.icon}</span>
               </div>
-              <h2 className="font-bold text-jade-900 text-lg">{sec.title}</h2>
+              <h2 className="font-bold text-teal-900 text-lg">{sec.title}</h2>
             </div>
             <ul className="space-y-3">
               {sec.items.map((item, i) => (
                 <li key={i} className="flex items-start gap-3 text-slate-600 text-sm leading-relaxed">
-                  <span className="material-symbols-outlined text-jade-500 text-base mt-0.5 flex-shrink-0">check_circle</span>
+                  <span className="material-symbols-outlined text-teal-500 text-base mt-0.5 flex-shrink-0">check_circle</span>
                   {item}
                 </li>
               ))}
@@ -133,7 +133,7 @@ export const ReturnPolicyView: React.FC<ReturnPolicyViewProps> = ({ setView }) =
         <p className="text-slate-500 text-sm mb-4">
           {isVi ? 'Có câu hỏi về chính sách đổi trả?' : 'Have questions about our return policy?'}
         </p>
-        <button onClick={() => setView('contact')} className="bg-jade-900 text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-jade-800 transition-colors">
+        <button onClick={() => setView('contact')} className="bg-teal-900 text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-teal-800 transition-colors">
           {isVi ? 'Liên Hệ Chúng Tôi' : 'Contact Us'}
         </button>
       </div>

@@ -62,9 +62,9 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({ setView })
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex justify-center">
-      <div className="w-full max-w-md bg-white border border-jade-100 p-10 rounded-sm shadow-sm">
+      <div className="w-full max-w-md bg-white border border-teal-100 p-10 rounded-sm shadow-sm">
         <div className="text-center mb-10">
-          <h2 className="text-2xl font-extrabold text-jade-900">Đặt Lại Mật Khẩu</h2>
+          <h2 className="text-2xl font-extrabold text-teal-900">Đặt Lại Mật Khẩu</h2>
           <p className="text-slate-500 mt-2">Nhập mật khẩu mới cho tài khoản của bạn</p>
         </div>
 
@@ -80,7 +80,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({ setView })
                 window.history.pushState({}, '', '/auth');
                 setView('auth');
               }}
-              className="w-full bg-jade-900 text-white font-bold py-4 hover:opacity-90 transition-all rounded-sm"
+              className="w-full bg-teal-900 text-white font-bold py-4 hover:opacity-90 transition-all rounded-sm"
             >
               Quay lại Đăng Nhập
             </button>
@@ -90,7 +90,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({ setView })
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Mật khẩu mới</label>
               <input 
-                className="w-full px-4 py-3 bg-jade-50 border-none focus:ring-2 focus:ring-jade-900 rounded-sm text-jade-900" 
+                className="w-full px-4 py-3 bg-teal-50 border-none focus:ring-2 focus:ring-teal-900 rounded-sm text-teal-900" 
                 placeholder="••••••••" 
                 type="password"
                 value={password}
@@ -103,7 +103,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({ setView })
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Xác nhận mật khẩu</label>
               <input 
-                className="w-full px-4 py-3 bg-jade-50 border-none focus:ring-2 focus:ring-jade-900 rounded-sm text-jade-900" 
+                className="w-full px-4 py-3 bg-teal-50 border-none focus:ring-2 focus:ring-teal-900 rounded-sm text-teal-900" 
                 placeholder="••••••••" 
                 type="password"
                 value={confirmPassword}
@@ -116,7 +116,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({ setView })
             <button 
               type="submit"
               disabled={loading || !token}
-              className="w-full bg-jade-900 text-white font-bold py-4 hover:opacity-90 transition-all rounded-sm mt-4 disabled:opacity-50"
+              className="w-full bg-teal-900 text-white font-bold py-4 hover:opacity-90 transition-all rounded-sm mt-4 disabled:opacity-50"
             >
               {loading ? 'Đang xử lý...' : 'Lưu Mật Khẩu Mới'}
             </button>

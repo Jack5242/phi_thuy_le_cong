@@ -17,9 +17,11 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ setView, totalAmount
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [bankInfo, setBankInfo] = useState({ bankName: 'Vietcombank', bankOwner: 'CÔNG TY TNHH THIÊN MỘC', bankNumber: '0123456789', bankQR: '' });
+  const [orderId, setOrderId] = useState('');
   const { t } = useLanguage();
 
   useEffect(() => {
+    setOrderId(`ORD-${Math.floor(1000 + Math.random() * 9000)}`);
     fetch('/api/settings/bank')
       .then(res => res.json())
       .then(data => {
@@ -62,6 +64,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ setView, totalAmount
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          id: orderId,
           email: user ? user.email : `guest_${checkoutFormData.email || 'guest@example.com'}`,
           name: checkoutFormData.name,
           phone: checkoutFormData.phone,
@@ -93,16 +96,16 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ setView, totalAmount
   if (isSuccess) {
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-        <div className="w-24 h-24 bg-jade-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <span className="material-symbols-outlined text-5xl text-jade-600">check_circle</span>
+        <div className="w-24 h-24 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <span className="material-symbols-outlined text-5xl text-teal-600">check_circle</span>
         </div>
-        <h1 className="text-3xl font-extrabold text-jade-900 mb-4">{t('checkout.success.title')}</h1>
+        <h1 className="text-3xl font-extrabold text-teal-900 mb-4">{t('checkout.success.title')}</h1>
         <p className="text-slate-600 mb-8 text-lg">
           {t('checkout.success.desc')}
         </p>
         <button 
           onClick={() => setView('home')}
-          className="bg-jade-900 text-white px-8 py-4 font-bold hover:opacity-90 transition-all rounded-sm"
+          className="bg-teal-900 text-white px-8 py-4 font-bold hover:opacity-90 transition-all rounded-sm"
         >
           {t('checkout.success.home')}
         </button>
@@ -115,53 +118,53 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ setView, totalAmount
       <div className="flex items-center gap-4 mb-10">
         <button 
           onClick={() => setView('cart')}
-          className="text-slate-400 hover:text-jade-900 transition-colors"
+          className="text-slate-400 hover:text-teal-900 transition-colors"
         >
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
-        <h1 className="text-3xl font-extrabold text-jade-900">{t('checkout.title')}</h1>
+        <h1 className="text-3xl font-extrabold text-teal-900">{t('checkout.title')}</h1>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         {/* Bank Info */}
         <div className="space-y-8">
           <div>
-            <h2 className="text-xl font-bold text-jade-900 mb-4">{t('checkout.bank.title')}</h2>
+            <h2 className="text-xl font-bold text-teal-900 mb-4">{t('checkout.bank.title')}</h2>
             <p className="text-slate-600 mb-6">{t('checkout.bank.desc')}</p>
             
-            <div className="bg-jade-50 p-6 rounded-sm space-y-4 border border-jade-100">
-              <div className="flex justify-between items-center border-b border-jade-200 pb-3">
+            <div className="bg-teal-50 p-6 rounded-sm space-y-4 border border-teal-100">
+              <div className="flex justify-between items-center border-b border-teal-200 pb-3">
                 <span className="text-slate-500">{t('checkout.bank.name')}</span>
-                <span className="font-bold text-jade-900">{bankInfo.bankName}</span>
+                <span className="font-bold text-teal-900">{bankInfo.bankName}</span>
               </div>
-              <div className="flex justify-between items-center border-b border-jade-200 pb-3">
+              <div className="flex justify-between items-center border-b border-teal-200 pb-3">
                 <span className="text-slate-500">{t('checkout.bank.owner')}</span>
-                <span className="font-bold text-jade-900">{bankInfo.bankOwner}</span>
+                <span className="font-bold text-teal-900">{bankInfo.bankOwner}</span>
               </div>
-              <div className="flex justify-between items-center border-b border-jade-200 pb-3">
+              <div className="flex justify-between items-center border-b border-teal-200 pb-3">
                 <span className="text-slate-500">{t('checkout.bank.number')}</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-jade-900 font-mono text-lg">{bankInfo.bankNumber}</span>
-                  <button className="text-jade-600 hover:text-jade-800" title="Copy">
+                  <span className="font-bold text-teal-900 font-mono text-lg">{bankInfo.bankNumber}</span>
+                  <button className="text-teal-600 hover:text-teal-800" title="Copy">
                     <span className="material-symbols-outlined text-sm">content_copy</span>
                   </button>
                 </div>
               </div>
-              <div className="flex justify-between items-center border-b border-jade-200 pb-3">
+              <div className="flex justify-between items-center border-b border-teal-200 pb-3">
                 <span className="text-slate-500">{t('checkout.bank.amount')}</span>
-                <span className="font-bold text-jade-900 text-lg">{totalAmount.toLocaleString()} VND</span>
+                <span className="font-bold text-teal-900 text-lg">{totalAmount.toLocaleString()} VND</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500">{t('checkout.bank.content')}</span>
-                <span className="font-bold text-jade-900">TM {Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}</span>
+                <span className="font-bold text-teal-900">{orderId}</span>
               </div>
             </div>
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-jade-900 mb-4">{t('checkout.qr.title')}</h2>
-            <div className="bg-white p-6 rounded-sm border border-jade-100 flex flex-col items-center justify-center">
-              <div className="w-48 h-48 bg-slate-100 mb-4 p-2 border-2 border-jade-200 rounded-sm">
+            <h2 className="text-xl font-bold text-teal-900 mb-4">{t('checkout.qr.title')}</h2>
+            <div className="bg-white p-6 rounded-sm border border-teal-100 flex flex-col items-center justify-center">
+              <div className="w-48 h-48 bg-slate-100 mb-4 p-2 border-2 border-teal-200 rounded-sm">
                 {bankInfo.bankQR ? (
                   <img 
                     src={bankInfo.bankQR} 
@@ -183,11 +186,11 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ setView, totalAmount
 
         {/* Upload Receipt */}
         <div>
-          <h2 className="text-xl font-bold text-jade-900 mb-4">{t('checkout.upload.title')}</h2>
-          <div className="bg-white p-6 rounded-sm border border-jade-100 h-full flex flex-col">
+          <h2 className="text-xl font-bold text-teal-900 mb-4">{t('checkout.upload.title')}</h2>
+          <div className="bg-white p-6 rounded-sm border border-teal-100 h-full flex flex-col">
             <p className="text-slate-600 mb-6">{t('checkout.upload.desc')}</p>
             
-            <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-jade-200 rounded-sm p-8 mb-6 bg-slate-50 hover:bg-jade-50 transition-colors cursor-pointer relative">
+            <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-teal-200 rounded-sm p-8 mb-6 bg-slate-50 hover:bg-teal-50 transition-colors cursor-pointer relative">
               <input 
                 type="file" 
                 accept="image/*" 
@@ -197,8 +200,8 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ setView, totalAmount
               
               {receiptFile ? (
                 <div className="text-center">
-                  <span className="material-symbols-outlined text-4xl text-jade-600 mb-2">image</span>
-                  <p className="font-medium text-jade-900 truncate max-w-[200px]">{receiptFile.name}</p>
+                  <span className="material-symbols-outlined text-4xl text-teal-600 mb-2">image</span>
+                  <p className="font-medium text-teal-900 truncate max-w-[200px]">{receiptFile.name}</p>
                   <p className="text-xs text-slate-500 mt-1">{t('checkout.upload.change')}</p>
                 </div>
               ) : (
@@ -217,7 +220,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ setView, totalAmount
                 className={`w-full py-4 font-bold rounded-sm transition-all flex items-center justify-center gap-2 ${
                   !receiptFile 
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
-                    : 'bg-jade-900 text-white hover:opacity-90'
+                    : 'bg-teal-900 text-white hover:opacity-90'
                 }`}
               >
                 {isSubmitting ? (

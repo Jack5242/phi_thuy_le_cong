@@ -197,6 +197,14 @@ export async function initDb() {
     description_en TEXT,
     slug TEXT UNIQUE
   );
+
+  CREATE TABLE IF NOT EXISTS wishlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_email TEXT NOT NULL,
+    product_id TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_email, product_id)
+  );
 `);
 
   // Migration for promotions localized fields
@@ -371,7 +379,7 @@ export async function seedProducts(products: Product[]) {
   if (checkUsers.count === 0) {
     const insertUser = db.prepare('INSERT INTO users (id, email, password, name) VALUES (?, ?, ?, ?)');
     const hash = bcrypt.hashSync('admin123', 10);
-    await insertUser.run('admin-1', 'admin@jade.com', hash, 'Admin User');
+    await insertUser.run('admin-1', 'admin@teal.com', hash, 'Admin User');
     console.log('Database seeded with admin user.');
   }
 
@@ -665,7 +673,13 @@ export async function deleteProduct(id: string) {
 }
 
 export async function getAllOrders() {
-  const orders = await db.prepare('SELECT * FROM orders ORDER BY created_at DESC').all() as any[];
+  const orders = await db.prepare(`
+    SELECT o.*, uv.voucher_code, v.discount as voucher_discount, v.type as voucher_type
+    FROM orders o
+    LEFT JOIN used_vouchers uv ON o.id = uv.order_id
+    LEFT JOIN vouchers v ON uv.voucher_code = v.code
+    ORDER BY o.created_at DESC
+  `).all() as any[];
   return await Promise.all(orders.map(async order => {
     const items = await db.prepare(`
       SELECT oi.*, p.name, p.name_en, p.image, p.category, p.collection, c.name_en AS collection_en
@@ -674,7 +688,11 @@ export async function getAllOrders() {
       LEFT JOIN collections c ON p.collection = c.name
       WHERE oi.order_id = ?
     `).all(order.id);
-    return { ...order, items };
+    return { 
+      ...order, 
+      items,
+      voucher_discount: order.voucher_discount ? Number(order.voucher_discount) : undefined
+    };
   }));
 }
 
@@ -794,8 +812,64 @@ export async function updateUserProfile(id: string, profile: { name?: string; ph
   return { success: true };
 }
 
+export async function getWishlist(email: string) {
+  const items = await db.prepare('SELECT product_id FROM wishlist WHERE user_email = ? ORDER BY created_at DESC').all(email) as any[];
+  if (!items.length) return [];
+  const productIds = items.map(i => i.product_id);
+  const placeholders = productIds.map(() => '?').join(',');
+  const rows = await db.prepare(`
+    SELECT p.*, c.name_en AS collection_en 
+    FROM products p
+    LEFT JOIN collections c ON p.collection = c.name
+    WHERE p.id IN (${placeholders})
+  `).all(...productIds) as any[];
+  
+  return rows.map(row => {
+    let images = [];
+    try {
+      if (row.images) {
+        images = JSON.parse(row.images);
+      } else if (row.image) {
+        images = [row.image];
+      }
+    } catch (e) {
+      images = row.image ? [row.image] : [];
+    }
+
+    return {
+      ...row,
+      images,
+      isNew: Boolean(row.isNew ?? row.isnew),
+      isPremium: Boolean(row.isPremium ?? row.ispremium),
+      isBestSeller: Boolean(row.isBestSeller ?? row.isbestseller)
+    };
+  });
+}
+
+export async function addToWishlist(email: string, productId: string) {
+  await db.prepare('INSERT INTO wishlist (user_email, product_id) VALUES (?, ?) ON CONFLICT DO NOTHING').run(email, productId);
+  return { success: true };
+}
+
+export async function removeFromWishlist(email: string, productId: string) {
+  await db.prepare('DELETE FROM wishlist WHERE user_email = ? AND product_id = ?').run(email, productId);
+  return { success: true };
+}
+
+export async function isInWishlist(email: string, productId: string) {
+  const item = await db.prepare('SELECT 1 FROM wishlist WHERE user_email = ? AND product_id = ?').get(email, productId);
+  return !!item;
+}
+
 export async function getUserOrders(email: string) {
-  const orders = await db.prepare('SELECT * FROM orders WHERE user_email = ? ORDER BY created_at DESC').all(email) as any[];
+  const orders = await db.prepare(`
+    SELECT o.*, uv.voucher_code, v.discount as voucher_discount, v.type as voucher_type
+    FROM orders o
+    LEFT JOIN used_vouchers uv ON o.id = uv.order_id
+    LEFT JOIN vouchers v ON uv.voucher_code = v.code
+    WHERE o.user_email = ? 
+    ORDER BY o.created_at DESC
+  `).all(email) as any[];
   return await Promise.all(orders.map(async order => {
     const items = await db.prepare(`
       SELECT oi.*, p.name as product_name, p.name_en as product_name_en, p.image as product_image, p.collection, c.name_en AS collection_en
@@ -804,7 +878,11 @@ export async function getUserOrders(email: string) {
       LEFT JOIN collections c ON p.collection = c.name
       WHERE oi.order_id = ?
     `).all(order.id);
-    return { ...order, items };
+    return { 
+      ...order, 
+      items,
+      voucher_discount: order.voucher_discount ? Number(order.voucher_discount) : undefined
+    };
   }));
 }
 

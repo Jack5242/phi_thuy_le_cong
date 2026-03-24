@@ -133,7 +133,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-20">
       <div className="mb-10">
-        <h1 className="text-4xl font-extrabold text-jade-900 tracking-tight mb-2">{t('col.page.title')}</h1>
+        <h1 className="text-4xl font-extrabold text-teal-900 tracking-tight mb-2">{t('col.page.title')}</h1>
         {searchQuery ? (
           <p className="text-slate-500 max-w-2xl text-lg">{t('col.searchResult')} "{searchQuery}"</p>
         ) : (
@@ -145,7 +145,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
         {/* Sidebar Filters */}
         <aside className="w-full lg:w-64 flex flex-col gap-8">
           <div>
-            <h3 className="font-bold text-jade-900 mb-4 flex items-center gap-2">
+            <h3 className="font-bold text-teal-900 mb-4 flex items-center gap-2">
               <span className="material-symbols-outlined text-xl">category</span> {t('col.filter.category')}
             </h3>
             <div className="flex flex-col gap-1">
@@ -156,10 +156,10 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
                     setSelectedCategory(cat.id);
                     setCurrentPage(1);
                   }}
-                  className={`flex items-center justify-between px-3 py-2 rounded-sm text-sm transition-colors ${selectedCategory === cat.id ? 'bg-jade-900 text-white font-bold' : 'text-slate-600 hover:bg-jade-50 font-medium'}`}
+                  className={`flex items-center justify-between px-3 py-2 rounded-sm text-sm transition-colors ${selectedCategory === cat.id ? 'bg-teal-900 text-white font-bold' : 'text-slate-600 hover:bg-teal-50 font-medium'}`}
                 >
                   {cat.label}
-                  <span className={`text-xs px-2 py-0.5 rounded-sm ${selectedCategory === cat.id ? 'bg-white/20' : 'bg-jade-100'}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-sm ${selectedCategory === cat.id ? 'bg-white/20' : 'bg-teal-100'}`}>
                     {cat.id === ALL_CAT ? products.length : products.filter(p => p.category === cat.id).length}
                   </span>
                 </button>
@@ -168,19 +168,19 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
           </div>
 
           <div>
-            <h3 className="font-bold text-jade-900 mb-4 flex items-center gap-2">
+            <h3 className="font-bold text-teal-900 mb-4 flex items-center gap-2">
               <span className="material-symbols-outlined text-xl">palette</span> {t('col.filter.collection')}
             </h3>
             <div className="flex flex-wrap lg:flex-col gap-2">
               {collections.map(collection => (
                 <label key={collection} className="flex items-center gap-3 cursor-pointer group">
                   <input
-                    className="rounded border-slate-300 text-jade-900 focus:ring-jade-900"
+                    className="rounded border-slate-300 text-teal-900 focus:ring-teal-900"
                     type="checkbox"
                     checked={selectedCollections.includes(collection)}
                     onChange={() => handleCollectionChange(collection)}
                   />
-                  <span className="text-sm font-medium text-slate-700 group-hover:text-jade-900">
+                  <span className="text-sm font-medium text-slate-700 group-hover:text-teal-900">
                     {(() => {
                       const dbCol = dbCollections.find(c => c.name === collection);
                       if (dbCol) {
@@ -194,13 +194,13 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
             </div>
           </div>
           <div>
-            <h3 className="font-bold text-jade-900 mb-4 flex items-center gap-2">
+            <h3 className="font-bold text-teal-900 mb-4 flex items-center gap-2">
               <span className="material-symbols-outlined text-xl">payments</span> {t('col.filter.price')}
             </h3>
             <div className="px-2">
-              <div className="relative h-1.5 w-full bg-jade-100 rounded-full mb-6 mt-4 flex items-center">
+              <div className="relative h-1.5 w-full bg-teal-100 rounded-full mb-6 mt-4 flex items-center">
                 <div
-                  className="absolute h-full bg-jade-700 rounded-full"
+                  className="absolute h-full bg-teal-700 rounded-full"
                   style={{
                     left: `${((minPrice - priceMin) / (priceMax - priceMin)) * 100}%`,
                     right: `${100 - ((maxPrice - priceMin) / (priceMax - priceMin)) * 100}%`
@@ -217,7 +217,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
                     setMinPrice(value);
                     setCurrentPage(1);
                   }}
-                  className={`absolute w-full h-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-jade-700 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:-mt-1.5 [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-jade-700 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:-mt-1.5 ${minPrice > priceMax - (priceMax - priceMin) * 0.05 ? 'z-20' : 'z-10'}`}
+                  className={`absolute w-full h-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-teal-700 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:-mt-1.5 [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-teal-700 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:-mt-1.5 ${minPrice > priceMax - (priceMax - priceMin) * 0.05 ? 'z-20' : 'z-10'}`}
                 />
                 <input
                   type="range"
@@ -230,7 +230,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
                     setMaxPrice(value);
                     setCurrentPage(1);
                   }}
-                  className="absolute w-full h-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-jade-700 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:-mt-1.5 [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-jade-700 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:-mt-1.5 z-10"
+                  className="absolute w-full h-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-teal-700 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:-mt-1.5 [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-teal-700 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:-mt-1.5 z-10"
                 />
               </div>
               <div className="flex justify-between text-xs font-bold text-slate-500 mt-2">
@@ -243,7 +243,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
 
         {/* Product Grid */}
         <div className="flex-1">
-          <div className="flex items-center justify-between mb-6 border-b border-jade-100 pb-4">
+          <div className="flex items-center justify-between mb-6 border-b border-teal-100 pb-4">
             <span className="text-sm font-medium text-slate-500">
               {t('col.showing')} {filteredProducts.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} - {Math.min(currentPage * itemsPerPage, filteredProducts.length)}{t('col.of')}{filteredProducts.length}{t('col.items')}
             </span>
@@ -254,7 +254,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
                   setItemsPerPage(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-jade-100 bg-white text-jade-900 rounded-sm focus:ring-jade-900 focus:border-jade-900 outline-none"
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-teal-100 bg-white text-teal-900 rounded-sm focus:ring-teal-900 focus:border-teal-900 outline-none"
               >
                 <option value={12}>{t('col.show')} 12</option>
                 <option value={24}>{t('col.show')} 24</option>
@@ -266,7 +266,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
                   setSortOrder(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-jade-100 bg-white text-jade-900 rounded-sm focus:ring-jade-900 focus:border-jade-900 outline-none"
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-teal-100 bg-white text-teal-900 rounded-sm focus:ring-teal-900 focus:border-teal-900 outline-none"
               >
                 <option value="featured">{t('col.sort.featured')}</option>
                 <option value="price-asc">{t('col.sort.priceAsc')}</option>
@@ -294,7 +294,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="size-10 flex items-center justify-center border border-jade-100 text-slate-400 hover:bg-jade-50 transition-all rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="size-10 flex items-center justify-center border border-teal-100 text-slate-400 hover:bg-teal-50 transition-all rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="material-symbols-outlined">chevron_left</span>
               </button>
@@ -303,7 +303,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
                   <button
                     key={idx}
                     onClick={() => setCurrentPage(idx + 1)}
-                    className={`size-10 flex items-center justify-center rounded-sm transition-all ${currentPage === idx + 1 ? 'bg-jade-900 text-white font-bold' : 'border border-jade-100 text-slate-600 hover:bg-jade-50'}`}
+                    className={`size-10 flex items-center justify-center rounded-sm transition-all ${currentPage === idx + 1 ? 'bg-teal-900 text-white font-bold' : 'border border-teal-100 text-slate-600 hover:bg-teal-50'}`}
                   >
                     {idx + 1}
                   </button>
@@ -312,7 +312,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="size-10 flex items-center justify-center border border-jade-100 text-slate-400 hover:bg-jade-50 transition-all rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="size-10 flex items-center justify-center border border-teal-100 text-slate-400 hover:bg-teal-50 transition-all rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="material-symbols-outlined">chevron_right</span>
               </button>

@@ -45,17 +45,17 @@ export const BlogDetailView: React.FC<BlogDetailViewProps> = ({ blog, setView })
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center mt-20">
 
 
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white mb-6 leading-tight drop-shadow-lg">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-be-vietnam font-bold text-white mb-6 leading-tight drop-shadow-lg">
             {blog.title}
           </h1>
 
           <div className="flex flex-wrap items-center justify-center space-x-6 text-stone-200 text-sm font-medium">
             <div className="flex items-center bg-black/30 px-4 py-2 rounded-full backdrop-blur-sm">
-              <Calendar size={16} className="mr-2 text-jade-400" />
+              <Calendar size={16} className="mr-2 text-teal-400" />
               {new Date(blog.created_at).toLocaleDateString('vi-VN')}
             </div>
             <div className="flex items-center bg-black/30 px-4 py-2 rounded-full backdrop-blur-sm">
-              <User size={16} className="mr-2 text-jade-400" />
+              <User size={16} className="mr-2 text-teal-400" />
               Tác giả: <span className="text-white ml-1 font-bold">{blog.author}</span>
             </div>
           </div>
@@ -67,35 +67,35 @@ export const BlogDetailView: React.FC<BlogDetailViewProps> = ({ blog, setView })
         <div className="bg-white rounded-2xl shadow-xl border border-stone-100 p-8 md:p-12 lg:p-16">
 
           {/* Excerpt */}
-          <div className="text-xl md:text-2xl font-serif text-jade-900 italic font-medium leading-relaxed mb-10 border-l-4 border-jade-500 pl-6 bg-jade-50/50 py-4 pr-4 rounded-r-lg">
+          <div className="text-xl md:text-2xl font-serif text-teal-900 italic font-medium leading-relaxed mb-10 border-l-4 border-teal-500 pl-6 bg-teal-50/50 py-4 pr-4 rounded-r-lg">
             {blog.excerpt}
           </div>
 
           {/* HTML Content */}
           <div
-            className="prose prose-lg md:prose-xl prose-stone max-w-none 
-              prose-headings:font-serif prose-headings:text-jade-900 prose-headings:font-bold
+            className="prose prose-lg md:prose-xl prose-stone max-w-none break-words
+              prose-headings:font-be-vietnam prose-headings:text-teal-900 prose-headings:font-bold
               prose-p:text-stone-700 prose-p:leading-relaxed
-              prose-a:text-jade-600 prose-a:font-medium hover:prose-a:text-jade-800 transition-colors
+              prose-a:text-teal-600 prose-a:font-medium hover:prose-a:text-teal-800 transition-colors
               prose-img:rounded-xl prose-img:shadow-md
-              prose-blockquote:border-l-jade-500 prose-blockquote:bg-stone-50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:font-serif prose-blockquote:italic
+              prose-blockquote:border-l-teal-500 prose-blockquote:bg-stone-50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:font-serif prose-blockquote:italic
               prose-strong:text-stone-900
               prose-li:text-stone-700"
-            dangerouslySetInnerHTML={{ __html: blog.content }}
+            dangerouslySetInnerHTML={{ __html: blog.content ? blog.content.replace(/&nbsp;/g, ' ') : '' }}
           />
 
           {/* Footer Metadata */}
           <div className="mt-16 pt-8 border-t border-stone-200 flex flex-col sm:flex-row justify-between items-center">
             <div className="flex items-center space-x-4 mb-4 sm:mb-0">
               <span className="font-bold text-stone-900 uppercase tracking-widest text-xs">Chia sẻ bài viết</span>
-              <button onClick={handleShare} className="p-2 bg-stone-100 hover:bg-jade-600 text-stone-600 hover:text-white rounded-full transition-all duration-300">
+              <button onClick={handleShare} className="p-2 bg-stone-100 hover:bg-teal-600 text-stone-600 hover:text-white rounded-full transition-all duration-300">
                 <LinkIcon size={18} />
               </button>
             </div>
 
             <button
               onClick={() => setView('blog')}
-              className="group flex items-center font-bold text-jade-700 hover:text-jade-900 transition-colors"
+              className="group flex items-center font-bold text-teal-700 hover:text-teal-900 transition-colors"
             >
               Xem thêm bài viết
               <ArrowRight size={16} className="ml-2 transform group-hover:translate-x-1 transition-transform" />

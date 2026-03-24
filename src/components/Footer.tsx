@@ -19,7 +19,7 @@ export const Footer: React.FC<FooterProps> = ({ setView }) => {
   }, []);
 
   return (
-    <footer className="bg-jade-900 pt-16 pb-8 border-t border-white/10 text-white">
+    <footer className="bg-teal-900 pt-16 pb-8 border-t border-white/10 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
         <div className="col-span-1 md:col-span-1">
           <div className="flex items-center gap-2 text-white mb-6">

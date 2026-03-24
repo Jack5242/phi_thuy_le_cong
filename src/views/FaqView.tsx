@@ -22,20 +22,20 @@ export const FaqView: React.FC<FaqViewProps> = ({ setView }) => {
         { q: 'Tôi cần bảo quản ngọc như thế nào?', a: 'Lau sạch bằng vải mềm sau mỗi lần đeo, tránh hóa chất, nhiệt độ cao và bảo quản trong hộp nhung đi kèm.' },
       ]
     : [
-        { q: 'How do I know if the product is genuine jade?', a: 'All our products are evaluated by gemological experts and come with a certificate of authenticity. You can also request an in-store inspection.' },
+        { q: 'How do I know if the product is genuine teal?', a: 'All our products are evaluated by gemological experts and come with a certificate of authenticity. You can also request an in-store inspection.' },
         { q: 'What payment methods do you accept?', a: 'We support bank transfers (with QR code) and cash on delivery (COD).' },
         { q: 'How long does delivery take?', a: 'Typically 1–3 business days in Ho Chi Minh City and 3–5 days for other provinces.' },
         { q: 'Can I inspect the item before paying?', a: 'Yes. For COD orders, you have the right to inspect the product before making payment.' },
         { q: 'Can I return or exchange a product?', a: 'Yes, within 7 days if the item is in original condition or has a defect from our side. See our Return Policy page for details.' },
         { q: 'How do I place a bulk or custom order?', a: 'Please contact us directly through the Contact page or call our hotline for consultation and pricing.' },
-        { q: 'How should I care for my jade?', a: 'Wipe clean with a soft cloth after each use, avoid chemicals and high heat, and store in the accompanying velvet box.' },
+        { q: 'How should I care for my teal?', a: 'Wipe clean with a soft cloth after each use, avoid chemicals and high heat, and store in the accompanying velvet box.' },
       ];
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 pb-24">
       <div className="text-center mb-14">
-        <p className="text-sm font-bold tracking-widest uppercase text-jade-600 mb-3">FAQ</p>
-        <h1 className="text-4xl font-extrabold text-jade-900 mb-4">
+        <p className="text-sm font-bold tracking-widest uppercase text-teal-600 mb-3">FAQ</p>
+        <h1 className="text-4xl font-extrabold text-teal-900 mb-4">
           {isVi ? 'Câu Hỏi Thường Gặp' : 'Frequently Asked Questions'}
         </h1>
         <p className="text-slate-500 max-w-lg mx-auto text-sm">
@@ -47,18 +47,18 @@ export const FaqView: React.FC<FaqViewProps> = ({ setView }) => {
 
       <div className="space-y-3">
         {faqs.map((faq, i) => (
-          <div key={i} className="bg-white border border-jade-100 rounded-xl overflow-hidden shadow-sm">
+          <div key={i} className="bg-white border border-teal-100 rounded-xl overflow-hidden shadow-sm">
             <button
               className="w-full flex items-center justify-between px-6 py-5 text-left"
               onClick={() => setOpenIndex(openIndex === i ? null : i)}
             >
-              <span className="font-bold text-jade-900 pr-4">{faq.q}</span>
-              <span className={`material-symbols-outlined text-jade-600 flex-shrink-0 transition-transform duration-200 ${openIndex === i ? 'rotate-180' : ''}`}>
+              <span className="font-bold text-teal-900 pr-4">{faq.q}</span>
+              <span className={`material-symbols-outlined text-teal-600 flex-shrink-0 transition-transform duration-200 ${openIndex === i ? 'rotate-180' : ''}`}>
                 expand_more
               </span>
             </button>
             {openIndex === i && (
-              <div className="px-6 pb-5 text-slate-500 text-sm leading-relaxed border-t border-jade-50 pt-4">
+              <div className="px-6 pb-5 text-slate-500 text-sm leading-relaxed border-t border-teal-50 pt-4">
                 {faq.a}
               </div>
             )}
@@ -70,7 +70,7 @@ export const FaqView: React.FC<FaqViewProps> = ({ setView }) => {
         <p className="text-slate-500 text-sm mb-4">
           {isVi ? 'Không tìm thấy câu trả lời bạn cần?' : "Didn't find the answer you need?"}
         </p>
-        <button onClick={() => setView('contact')} className="bg-jade-900 text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-jade-800 transition-colors">
+        <button onClick={() => setView('contact')} className="bg-teal-900 text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-teal-800 transition-colors">
           {isVi ? 'Liên Hệ Chúng Tôi' : 'Contact Us'}
         </button>
       </div>

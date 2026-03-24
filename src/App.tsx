@@ -14,6 +14,7 @@ import { CollectionsView } from './views/CollectionsView';
 import { ProductDetailView } from './views/ProductDetailView';
 import { CartView } from './views/CartView';
 import { AuthView } from './views/AuthView';
+import { ZaloChatButton } from './components/ZaloChatButton';
 import { ProfileView } from './views/ProfileView';
 import { CheckoutView } from './views/CheckoutView';
 import { AdminView } from './views/AdminView';
@@ -31,6 +32,20 @@ import { PrivacyPolicyView } from './views/PrivacyPolicyView';
 import { TermsOfServiceView } from './views/TermsOfServiceView';
 import { motion, AnimatePresence } from 'motion/react';
 
+const generateSlug = (text: string) => {
+  return text.toString().toLowerCase()
+    .replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, 'a')
+    .replace(/[èéẹẻẽêềếệểễ]/g, 'e')
+    .replace(/[ìíịỉĩ]/g, 'i')
+    .replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, 'o')
+    .replace(/[ùúụủũưừứựửữ]/g, 'u')
+    .replace(/[ỳýỵỷỹ]/g, 'y')
+    .replace(/đ/g, 'd')
+    .replace(/[^a-z0-9 -]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+};
+
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(() => {
     const path = window.location.pathname;
@@ -40,6 +55,7 @@ const App: React.FC = () => {
     if (path === '/auth') return 'auth';
     if (path === '/profile') return 'profile';
     if (path === '/blog') return 'blog';
+    if (path.startsWith('/product/')) return 'detail';
     
     // Parse query params for direct links
     const params = new URLSearchParams(window.location.search);
@@ -80,6 +96,12 @@ const App: React.FC = () => {
       .then(data => {
         setProducts(data);
         setIsLoading(false);
+        const currentPath = window.location.pathname;
+        if (currentPath.startsWith('/product/')) {
+          const slugFromUrl = currentPath.replace('/product/', '');
+          const product = data.find((p: any) => generateSlug(p.name) === slugFromUrl);
+          if (product) setSelectedProduct(product);
+        }
       })
       .catch(err => {
         console.error('Failed to fetch products:', err);
@@ -89,7 +111,9 @@ const App: React.FC = () => {
 
   useEffect(() => {
     fetchProducts();
-    
+  }, []);
+
+  useEffect(() => {
     // Listen for popstate events (browser back/forward buttons)
     const handlePopState = () => {
       const currentPath = window.location.pathname;
@@ -99,6 +123,12 @@ const App: React.FC = () => {
       else if (currentPath === '/auth') setCurrentView('auth');
       else if (currentPath === '/profile') setCurrentView('profile');
       else if (currentPath === '/blog') setCurrentView('blog');
+      else if (currentPath.startsWith('/product/')) {
+        setCurrentView('detail');
+        const slugFromUrl = currentPath.replace('/product/', '');
+        const product = products.find(p => generateSlug(p.name) === slugFromUrl);
+        if (product) setSelectedProduct(product);
+      }
       else {
         const params = new URLSearchParams(window.location.search);
         const viewParam = params.get('view');
@@ -111,7 +141,7 @@ const App: React.FC = () => {
     
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+  }, [products]);
 
   // Update URL when view changes
   useEffect(() => {
@@ -120,6 +150,8 @@ const App: React.FC = () => {
     
     if (currentView === 'home') {
       path = '/';
+    } else if (currentView === 'detail' && selectedProduct) {
+      path = `/product/${generateSlug(selectedProduct.name)}`;
     } else if (currentView === 'blog-detail' && selectedBlog) {
       path = `/blog/${selectedBlog.slug}`;
     } else if (currentView === 'reset-password' || currentView === 'admin-reset-password' || currentView === 'feedback') {
@@ -132,14 +164,14 @@ const App: React.FC = () => {
     }
     
     const fullUrl = path + search;
-    if (window.location.pathname + window.location.search !== fullUrl && currentView !== 'detail' && currentView !== 'checkout') {
+    if (window.location.pathname + window.location.search !== fullUrl && currentView !== 'checkout') {
       window.history.pushState({}, '', fullUrl);
     }
     
     if (currentView !== 'reset-password' && currentView !== 'admin-reset-password' && currentView !== 'feedback') {
        window.scrollTo(0, 0);
     }
-  }, [currentView, selectedBlog]);
+  }, [currentView, selectedBlog, selectedProduct]);
 
   // Redirect from auth to profile if already logged in
   useEffect(() => {
@@ -241,7 +273,7 @@ const App: React.FC = () => {
     if (isLoading) {
       return (
         <div className="flex items-center justify-center h-screen">
-          <span className="material-symbols-outlined animate-spin text-4xl text-jade-900">progress_activity</span>
+          <span className="material-symbols-outlined animate-spin text-4xl text-teal-900">progress_activity</span>
         </div>
       );
     }
@@ -259,6 +291,8 @@ const App: React.FC = () => {
             setView={setCurrentView} 
             setSelectedProduct={setSelectedProduct}
             products={products}
+            user={user}
+            token={token}
           />
         ) : <HomeView setView={setCurrentView} setSelectedProduct={setSelectedProduct} products={products} />;
       case 'cart':
@@ -305,6 +339,7 @@ const App: React.FC = () => {
             user={user} 
             token={token} 
             onUpdateUser={handleUpdateUser}
+            setSelectedProduct={setSelectedProduct}
           />
         ) : <AuthView setView={setCurrentView} onLogin={handleLogin} />;
       case 'blog':
@@ -347,6 +382,7 @@ const App: React.FC = () => {
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           setSelectedCategory={setSelectedCategory}
+          user={user}
         />
       )}
       
@@ -372,6 +408,8 @@ const App: React.FC = () => {
           onClose={() => setShowToast(false)} 
         />
       )}
+      
+      {currentView !== 'admin' && currentView !== 'admin-reset-password' && <ZaloChatButton />}
     </div>
   );
 };

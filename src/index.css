@@ -2,11 +2,12 @@
 
 @theme {
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
-  --color-jade-900: #1E7A56;
-  --color-jade-800: #14523a;
-  --color-jade-700: #196648;
-  --color-jade-100: #dcf2e9;
-  --color-jade-50: #edf9f4;
+  --font-be-vietnam: "Be Vietnam Pro", sans-serif;
+  --color-teal-900: #008080;
+  --color-teal-800: #006666;
+  --color-teal-700: #004d4d;
+  --color-teal-100: #ccffff;
+  --color-teal-50: #e6ffff;
 }
 
 @layer base {

@@ -2,7 +2,7 @@ import './env.js';
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import { PRODUCTS } from './src/constants';
-import db, { initDb, seedProducts, getAllProducts, createOrder, addProduct, updateProduct, deleteProduct, getAllOrders, updateOrderStatus, deleteOrder, getAllVouchers, addVoucher, updateVoucher, deleteVoucher, getVoucherByCode, createUser, getUserByEmail, getUserById, updateUserProfile, getUserOrders, getAllPromotions, addPromotion, updatePromotion, deletePromotion, hasUserUsedVoucher, getUserTotalSpent, logSearchKeyword, getSearchAnalytics, clearSearchAnalytics, getAllBlogs, getBlogBySlug, getBlogById, addBlog, updateBlog, deleteBlog, createEmailVerification, verifyEmailCode, markUserVerified, createPasswordResetToken, verifyPasswordResetToken, updatePassword, saveOrderFeedback, getOrderFeedback, getAdminByEmail, getAdminById, getAllAdmins, addAdmin, updateAdminCredentials, updateAdminPassword, deleteAdmin, getBankSettings, updateBankSettings, getSocialSettings, updateSocialSettings, getContactSettings, updateContactSettings, getFeaturedBlogs, getRegistrationVoucherDiscount, updateRegistrationVoucherDiscount, getAllAvailableVouchersForUser, getAllCollections, addCollection, updateCollection, deleteCollection } from './src/db';
+import db, { initDb, seedProducts, getAllProducts, createOrder, addProduct, updateProduct, deleteProduct, getAllOrders, updateOrderStatus, deleteOrder, getAllVouchers, addVoucher, updateVoucher, deleteVoucher, getVoucherByCode, createUser, getUserByEmail, getUserById, updateUserProfile, getUserOrders, getAllPromotions, addPromotion, updatePromotion, deletePromotion, hasUserUsedVoucher, getUserTotalSpent, logSearchKeyword, getSearchAnalytics, clearSearchAnalytics, getAllBlogs, getBlogBySlug, getBlogById, addBlog, updateBlog, deleteBlog, createEmailVerification, verifyEmailCode, markUserVerified, createPasswordResetToken, verifyPasswordResetToken, updatePassword, saveOrderFeedback, getOrderFeedback, getAdminByEmail, getAdminById, getAllAdmins, addAdmin, updateAdminCredentials, updateAdminPassword, deleteAdmin, getBankSettings, updateBankSettings, getSocialSettings, updateSocialSettings, getContactSettings, updateContactSettings, getFeaturedBlogs, getRegistrationVoucherDiscount, updateRegistrationVoucherDiscount, getAllAvailableVouchersForUser, getAllCollections, addCollection, updateCollection, deleteCollection, getWishlist, addToWishlist, removeFromWishlist, isInWishlist } from './src/db';
 import { sendVerificationEmail, sendPasswordResetEmail, sendFeedbackRequestEmail, sendWelcomeVoucherEmail } from './email';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -169,7 +169,7 @@ async function startServer() {
 
   app.post('/api/orders', async (req, res) => {
     try {
-      const { email, name, phone, address, notes, total, items, receipt, voucher_code, voucher_id } = req.body;
+      const { id, email, name, phone, address, notes, total, items, receipt, voucher_code, voucher_id } = req.body;
       const orderEmail = email || 'guest@example.com';
 
       if (!validatePhone(phone)) {
@@ -197,7 +197,7 @@ async function startServer() {
         }
       }
 
-      const orderId = `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
+      const orderId = id || `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
       const result = await createOrder({
         id: orderId,
         email: orderEmail,
@@ -285,7 +285,7 @@ async function startServer() {
       }
 
       const token = jwt.sign({ id: userId, email }, JWT_SECRET, { expiresIn: '24h' });
-      res.json({ token, user: { id: userId, email, name, is_verified: true } });
+      res.json({ token, user: { id: userId, email, name, is_verified: true, phone: '', address: '' } });
     } catch (error) {
       res.status(500).json({ error: 'Đăng ký người dùng thất bại' });
     }
@@ -347,7 +347,7 @@ async function startServer() {
       }
 
       const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
-      res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
+      res.json({ token, user: { id: user.id, email: user.email, name: user.name, phone: user.phone || '', address: user.address || '' } });
     } catch (error) {
       res.status(500).json({ error: 'Đăng nhập thất bại' });
     }
@@ -477,6 +477,42 @@ async function startServer() {
       res.json(orders);
     } catch (error) {
       res.status(500).json({ error: 'Lấy danh sách đơn hàng thất bại' });
+    }
+  });
+
+  app.get('/api/users/wishlist', authenticateToken, async (req: any, res: any) => {
+    try {
+      const wishlist = await getWishlist(req.user.email);
+      res.json(wishlist);
+    } catch (error) {
+      res.status(500).json({ error: 'Lấy danh sách yêu thích thất bại' });
+    }
+  });
+
+  app.post('/api/users/wishlist/:productId', authenticateToken, async (req: any, res: any) => {
+    try {
+      await addToWishlist(req.user.email, req.params.productId);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Thêm vào danh sách yêu thích thất bại' });
+    }
+  });
+
+  app.delete('/api/users/wishlist/:productId', authenticateToken, async (req: any, res: any) => {
+    try {
+      await removeFromWishlist(req.user.email, req.params.productId);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Xóa khỏi danh sách yêu thích thất bại' });
+    }
+  });
+
+  app.get('/api/users/wishlist/:productId/check', authenticateToken, async (req: any, res: any) => {
+    try {
+      const inWishlist = await isInWishlist(req.user.email, req.params.productId);
+      res.json({ inWishlist });
+    } catch (error) {
+      res.status(500).json({ error: 'Kiểm tra trạng thái yêu thích thất bại' });
     }
   });
 

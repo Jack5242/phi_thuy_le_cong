@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View } from '../types';
+import { View, User } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 
 interface NavbarProps {
@@ -10,9 +10,10 @@ interface NavbarProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   setSelectedCategory: (category: string) => void;
+  user?: User | null;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount, isLoggedIn, searchQuery, setSearchQuery, setSelectedCategory }) => {
+export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount, isLoggedIn, searchQuery, setSearchQuery, setSelectedCategory, user }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isProductDropdownOpen, setIsProductDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -34,21 +35,33 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
 
   return (
     <header 
-      className={`sticky top-0 z-50 transition-all duration-700 border-b ${isScrolled ? 'opacity-0 pointer-events-none' : 'bg-jade-900 border-white/10 shadow-xl opacity-100'}`}
+      className={`sticky top-0 z-50 transition-all duration-700 border-b ${isScrolled ? 'opacity-0 pointer-events-none' : 'bg-teal-900 border-white/10 shadow-xl opacity-100'}`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* First Row: Search, Centered Brand, and Icons */}
         <div className={`flex items-center justify-between transition-all duration-500 border-b border-white/5 ${isScrolled ? 'py-2' : 'py-4'}`}>
           {/* Mobile Menu Button (Left on Mobile) */}
-          <div className="flex-1 flex md:hidden justify-start">
+          <div className="flex-1 flex md:hidden justify-start items-center gap-2">
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-white hover:text-jade-200 transition-colors"
+              className="flex items-center justify-center group min-w-[40px] hover:scale-110 transition-transform duration-300"
             >
-              <span className="material-symbols-outlined text-3xl">
-                {isMobileMenuOpen ? 'close' : 'menu'}
-              </span>
+              <div className="flex items-center justify-center h-8">
+                <span className="material-symbols-outlined text-3xl text-white group-hover:text-teal-200 transition-colors leading-none drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
+                  {isMobileMenuOpen ? 'close' : 'menu'}
+                </span>
+              </div>
             </button>
+            {currentView !== 'admin' && (
+              <button 
+                onClick={() => setLanguage(language === 'vi' ? 'en' : 'vi')}
+                className="flex items-center justify-center group min-w-[40px] hover:scale-110 transition-transform duration-300 gap-1"
+              >
+                <div className="flex items-center justify-center h-8">
+                  <span className="material-symbols-outlined text-2xl text-white group-hover:text-teal-200 transition-colors leading-none drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">language</span>
+                </div>
+              </button>
+            )}
           </div>
 
           {/* Search Bar (Left on Desktop) */}
@@ -80,7 +93,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
             className="flex flex-col items-center cursor-pointer group px-4 md:px-8"
             onClick={() => setView('home')}
           >
-            <h2 className="text-2xl md:text-3xl font-serif italic tracking-widest uppercase leading-none text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] group-hover:text-jade-200 transition-colors duration-300 text-center">
+            <h2 className="text-2xl md:text-3xl font-serif italic tracking-widest uppercase leading-none text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] group-hover:text-teal-200 transition-colors duration-300 text-center">
               Phỉ Thúy Lê Công
             </h2>
             <div className="flex items-center gap-3 w-full mt-2">
@@ -95,12 +108,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
             {currentView !== 'admin' && (
               <button 
                 onClick={() => setLanguage(language === 'vi' ? 'en' : 'vi')}
-                className="flex flex-col items-center justify-center group min-w-[40px] md:min-w-[60px] hover:scale-110 transition-transform duration-300"
+                className="hidden md:flex flex-col items-center justify-center group min-w-[40px] md:min-w-[60px] hover:scale-110 transition-transform duration-300"
               >
                 <div className="flex items-center justify-center h-8">
-                  <span className="material-symbols-outlined text-2xl md:text-3xl text-white group-hover:text-jade-200 transition-colors leading-none drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">language</span>
+                  <span className="material-symbols-outlined text-2xl md:text-3xl text-white group-hover:text-teal-200 transition-colors leading-none drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">language</span>
                 </div>
-                <span className="hidden md:block text-[10px] font-extrabold uppercase tracking-tighter text-white group-hover:text-jade-200 transition-colors mt-1 leading-none">{language === 'vi' ? 'EN' : 'VI'}</span>
+                <span className="hidden md:block text-[10px] font-extrabold uppercase tracking-tighter text-white group-hover:text-teal-200 transition-colors mt-1 leading-none">{language === 'vi' ? 'VI' : 'EN'}</span>
               </button>
             )}
             <button 
@@ -108,23 +121,25 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
               className="flex flex-col items-center justify-center group relative min-w-[40px] md:min-w-[60px] hover:scale-110 transition-transform duration-300"
             >
               <div className="relative flex items-center justify-center h-8">
-                <span className="material-symbols-outlined text-2xl md:text-3xl text-white group-hover:text-jade-200 transition-colors leading-none drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">shopping_bag</span>
+                <span className="material-symbols-outlined text-2xl md:text-3xl text-white group-hover:text-teal-200 transition-colors leading-none drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">shopping_bag</span>
                 {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-white text-jade-900 text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)] border border-jade-900/10">
+                  <span className="absolute -top-1.5 -right-1.5 bg-white text-teal-900 text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)] border border-teal-900/10">
                     {cartCount}
                   </span>
                 )}
               </div>
-              <span className="hidden md:block text-[10px] font-extrabold uppercase tracking-tighter text-white group-hover:text-jade-200 transition-colors mt-1 leading-none">{t('nav.cart')}</span>
+              <span className="hidden md:block text-[10px] font-extrabold uppercase tracking-tighter text-white group-hover:text-teal-200 transition-colors mt-1 leading-none">{t('nav.cart')}</span>
             </button>
             <button 
               onClick={() => setView(isLoggedIn ? 'profile' : 'auth')}
               className="flex flex-col items-center justify-center group min-w-[40px] md:min-w-[60px] hover:scale-110 transition-transform duration-300"
             >
               <div className="flex items-center justify-center h-8">
-                <span className="material-symbols-outlined text-2xl md:text-3xl text-white group-hover:text-jade-200 transition-colors leading-none drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">account_circle</span>
+                <span className="material-symbols-outlined text-2xl md:text-3xl text-white group-hover:text-teal-200 transition-colors leading-none drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">account_circle</span>
               </div>
-              <span className="hidden md:block text-[10px] font-extrabold uppercase tracking-tighter text-white group-hover:text-jade-200 transition-colors mt-1 leading-none">{t('nav.account')}</span>
+              <span className="hidden md:block text-[10px] font-extrabold uppercase tracking-tighter text-white group-hover:text-teal-200 transition-colors mt-1 leading-none max-w-[70px] truncate text-center">
+                {isLoggedIn && user?.name ? user.name : t('nav.account')}
+              </span>
             </button>
           </div>
         </div>
@@ -163,7 +178,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
               </button>
               
               {isProductDropdownOpen && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 w-64 bg-jade-900 border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] py-4 z-50 backdrop-blur-md">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 w-64 bg-teal-900 border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] py-4 z-50 backdrop-blur-md">
                   {categories.map((cat) => (
                     <button
                       key={cat.id}
@@ -199,7 +214,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full bg-jade-900 border-b border-white/10 shadow-2xl z-50">
+        <div className="md:hidden absolute top-full left-0 w-full bg-teal-900 border-b border-white/10 shadow-2xl z-50">
           <div className="flex flex-col py-4">
             <div className="px-6 py-4 border-b border-white/10">
               <div className="flex items-center bg-white/10 px-4 py-2 rounded-full border border-white/20">

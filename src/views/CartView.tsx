@@ -141,12 +141,12 @@ export const CartView: React.FC<CartViewProps> = ({
   if (cartItems.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col items-center justify-center py-20 text-center">
-        <span className="material-symbols-outlined text-6xl text-jade-100 mb-6">shopping_bag</span>
-        <h2 className="text-2xl font-bold text-jade-900 mb-2">{t('cart.empty.title')}</h2>
+        <span className="material-symbols-outlined text-6xl text-teal-100 mb-6">shopping_bag</span>
+        <h2 className="text-2xl font-bold text-teal-900 mb-2">{t('cart.empty.title')}</h2>
         <p className="text-slate-500 mb-8">{t('cart.empty.desc')}</p>
         <button 
           onClick={() => setView('collections')}
-          className="bg-jade-900 text-white px-8 py-4 font-bold hover:opacity-90 transition-all rounded-sm"
+          className="bg-teal-900 text-white px-8 py-4 font-bold hover:opacity-90 transition-all rounded-sm"
         >
           {t('cart.empty.btn')}
         </button>
@@ -156,70 +156,70 @@ export const CartView: React.FC<CartViewProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-20">
-      <h1 className="text-3xl font-extrabold text-jade-900 mb-10">{t('cart.title')}</h1>
+      <h1 className="text-3xl font-extrabold text-teal-900 mb-10">{t('cart.title')}</h1>
       
       {checkoutError && <div className="mb-6 p-4 bg-red-50 text-red-600 text-sm rounded-sm text-center font-bold border border-red-100">{checkoutError}</div>}
 
       <form onSubmit={handleCheckoutSubmit} className="flex flex-col lg:flex-row gap-12">
         {/* User Info Form */}
         <div className="flex-1 space-y-6">
-          <div className="bg-white p-8 rounded-sm border border-jade-100">
-            <h2 className="text-xl font-bold text-jade-900 mb-6">{t('checkout.details.title')}</h2>
+          <div className="bg-white p-8 rounded-sm border border-teal-100">
+            <h2 className="text-xl font-bold text-teal-900 mb-6">{t('checkout.details.title')}</h2>
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-bold text-jade-900 mb-2">{t('checkout.details.name')}</label>
+                <label className="block text-sm font-bold text-teal-900 mb-2">{t('checkout.details.name')}</label>
                 <input 
                   type="text" 
                   required
                   value={checkoutFormData.name}
                   onChange={(e) => setCheckoutFormData({...checkoutFormData, name: e.target.value})}
-                  className="w-full px-4 py-3 border border-jade-200 rounded-sm focus:outline-none focus:border-jade-500"
+                  className="w-full px-4 py-3 border border-teal-200 rounded-sm focus:outline-none focus:border-teal-500"
                   placeholder={t('checkout.details.name.placeholder')}
                 />
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-bold text-jade-900 mb-2">{t('checkout.details.phone')}</label>
+                  <label className="block text-sm font-bold text-teal-900 mb-2">{t('checkout.details.phone')}</label>
                   <input 
                     type="tel" 
                     required
                     value={checkoutFormData.phone}
                     onChange={(e) => setCheckoutFormData({...checkoutFormData, phone: e.target.value})}
-                    className="w-full px-4 py-3 border border-jade-200 rounded-sm focus:outline-none focus:border-jade-500"
+                    className="w-full px-4 py-3 border border-teal-200 rounded-sm focus:outline-none focus:border-teal-500"
                     placeholder={t('checkout.details.phone.placeholder')}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-jade-900 mb-2">{t('checkout.details.email')}</label>
+                  <label className="block text-sm font-bold text-teal-900 mb-2">{t('checkout.details.email')}</label>
                   <input 
                     type="email" 
                     value={user ? user.email : checkoutFormData.email}
                     onChange={(e) => setCheckoutFormData({...checkoutFormData, email: e.target.value})}
                     disabled={!!user}
-                    className={`w-full px-4 py-3 border border-jade-200 rounded-sm focus:outline-none focus:border-jade-500 ${user ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
+                    className={`w-full px-4 py-3 border border-teal-200 rounded-sm focus:outline-none focus:border-teal-500 ${user ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
                     placeholder={t('checkout.details.email.placeholder')}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-jade-900 mb-2">{t('checkout.details.address')}</label>
+                <label className="block text-sm font-bold text-teal-900 mb-2">{t('checkout.details.address')}</label>
                 <textarea 
                   required
                   value={checkoutFormData.address}
                   onChange={(e) => setCheckoutFormData({...checkoutFormData, address: e.target.value})}
-                  className="w-full px-4 py-3 border border-jade-200 rounded-sm focus:outline-none focus:border-jade-500 min-h-[100px]"
+                  className="w-full px-4 py-3 border border-teal-200 rounded-sm focus:outline-none focus:border-teal-500 min-h-[100px]"
                   placeholder={t('checkout.details.address.placeholder')}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-jade-900 mb-2">{t('checkout.details.notes') || 'Special Instructions'}</label>
+                <label className="block text-sm font-bold text-teal-900 mb-2">{t('checkout.details.notes') || 'Special Instructions'}</label>
                 <textarea 
                   value={checkoutFormData.notes}
                   onChange={(e) => setCheckoutFormData({...checkoutFormData, notes: e.target.value})}
-                  className="w-full px-4 py-3 border border-jade-200 rounded-sm focus:outline-none focus:border-jade-500 min-h-[80px]"
+                  className="w-full px-4 py-3 border border-teal-200 rounded-sm focus:outline-none focus:border-teal-500 min-h-[80px]"
                   placeholder={t('checkout.details.notes.placeholder') || 'Any special requests for your order?'}
                 />
               </div>
@@ -230,7 +230,7 @@ export const CartView: React.FC<CartViewProps> = ({
             <button 
               type="button"
               onClick={() => setView('collections')}
-              className="text-jade-900 font-bold flex items-center gap-2 hover:underline"
+              className="text-teal-900 font-bold flex items-center gap-2 hover:underline"
             >
               <span className="material-symbols-outlined text-sm">arrow_back</span>
               {t('cart.continue')}
@@ -240,20 +240,20 @@ export const CartView: React.FC<CartViewProps> = ({
 
         {/* Summary */}
         <div className="w-full lg:w-[500px]">
-          <div className="bg-jade-50 p-8 rounded-sm sticky top-32">
-            <h2 className="text-xl font-bold text-jade-900 mb-6">{t('cart.summary.title')}</h2>
+          <div className="bg-teal-50 p-8 rounded-sm sticky top-32">
+            <h2 className="text-xl font-bold text-teal-900 mb-6">{t('cart.summary.title')}</h2>
             
             {/* Cart Items List */}
             <div className="space-y-4 mb-6 max-h-64 overflow-y-auto pr-2">
               {cartItems.map(item => (
-                <div key={item.product.id} className="flex gap-4 bg-white p-3 rounded-sm border border-jade-100">
-                  <div className="w-16 h-16 bg-jade-50 rounded-sm overflow-hidden flex-shrink-0">
+                <div key={item.product.id} className="flex gap-4 bg-white p-3 rounded-sm border border-teal-100">
+                  <div className="w-16 h-16 bg-teal-50 rounded-sm overflow-hidden flex-shrink-0">
                     <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 flex flex-col justify-between">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-bold text-sm text-jade-900 line-clamp-1">{item.product.name}</h3>
+                        <h3 className="font-bold text-sm text-teal-900 line-clamp-1">{item.product.name}</h3>
                         <p className="text-xs text-slate-500">{item.product.category}</p>
                       </div>
                       <button 
@@ -265,24 +265,24 @@ export const CartView: React.FC<CartViewProps> = ({
                       </button>
                     </div>
                     <div className="flex justify-between items-end mt-2">
-                      <div className="flex items-center border border-jade-100 rounded-sm">
+                      <div className="flex items-center border border-teal-100 rounded-sm">
                         <button 
                           type="button"
                           onClick={() => updateQuantity(item.product.id, Math.max(1, item.quantity - 1))}
-                          className="px-1 py-0.5 hover:bg-jade-50 transition-colors"
+                          className="px-1 py-0.5 hover:bg-teal-50 transition-colors"
                         >
                           <span className="material-symbols-outlined text-[10px]">remove</span>
                         </button>
-                        <span className="w-6 text-center text-xs font-bold text-jade-900">{item.quantity}</span>
+                        <span className="w-6 text-center text-xs font-bold text-teal-900">{item.quantity}</span>
                         <button 
                           type="button"
                           onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                          className="px-1 py-0.5 hover:bg-jade-50 transition-colors"
+                          className="px-1 py-0.5 hover:bg-teal-50 transition-colors"
                         >
                           <span className="material-symbols-outlined text-[10px]">add</span>
                         </button>
                       </div>
-                      <p className="font-bold text-sm text-jade-900">{(item.product.price * item.quantity).toLocaleString()} VND</p>
+                      <p className="font-bold text-sm text-teal-900">{(item.product.price * item.quantity).toLocaleString()} VND</p>
                     </div>
                   </div>
                 </div>
@@ -290,13 +290,13 @@ export const CartView: React.FC<CartViewProps> = ({
             </div>
 
             {/* Voucher Section */}
-            <div className="mb-6 pb-6 border-b border-jade-200">
+            <div className="mb-6 pb-6 border-b border-teal-200">
               <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-bold text-jade-900">{t('cart.voucher.label')}</label>
+                <label className="block text-sm font-bold text-teal-900">{t('cart.voucher.label')}</label>
                 <button 
                   type="button" 
                   onClick={handleOpenVoucherModal}
-                  className="text-sm text-jade-600 hover:text-jade-800 font-medium flex items-center gap-1"
+                  className="text-sm text-teal-600 hover:text-teal-800 font-medium flex items-center gap-1"
                 >
                   <span className="material-symbols-outlined text-[16px]">local_activity</span>
                   {t('cart.voucher.view')}
@@ -308,14 +308,14 @@ export const CartView: React.FC<CartViewProps> = ({
                   value={voucherCode}
                   onChange={(e) => setVoucherCode(e.target.value)}
                   placeholder={t('cart.voucher.placeholder')} 
-                  className="flex-1 px-3 py-2 border border-jade-200 rounded-sm text-sm focus:outline-none focus:border-jade-500"
+                  className="flex-1 px-3 py-2 border border-teal-200 rounded-sm text-sm focus:outline-none focus:border-teal-500"
                   disabled={!!appliedVoucher}
                 />
                 {!appliedVoucher ? (
                   <button 
                     type="button"
                     onClick={applyVoucher}
-                    className="bg-jade-900 text-white px-4 py-2 rounded-sm text-sm font-bold hover:bg-jade-800 transition-colors"
+                    className="bg-teal-900 text-white px-4 py-2 rounded-sm text-sm font-bold hover:bg-teal-800 transition-colors"
                   >
                     {t('cart.voucher.apply')}
                   </button>
@@ -330,28 +330,28 @@ export const CartView: React.FC<CartViewProps> = ({
                 )}
               </div>
               {voucherError && <p className="text-red-500 text-xs">{voucherError}</p>}
-              {appliedVoucher && <p className="text-jade-600 text-xs font-medium">{t('cart.voucher.success')}</p>}
+              {appliedVoucher && <p className="text-teal-600 text-xs font-medium">{t('cart.voucher.success')}</p>}
             </div>
 
-            <div className="space-y-4 mb-6 pb-6 border-b border-jade-200">
+            <div className="space-y-4 mb-6 pb-6 border-b border-teal-200">
               <div className="flex justify-between text-slate-600">
                 <span>{t('cart.summary.subtotal')}</span>
-                <span className="font-bold text-jade-900">{subtotal.toLocaleString()} VND</span>
+                <span className="font-bold text-teal-900">{subtotal.toLocaleString()} VND</span>
               </div>
               {appliedVoucher && (
-                <div className="flex justify-between text-jade-600">
+                <div className="flex justify-between text-teal-600">
                   <span>{t('cart.summary.discount')} ({appliedVoucher.code})</span>
                   <span className="font-bold">- {discountAmount.toLocaleString()} VND</span>
                 </div>
               )}
             </div>
-            <div className="flex justify-between text-lg font-extrabold text-jade-900 mb-8">
+            <div className="flex justify-between text-lg font-extrabold text-teal-900 mb-8">
               <span>{t('cart.summary.total')}</span>
               <span>{total.toLocaleString()} VND</span>
             </div>
             <button 
               type="submit"
-              className="w-full bg-jade-900 text-white font-bold py-4 hover:opacity-90 transition-all rounded-sm mb-4"
+              className="w-full bg-teal-900 text-white font-bold py-4 hover:opacity-90 transition-all rounded-sm mb-4"
             >
               {t('cart.checkout')}
             </button>
@@ -368,7 +368,7 @@ export const CartView: React.FC<CartViewProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[80vh] flex flex-col">
             <div className="flex justify-between items-center p-4 border-b border-gray-100">
-              <h3 className="text-xl font-bold text-jade-900 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-teal-900 flex items-center gap-2">
                 <span className="material-symbols-outlined">local_activity</span>
                 {t('cart.voucher.modal.title')}
               </h3>
@@ -380,17 +380,17 @@ export const CartView: React.FC<CartViewProps> = ({
             <div className="p-4 overflow-y-auto flex-1 bg-gray-50">
               {isLoadingVouchers ? (
                 <div className="flex justify-center py-8">
-                  <span className="material-symbols-outlined animate-spin text-jade-600 text-3xl">progress_activity</span>
+                  <span className="material-symbols-outlined animate-spin text-teal-600 text-3xl">progress_activity</span>
                 </div>
               ) : availableVouchers.length > 0 ? (
                 <div className="space-y-3">
                   {availableVouchers.map(voucher => {
                     const isEligible = voucher.min_user_spending ? false : true; // Could do more complex eligibility here if needed before applying
                     return (
-                      <div key={voucher.id} className="bg-white border text-left border-jade-100 rounded-lg p-4 shadow-sm hover:shadow transition-shadow flex justify-between items-center">
+                      <div key={voucher.id} className="bg-white border text-left border-teal-100 rounded-lg p-4 shadow-sm hover:shadow transition-shadow flex justify-between items-center">
                         <div>
-                          <div className="font-bold text-jade-900 text-lg mb-1">{voucher.code}</div>
-                          <div className="text-sm font-medium text-jade-700 mb-1">
+                          <div className="font-bold text-teal-900 text-lg mb-1">{voucher.code}</div>
+                          <div className="text-sm font-medium text-teal-700 mb-1">
                             {t('cart.voucher.modal.off')} {voucher.type === 'percent' ? `${voucher.discount * 100}%` : `${voucher.discount.toLocaleString()} đ`}
                           </div>
                           {voucher.min_user_spending > 0 && (
@@ -404,7 +404,7 @@ export const CartView: React.FC<CartViewProps> = ({
                             executeApplyVoucherCode(voucher.code);
                             setIsVoucherModalOpen(false);
                           }}
-                          className="bg-jade-100 text-jade-800 hover:bg-jade-200 px-4 py-2 rounded-md font-bold text-sm transition-colors whitespace-nowrap ml-4"
+                          className="bg-teal-100 text-teal-800 hover:bg-teal-200 px-4 py-2 rounded-md font-bold text-sm transition-colors whitespace-nowrap ml-4"
                         >
                           {t('cart.voucher.modal.use')}
                         </button>

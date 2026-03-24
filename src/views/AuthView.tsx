@@ -109,9 +109,9 @@ export const AuthView: React.FC<AuthViewProps> = ({ setView, onLogin }) => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex justify-center">
-      <div className="w-full max-w-md bg-white border border-jade-100 p-10 rounded-sm shadow-sm">
+      <div className="w-full max-w-md bg-white border border-teal-100 p-10 rounded-sm shadow-sm">
         <div className="text-center mb-10">
-          <h2 className="text-2xl font-extrabold text-jade-900">
+          <h2 className="text-2xl font-extrabold text-teal-900">
             {isForgotPassword ? t('auth.forgot.title') : (isLogin ? t('auth.login.title') : (isVerifying ? t('auth.verify.title') : t('auth.register.title')))}
           </h2>
           <p className="text-slate-500 mt-2">
@@ -127,7 +127,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ setView, onLogin }) => {
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('auth.email')}</label>
               <input 
-                className="w-full px-4 py-3 bg-jade-50 border-none focus:ring-2 focus:ring-jade-900 rounded-sm text-jade-900" 
+                className="w-full px-4 py-3 bg-teal-50 border-none focus:ring-2 focus:ring-teal-900 rounded-sm text-teal-900" 
                 placeholder="email@vidu.com" 
                 type="email"
                 value={email}
@@ -143,13 +143,13 @@ export const AuthView: React.FC<AuthViewProps> = ({ setView, onLogin }) => {
               <div className="flex justify-between">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('auth.password')}</label>
                 {isLogin && (
-                  <button type="button" onClick={() => { setIsForgotPassword(true); resetForms(); }} className="text-xs font-bold text-jade-700 hover:underline">
+                  <button type="button" onClick={() => { setIsForgotPassword(true); resetForms(); }} className="text-xs font-bold text-teal-700 hover:underline">
                     {t('auth.forgot')}
                   </button>
                 )}
               </div>
               <input 
-                className="w-full px-4 py-3 bg-jade-50 border-none focus:ring-2 focus:ring-jade-900 rounded-sm text-jade-900" 
+                className="w-full px-4 py-3 bg-teal-50 border-none focus:ring-2 focus:ring-teal-900 rounded-sm text-teal-900" 
                 placeholder="••••••••" 
                 type="password"
                 value={password}
@@ -163,7 +163,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ setView, onLogin }) => {
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('auth.confirmPassword')}</label>
               <input 
-                className="w-full px-4 py-3 bg-jade-50 border-none focus:ring-2 focus:ring-jade-900 rounded-sm text-jade-900" 
+                className="w-full px-4 py-3 bg-teal-50 border-none focus:ring-2 focus:ring-teal-900 rounded-sm text-teal-900" 
                 placeholder="••••••••" 
                 type="password"
                 value={confirmPassword}
@@ -177,7 +177,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ setView, onLogin }) => {
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('auth.verify.label')}</label>
               <input 
-                className="w-full px-4 py-3 bg-jade-50 border-none focus:ring-2 focus:ring-jade-900 rounded-sm text-jade-900text-center tracking-[0.5em] font-bold" 
+                className="w-full px-4 py-3 bg-teal-50 border-none focus:ring-2 focus:ring-teal-900 rounded-sm text-teal-900text-center tracking-[0.5em] font-bold" 
                 placeholder="000000" 
                 type="text"
                 maxLength={6}
@@ -191,18 +191,18 @@ export const AuthView: React.FC<AuthViewProps> = ({ setView, onLogin }) => {
           <button 
             type="submit"
             disabled={loading}
-            className="w-full bg-jade-900 text-white font-bold py-4 hover:opacity-90 transition-all rounded-sm mt-4 disabled:opacity-50"
+            className="w-full bg-teal-900 text-white font-bold py-4 hover:opacity-90 transition-all rounded-sm mt-4 disabled:opacity-50"
           >
             {loading ? t('auth.loading') : (isForgotPassword ? t('auth.forgot.btn') : (isLogin ? t('auth.login.btn') : (isVerifying ? t('auth.verify.btn') : t('auth.verify.sendBtn'))))}
           </button>
         </form>
 
-        <div className="mt-8 pt-8 border-t border-jade-50 text-center">
+        <div className="mt-8 pt-8 border-t border-teal-50 text-center">
           <p className="text-sm text-slate-500">
             {isForgotPassword ? (
               <button 
                 onClick={() => { setIsForgotPassword(false); setIsLogin(true); resetForms(); }}
-                className="font-bold text-jade-900 hover:underline"
+                className="font-bold text-teal-900 hover:underline"
                 type="button"
               >
                 {t('auth.backToLogin')}
@@ -216,7 +216,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ setView, onLogin }) => {
                     setIsForgotPassword(false);
                     resetForms();
                   }}
-                  className="ml-2 font-bold text-jade-900 hover:underline"
+                  className="ml-2 font-bold text-teal-900 hover:underline"
                   type="button"
                 >
                   {isLogin ? t('auth.signup') : t('auth.login.btn')}

@@ -34,7 +34,7 @@ export const BlogListView: React.FC<BlogListViewProps> = ({ setView, setSelected
   if (isLoading) {
     return (
       <div className="min-h-screen pt-24 pb-12 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-jade-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-600"></div>
       </div>
     );
   }
@@ -44,8 +44,8 @@ export const BlogListView: React.FC<BlogListViewProps> = ({ setView, setSelected
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div className="text-center mb-16">
-          <BookOpen className="h-12 w-12 text-jade-700 mx-auto mb-4" />
-          <h1 className="text-4xl font-extrabold text-jade-900 tracking-tight mb-4">{t('blog.list.title')}</h1>
+          <BookOpen className="h-12 w-12 text-teal-700 mx-auto mb-4" />
+          <h1 className="text-4xl font-extrabold text-teal-900 tracking-tight mb-4">{t('blog.list.title')}</h1>
           <p className="text-lg text-stone-600 max-w-2xl mx-auto font-medium">{t('blog.list.desc')}</p>
         </div>
 
@@ -71,7 +71,7 @@ export const BlogListView: React.FC<BlogListViewProps> = ({ setView, setSelected
                     className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-in-out"
                   />
                   <div className="absolute top-4 left-4 z-20">
-                    <span className="bg-white/90 backdrop-blur-sm text-jade-800 text-xs font-bold px-3 py-1 rounded-full shadow-sm uppercase tracking-wider">
+                    <span className="bg-white/90 backdrop-blur-sm text-teal-800 text-xs font-bold px-3 py-1 rounded-full shadow-sm uppercase tracking-wider">
                       {t('blog.list.badge')}
                     </span>
                   </div>
@@ -80,16 +80,16 @@ export const BlogListView: React.FC<BlogListViewProps> = ({ setView, setSelected
                 <div className="p-6 flex flex-col flex-grow">
                   <div className="flex items-center space-x-4 text-xs font-medium text-stone-500 mb-4">
                     <div className="flex items-center">
-                      <Calendar size={14} className="mr-1.5 text-jade-600" />
+                      <Calendar size={14} className="mr-1.5 text-teal-600" />
                       {new Date(blog.created_at).toLocaleDateString('vi-VN')}
                     </div>
                     <div className="flex items-center">
-                      <User size={14} className="mr-1.5 text-jade-600" />
+                      <User size={14} className="mr-1.5 text-teal-600" />
                       {blog.author}
                     </div>
                   </div>
 
-                  <h3 className="text-xl font-bold text-stone-900 mb-3 group-hover:text-jade-700 transition-colors leading-snug">
+                  <h3 className="text-xl font-bold font-be-vietnam text-stone-900 mb-3 group-hover:text-teal-700 transition-colors leading-snug">
                     {blog.title}
                   </h3>
 
@@ -97,10 +97,10 @@ export const BlogListView: React.FC<BlogListViewProps> = ({ setView, setSelected
                     {blog.excerpt}
                   </p>
 
-                  <div className="flex items-center text-jade-700 font-bold text-sm group-hover:text-jade-900 transition-colors mt-auto w-fit">
+                  <div className="flex items-center text-teal-700 font-bold text-sm group-hover:text-teal-900 transition-colors mt-auto w-fit">
                     <span className="relative">
                       {t('home.blog.readMore')}
-                      <span className="absolute bottom-0 left-0 w-full h-0.5 bg-jade-400 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
+                      <span className="absolute bottom-0 left-0 w-full h-0.5 bg-teal-400 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
                     </span>
                     <ArrowRight size={16} className="ml-2 transform group-hover:translate-x-1 transition-transform" />
                   </div>

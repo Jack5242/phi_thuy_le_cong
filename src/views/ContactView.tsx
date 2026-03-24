@@ -36,10 +36,10 @@ export const ContactView: React.FC<ContactViewProps> = () => {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 pb-24">
       <div className="text-center mb-14">
-        <p className="text-sm font-bold tracking-widest uppercase text-jade-600 mb-3">
+        <p className="text-sm font-bold tracking-widest uppercase text-teal-600 mb-3">
           {isVi ? 'Liên Hệ' : 'Contact'}
         </p>
-        <h1 className="text-4xl font-extrabold text-jade-900 mb-4">
+        <h1 className="text-4xl font-extrabold text-teal-900 mb-4">
           {isVi ? 'Chúng Tôi Luôn Sẵn Sàng Hỗ Trợ' : "We're Here to Help"}
         </h1>
         <p className="text-slate-500 max-w-xl mx-auto">
@@ -56,9 +56,9 @@ export const ContactView: React.FC<ContactViewProps> = () => {
           { icon: 'mail', label: 'Email', value: contactSettings.email },
           { icon: 'schedule', label: isVi ? 'Giờ làm việc' : 'Business Hours', value: contactSettings.workingHours },
         ].map(item => (
-          <div key={item.label} className="bg-white border border-jade-100 rounded-2xl p-6 shadow-sm flex items-start gap-4">
-            <div className="w-10 h-10 bg-jade-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="material-symbols-outlined text-jade-700 text-xl">{item.icon}</span>
+          <div key={item.label} className="bg-white border border-teal-100 rounded-2xl p-6 shadow-sm flex items-start gap-4">
+            <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="material-symbols-outlined text-teal-700 text-xl">{item.icon}</span>
             </div>
             <div>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{item.label}</p>
