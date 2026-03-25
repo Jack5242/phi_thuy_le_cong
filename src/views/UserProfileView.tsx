@@ -53,7 +53,7 @@ const UserProfileView: React.FC = () => {
           </div>
           <div>
             <p className="text-sm text-gray-500 font-medium">Total Spent</p>
-            <p className="text-2xl font-bold text-gray-900">${totalSpent.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-gray-900">${Number(totalSpent).toLocaleString('vi-VN')}</p>
           </div>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-emerald-100 flex items-center space-x-4">
@@ -96,7 +96,7 @@ const UserProfileView: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Total</p>
-                  <p className="font-medium">${order.total.toLocaleString()}</p>
+                  <p className="font-medium">${Number(order.total).toLocaleString('vi-VN')}</p>
                 </div>
                 <div>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -121,7 +121,7 @@ const UserProfileView: React.FC = () => {
                           <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                         </div>
                       </div>
-                      <p className="font-medium text-gray-900">{item.price.toLocaleString()} VND</p>
+                      <p className="font-medium text-gray-900">{Number(item.price).toLocaleString('vi-VN')} VND</p>
                     </li>
                   ))}
                 </ul>

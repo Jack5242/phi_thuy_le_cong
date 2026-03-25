@@ -19,6 +19,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
   const [wishlistItems, setWishlistItems] = useState<any[]>([]);
   const [vouchers, setVouchers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [freshTotalSpent, setFreshTotalSpent] = useState<number>(Number(user.total_spent) || 0);
   const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'orders' | 'wishlist' | 'vouchers'>('overview');
   const [selectedOrderDetails, setSelectedOrderDetails] = useState<any | null>(null);
   const [isOrderDetailModalOpen, setIsOrderDetailModalOpen] = useState(false);
@@ -90,9 +91,25 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
       }
     };
 
+    const fetchFreshProfile = async () => {
+      try {
+        const response = await fetch('/api/users/profile', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setFreshTotalSpent(Number(data.total_spent) || 0);
+          onUpdateUser({ ...user, ...data });
+        }
+      } catch (error) {
+        console.error('Failed to fetch fresh profile', error);
+      }
+    };
+
     fetchOrders();
     fetchWishlist();
     fetchVouchers();
+    fetchFreshProfile();
   }, [token, user.email]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -235,8 +252,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
     }
   };
 
-  const totalSpent = Number(user.total_spent) || 0;
-  
   const getRank = (spent: number): { label: string; color: string } => {
     if (spent >= 1_000_000_000) return { label: 'Băng Chủng', color: 'text-cyan-600' };
     if (spent >= 300_000_000) return { label: 'Nếp Chủng', color: 'text-emerald-600' };
@@ -244,7 +259,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
     return { label: 'Ngọc Thô', color: 'text-slate-500' };
   };
 
-  const rank = getRank(totalSpent);
+  const rank = getRank(freshTotalSpent);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-20">
@@ -349,7 +364,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
                           </div>
                           <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t('profile.orders.total')}</p>
-                            <p className="text-sm font-extrabold text-teal-900">{orders[0].total.toLocaleString('vi-VN')}₫</p>
+                             <p className="text-sm font-extrabold text-teal-900">{Number(orders[0].total).toLocaleString('vi-VN')}₫</p>
                           </div>
                         </div>
 
@@ -679,7 +694,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
                               })()}
                             </span>
                           </td>
-                          <td className="py-4 font-bold text-teal-900">{order.total.toLocaleString()} VND</td>
+                           <td className="py-4 font-bold text-teal-900">{Number(order.total).toLocaleString('vi-VN')} VND</td>
                         </tr>
                         {order.notes && (
                           <tr className="border-b border-teal-50 bg-teal-50/20">
@@ -740,19 +755,19 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
                             {v.code}
                           </h3>
                           <span className="bg-gradient-to-r from-teal-600 to-emerald-500 text-white text-lg font-bold px-4 py-1.5 rounded-full shadow-md whitespace-nowrap ml-4">
-                            - {v.type === 'percent' ? `${v.discount * 100}%` : `${v.discount.toLocaleString('vi-VN')} đ`}
+                             - {v.type === 'percent' ? `${Number(v.discount) * 100}%` : `${Number(v.discount).toLocaleString('vi-VN')} đ`}
                           </span>
                         </div>
                         {v.min_order_value > 0 ? (
                           <p className="text-sm font-bold text-gray-600">
-                            Đơn tối thiểu: <span className="text-teal-700">{v.min_order_value.toLocaleString('vi-VN')} đ</span>
+                             Đơn tối thiểu: <span className="text-teal-700">{Number(v.min_order_value).toLocaleString('vi-VN')} đ</span>
                           </p>
                         ) : (
                           <p className="text-sm font-bold text-teal-600">Không giới hạn đơn hàng</p>
                         )}
                         {v.max_discount_amount > 0 && (
                           <p className="text-sm font-bold text-red-500 mt-1">
-                            Giảm tối đa: <span>{v.max_discount_amount.toLocaleString('vi-VN')} đ</span>
+                             Giảm tối đa: <span>{Number(v.max_discount_amount).toLocaleString('vi-VN')} đ</span>
                           </p>
                         )}
                         <span className="text-[10px] text-gray-400 mt-3 block uppercase tracking-wider font-semibold">
@@ -866,7 +881,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
                         <p className="text-xs text-slate-500 mt-1">{item.product_category || item.category || item.product?.category}</p>
                         <div className="flex items-center justify-between mt-2">
                               <p className="text-xs font-bold text-slate-400">x{item.quantity}</p>
-                              <p className="text-sm font-extrabold text-teal-900">{item.price?.toLocaleString('vi-VN')}₫</p>
+                               <p className="text-sm font-extrabold text-teal-900">{Number(item.price || 0).toLocaleString('vi-VN')}₫</p>
                             </div>
                           </div>
                         </div>
@@ -876,8 +891,28 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
                     {/* Total Summary */}
                     <div className="border-t border-teal-100 pt-6 space-y-3">
                       <div className="flex justify-between items-center text-sm">
-                        <span className="text-slate-500 font-medium">{t('profile.orders.total')}</span>
-                        <span className="text-lg font-extrabold text-teal-900">{selectedOrderDetails.total?.toLocaleString('vi-VN')}₫</span>
+                        <span className="text-slate-500 font-medium">Tổng phụ</span>
+                        <span className="font-bold text-teal-900">{Number(selectedOrderDetails.subtotal || 0).toLocaleString('vi-VN')}₫</span>
+                      </div>
+                      {selectedOrderDetails.voucher_code && (
+                        <>
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-slate-500 font-medium">Mã giảm giá</span>
+                            <span className="font-bold text-teal-700">{selectedOrderDetails.voucher_code}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-slate-500 font-medium">Mức giảm</span>
+                            <span className="font-bold text-teal-700">
+                              {selectedOrderDetails.voucher_type === 'percent' 
+                                ? `${Number(selectedOrderDetails.voucher_discount || 0) * 100}%` 
+                                : `${Number(selectedOrderDetails.voucher_discount || 0).toLocaleString('vi-VN')}₫`}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                      <div className="flex justify-between items-center text-sm border-t border-teal-50 pt-3">
+                        <span className="text-teal-900 font-bold">{t('profile.orders.total')}</span>
+                        <span className="text-lg font-extrabold text-teal-900">{Number(selectedOrderDetails.total || 0).toLocaleString('vi-VN')}₫</span>
                       </div>
                     </div>
                   </div>

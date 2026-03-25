@@ -1570,7 +1570,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                       {product.collection}
                       {product.collection_en && <div className="text-xs text-gray-500 italic">{product.collection_en}</div>}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-teal-900">{product.price.toLocaleString()} VND</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-teal-900">{product.price.toLocaleString('vi-VN')} VND</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
                       <span className={`px-2 py-1 rounded-full text-xs font-bold ${product.amount === 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                         {product.amount !== undefined ? product.amount : 1}
@@ -1834,7 +1834,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
               </div>
               <div>
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tổng doanh thu ({exportMonth})</p>
-                <p className="text-xl font-black text-gray-900">{orderStats.totalIncome.toLocaleString('vi-VN')} VND</p>
+                <p className="text-xl font-black text-gray-900">{Number(orderStats.totalIncome).toLocaleString('vi-VN')} VND</p>
               </div>
             </div>
           </div>
@@ -1867,7 +1867,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">{new Date(order.created_at).toLocaleDateString()}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-teal-900">{order.total.toLocaleString()} VND</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-teal-900">{Number(order.total).toLocaleString('vi-VN')} VND</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                           ${order.status === 'Delivered' || order.status === 'Đã Giao' ? 'bg-green-100 text-green-800' :
@@ -1996,7 +1996,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Tổng tiền:</span>
-                        <span className="font-bold text-teal-900">{orderToView.total.toLocaleString()} VND</span>
+                         <span className="font-bold text-teal-900">{Number(orderToView.total).toLocaleString('vi-VN')} VND</span>
                       </div>
                       {orderToView.voucher_code && (
                         <>
@@ -2009,7 +2009,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                             <span className="font-bold text-teal-700">
                               {orderToView.voucher_type === 'percent' 
                                 ? `${orderToView.voucher_discount * 100}%` 
-                                : `${orderToView.voucher_discount?.toLocaleString()} VND`}
+                                : `${Number(orderToView.voucher_discount || 0).toLocaleString('vi-VN')} VND`}
                             </span>
                           </div>
                         </>
@@ -2073,8 +2073,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                               </div>
                             </td>
                             <td className="px-4 py-3 text-center text-sm text-gray-900">{item.quantity}</td>
-                            <td className="px-4 py-3 text-right text-sm text-gray-900">{item.price.toLocaleString()} VND</td>
-                            <td className="px-4 py-3 text-right text-sm font-medium text-gray-900">{(item.price * item.quantity).toLocaleString()} VND</td>
+                            <td className="px-4 py-3 text-right text-sm text-gray-900">{Number(item.price).toLocaleString('vi-VN')} VND</td>
+                            <td className="px-4 py-3 text-right text-sm font-medium text-gray-900">{Number(item.price * item.quantity).toLocaleString('vi-VN')} VND</td>
                           </tr>
                         ))}
                       </tbody>
@@ -2192,9 +2192,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                     <label className="block text-sm font-bold text-gray-800 mb-1">Cấp Độ Khách Hàng Tối Thiểu Được Dùng</label>
                     <select value={voucherForm.min_user_spending || 0} onChange={e => setVoucherForm({ ...voucherForm, min_user_spending: Number(e.target.value) })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none">
                       <option value={0}>Tất cả khách hàng</option>
-                      <option value={50000000}>Đậu Chủng (Từ 50tr VND)</option>
-                      <option value={300000000}>Nếp Chủng (Từ 300tr VND)</option>
-                      <option value={1000000000}>Băng Chủng (Từ 1 tỷ VND)</option>
+                      <option value={50000000}>Đậu Chủng (Từ 50.000.000 VND)</option>
+                      <option value={300000000}>Nếp Chủng (Từ 300.000.000 VND)</option>
+                      <option value={1000000000}>Băng Chủng (Từ 1.000.000.000 VND)</option>
                     </select>
                   </div>
                   <div>
@@ -2259,7 +2259,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                   <tr key={voucher.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{voucher.code}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
-                      {voucher.type === 'percent' ? `${voucher.discount * 100}%` : `${voucher.discount.toLocaleString()} VND`}
+                      {voucher.type === 'percent' ? `${voucher.discount * 100}%` : `${Number(voucher.discount).toLocaleString('vi-VN')} VND`}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
                       {voucher.usage_count} / {voucher.usage_limit || '∞'}
@@ -2267,11 +2267,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
                       <div className="flex flex-col gap-1">
                         <span className="text-xs">{voucher.min_user_spending === 1000000000 ? 'Băng Chủng' : voucher.min_user_spending === 300000000 ? 'Nếp Chủng' : voucher.min_user_spending === 50000000 ? 'Đậu Chủng' : 'Tất cả khách'}</span>
-                        <span className="text-xs text-teal-700 font-bold">{voucher.min_order_value ? `Đơn > ${voucher.min_order_value.toLocaleString()}₫` : 'Không giới hạn đơn'}</span>
+                        <span className="text-xs text-teal-700 font-bold">{voucher.min_order_value ? `Đơn > ${Number(voucher.min_order_value).toLocaleString('vi-VN')}₫` : 'Không giới hạn đơn'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
-                      {voucher.max_discount_amount ? `${voucher.max_discount_amount.toLocaleString()}₫` : '∞'}
+                      {voucher.max_discount_amount ? `${Number(voucher.max_discount_amount).toLocaleString('vi-VN')}₫` : '∞'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap flex flex-col items-start gap-1">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${voucher.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -2437,7 +2437,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                         <div className="flex text-sm text-gray-600 justify-center">
                           <label htmlFor="promo-file-upload" className="relative cursor-pointer rounded-md font-medium text-teal-600 hover:text-teal-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-teal-500">
                             <span>Tải ảnh lên</span>
-                            <input id="promo-file-upload" name="promo-file-upload" type="file" className="sr-only" accept="image/*" onChange={(e) => {
+                            <input id="promo-file-upload" name="promo-file-upload" type="file" className="hidden" accept="image/*" onChange={(e) => {
                               const file = e.target.files?.[0];
                               if (file) {
                                 const reader = new FileReader();

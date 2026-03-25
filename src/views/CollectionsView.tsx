@@ -234,8 +234,8 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
                 />
               </div>
               <div className="flex justify-between text-xs font-bold text-slate-500 mt-2">
-                <span>{minPrice.toLocaleString()} VND</span>
-                <span>{maxPrice.toLocaleString()} VND</span>
+                <span>{minPrice.toLocaleString('vi-VN')} VND</span>
+                <span>{maxPrice.toLocaleString('vi-VN')} VND</span>
               </div>
             </div>
           </div>
