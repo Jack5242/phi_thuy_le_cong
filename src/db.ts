@@ -658,9 +658,6 @@ export async function createOrder(order: { id: string; email: string; name: stri
       db.prepare('INSERT INTO used_vouchers (user_email, voucher_code, order_id) VALUES (?, ?, ?)').run(data.email, data.voucher_code, data.id);
       await db.prepare('UPDATE vouchers SET usage_count = usage_count + 1 WHERE code = ?').run(data.voucher_code);
     }
-
-    // Increment user's total_spent
-    await db.prepare('UPDATE users SET total_spent = total_spent + ? WHERE email = ?').run(data.total, data.email);
   });
 
   await executeOrder(order);
@@ -744,13 +741,13 @@ export async function updateOrderStatus(id: string, status: string) {
   const order = await db.prepare('SELECT user_email, total, status FROM orders WHERE id = ?').get(id) as { user_email: string; total: number; status: string } | undefined;
   
   if (order && order.user_email) {
-    const isOldCancelled = order.status === 'Cancelled' || order.status === 'Đã Hủy';
-    const isNewCancelled = status === 'Cancelled' || status === 'Đã Hủy';
+    const isOldDelivered = order.status === 'Delivered' || order.status === 'Đã Giao' || order.status === 'Hoàn Thành';
+    const isNewDelivered = status === 'Delivered' || status === 'Đã Giao' || status === 'Hoàn Thành';
     
-    if (!isOldCancelled && isNewCancelled) {
-      await db.prepare('UPDATE users SET total_spent = total_spent - ? WHERE email = ?').run(order.total, order.user_email);
-    } else if (isOldCancelled && !isNewCancelled) {
+    if (!isOldDelivered && isNewDelivered) {
       await db.prepare('UPDATE users SET total_spent = total_spent + ? WHERE email = ?').run(order.total, order.user_email);
+    } else if (isOldDelivered && !isNewDelivered) {
+      await db.prepare('UPDATE users SET total_spent = total_spent - ? WHERE email = ?').run(order.total, order.user_email);
     }
   }
 
@@ -764,7 +761,9 @@ export async function deleteOrder(id: string) {
   await db.prepare('DELETE FROM order_items WHERE order_id = ?').run(id);
   await db.prepare('DELETE FROM orders WHERE id = ?').run(id);
 
-  if (order && order.user_email && order.status !== 'Cancelled' && order.status !== 'Đã Hủy' && order.status !== 'Delivered' && order.status !== 'Hoàn Thành') {
+  const isDelivered = order.status === 'Delivered' || order.status === 'Đã Giao' || order.status === 'Hoàn Thành';
+
+  if (order && order.user_email && isDelivered) {
     await db.prepare('UPDATE users SET total_spent = total_spent - ? WHERE email = ?').run(order.total, order.user_email);
   }
 

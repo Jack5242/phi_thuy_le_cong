@@ -38,9 +38,66 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ setView, totalAmount
       .catch(err => console.error('Failed to load bank settings', err));
   }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Max dimensions
+          const MAX_SIZE = 1200;
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+            } else {
+              resolve(file);
+            }
+          }, 'image/jpeg', 0.7); // 70% quality
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setReceiptFile(e.target.files[0]);
+      let file = e.target.files[0];
+      
+      // If file is larger than 1MB, try to compress it first
+      if (file.size > 1 * 1024 * 1024) {
+        file = await compressImage(file);
+      }
+      
+      // If still larger than 5MB after compression, reject it
+      if (file.size > 5 * 1024 * 1024) {
+        alert(t('checkout.upload.error.size'));
+        e.target.value = '';
+        return;
+      }
+      
+      setReceiptFile(file);
     }
   };
 

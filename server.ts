@@ -172,6 +172,10 @@ async function startServer() {
       const { id, email, name, phone, address, notes, total, items, receipt, voucher_code, voucher_id } = req.body;
       const orderEmail = email || 'guest@example.com';
 
+      if (receipt && receipt.length > 7 * 1024 * 1024) {
+        return res.status(400).json({ error: 'Kích thước biên lai quá lớn (Tối đa 5MB).' });
+      }
+
       if (!validatePhone(phone)) {
         return res.status(400).json({ error: 'Số điện thoại phải có ít nhất 10 chữ số.' });
       }
