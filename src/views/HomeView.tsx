@@ -200,7 +200,18 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 1.2 }}
-              className="absolute inset-0"
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.2}
+              onDragEnd={(_, info) => {
+                const threshold = 50;
+                if (info.offset.x < -threshold) {
+                  setCurrentPromo((prev) => (prev + 1) % promotions.length);
+                } else if (info.offset.x > threshold) {
+                  setCurrentPromo((prev) => (prev - 1 + promotions.length) % promotions.length);
+                }
+              }}
+              className="absolute inset-0 cursor-grab active:cursor-grabbing touch-pan-y"
             >
               {/* Background Image */}
               <div
