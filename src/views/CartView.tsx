@@ -8,8 +8,8 @@ interface CartViewProps {
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   setView: (view: View) => void;
-  appliedVoucher: { code: string; discount: number; type: 'percent' | 'fixed' } | null;
-  setAppliedVoucher: (voucher: { code: string; discount: number; type: 'percent' | 'fixed' } | null) => void;
+  appliedVoucher: any | null;
+  setAppliedVoucher: (voucher: any | null) => void;
   checkoutFormData: { name: string; phone: string; email: string; address: string; notes: string; without_receipt: boolean };
   setCheckoutFormData: (data: { name: string; phone: string; email: string; address: string; notes: string; without_receipt: boolean }) => void;
   user?: User | null;
@@ -70,11 +70,13 @@ export const CartView: React.FC<CartViewProps> = ({
       return;
     }
     
+    const currentSubtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+    
     try {
       const res = await fetch(`/api/vouchers/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: codeToApply, email: emailToUse })
+        body: JSON.stringify({ code: codeToApply, email: emailToUse, orderValue: currentSubtotal })
       });
       const data = await res.json();
       
@@ -82,7 +84,8 @@ export const CartView: React.FC<CartViewProps> = ({
         setAppliedVoucher({ 
           code: data.voucher.code, 
           discount: data.voucher.discount, 
-          type: data.voucher.type 
+          type: data.voucher.type,
+          max_discount_amount: data.voucher.max_discount_amount
         });
         setVoucherCode(codeToApply);
       } else {
@@ -101,6 +104,10 @@ export const CartView: React.FC<CartViewProps> = ({
   if (appliedVoucher) {
     if (appliedVoucher.type === 'percent') {
       discountAmount = subtotal * appliedVoucher.discount;
+      // Apply maximum discount amount cap
+      if (appliedVoucher.max_discount_amount) {
+        discountAmount = Math.min(discountAmount, appliedVoucher.max_discount_amount);
+      }
     } else {
       discountAmount = appliedVoucher.discount;
     }
@@ -282,7 +289,7 @@ export const CartView: React.FC<CartViewProps> = ({
                           <span className="material-symbols-outlined text-[10px]">add</span>
                         </button>
                       </div>
-                      <p className="font-bold text-sm text-teal-900">{(item.product.price * item.quantity).toLocaleString()} VND</p>
+                      <p className="font-bold text-sm text-teal-900">{(item.product.price * item.quantity).toLocaleString('vi-VN')} VND</p>
                     </div>
                   </div>
                 </div>
@@ -336,18 +343,18 @@ export const CartView: React.FC<CartViewProps> = ({
             <div className="space-y-4 mb-6 pb-6 border-b border-teal-200">
               <div className="flex justify-between text-slate-600">
                 <span>{t('cart.summary.subtotal')}</span>
-                <span className="font-bold text-teal-900">{subtotal.toLocaleString()} VND</span>
+                <span className="font-bold text-teal-900">{subtotal.toLocaleString('vi-VN')} VND</span>
               </div>
               {appliedVoucher && (
                 <div className="flex justify-between text-teal-600">
                   <span>{t('cart.summary.discount')} ({appliedVoucher.code})</span>
-                  <span className="font-bold">- {discountAmount.toLocaleString()} VND</span>
+                  <span className="font-bold">- {discountAmount.toLocaleString('vi-VN')} VND</span>
                 </div>
               )}
             </div>
             <div className="flex justify-between text-lg font-extrabold text-teal-900 mb-8">
               <span>{t('cart.summary.total')}</span>
-              <span>{total.toLocaleString()} VND</span>
+              <span>{total.toLocaleString('vi-VN')} VND</span>
             </div>
             <button 
               type="submit"
@@ -388,20 +395,33 @@ export const CartView: React.FC<CartViewProps> = ({
                     const isEligible = voucher.min_user_spending ? false : true; // Could do more complex eligibility here if needed before applying
                     return (
                       <div key={voucher.id} className="bg-white border text-left border-teal-100 rounded-lg p-4 shadow-sm hover:shadow transition-shadow flex justify-between items-center">
-                        <div>
-                          <div className="font-bold text-teal-900 text-lg mb-1">{voucher.code}</div>
-                          <div className="text-sm font-medium text-teal-700 mb-1">
-                            {t('cart.voucher.modal.off')} {voucher.type === 'percent' ? `${voucher.discount * 100}%` : `${voucher.discount.toLocaleString()} đ`}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-1">
+                            <span className="font-bold text-teal-900 text-lg uppercase tracking-wider">{voucher.code}</span>
+                            <span className="font-bold text-teal-700 bg-teal-50 px-3 py-1 rounded-full text-xs">
+                              {t('cart.voucher.modal.off')} {voucher.type === 'percent' ? `${voucher.discount * 100}%` : `${voucher.discount.toLocaleString('vi-VN')} ₫`}
+                            </span>
                           </div>
-                          {voucher.min_user_spending > 0 && (
-                            <div className="text-xs text-slate-500">
-                              {t('cart.voucher.modal.min')} {voucher.min_user_spending.toLocaleString()} đ
+                          {voucher.min_order_value > 0 && (
+                            <div className="text-sm font-bold text-slate-500 mt-1">
+                              Đơn tối thiểu: <span className="text-teal-700">{voucher.min_order_value.toLocaleString('vi-VN')}₫</span>
+                            </div>
+                          )}
+                          {voucher.max_discount_amount > 0 && (
+                            <div className="text-xs font-bold text-red-500 mt-1">
+                              Giảm tối đa: <span>{voucher.max_discount_amount.toLocaleString('vi-VN')}₫</span>
                             </div>
                           )}
                         </div>
                         <button 
                           onClick={() => {
-                            executeApplyVoucherCode(voucher.code);
+                            setAppliedVoucher({
+                              code: voucher.code,
+                              discount: voucher.discount,
+                              type: voucher.type,
+                              max_discount_amount: voucher.max_discount_amount
+                            });
+                            setVoucherCode(voucher.code);
                             setIsVoucherModalOpen(false);
                           }}
                           className="bg-teal-100 text-teal-800 hover:bg-teal-200 px-4 py-2 rounded-md font-bold text-sm transition-colors whitespace-nowrap ml-4"

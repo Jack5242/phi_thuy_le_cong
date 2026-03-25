@@ -35,7 +35,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ setView }) => {
       {/* Story */}
       <div className="grid md:grid-cols-2 gap-16 items-center">
         <div className="space-y-6 text-slate-600 leading-relaxed text-lg">
-          <h2 className="text-3xl font-bold text-teal-900 mb-6 font-be-vietnam">
+          <h2 className="text-3xl md:text-4xl font-bold text-teal-900 mb-6 font-playfair italic leading-tight">
             {isVi ? 'Từ Đam Mê Đến Cam Kết "Giá Trị Thật"' : 'From Passion to the Commitment of "True Value"'}
           </h2>
           <p>
@@ -83,7 +83,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ setView }) => {
       <div>
         <div className="text-center mb-12">
           <span className="text-teal-600 font-bold tracking-widest uppercase text-sm">{isVi ? 'Giá Trị Tiên Quyết' : 'Prerequisite Values'}</span>
-          <h2 className="text-3xl md:text-4xl font-black text-teal-900 mt-3 font-be-vietnam">
+          <h2 className="text-4xl md:text-5xl font-black text-teal-900 mt-4 mb-2 font-playfair italic drop-shadow-sm">
             {isVi ? '4 Lời Cam Kết Vàng' : '4 Golden Commitments'}
           </h2>
           <p className="text-slate-500 mt-4 max-w-2xl mx-auto">
@@ -96,32 +96,32 @@ export const AboutView: React.FC<AboutViewProps> = ({ setView }) => {
               icon: 'verified',
               title: isVi ? 'Tuyệt đối Tự Nhiên' : 'Absolutely Natural',
               subtitle: '100% Type A',
-              desc: isVi 
-                ? 'Lê Công nói KHÔNG với ngọc xử lý hóa học, ngọc nhuộm màu hay bơm keo. Mỗi sản phẩm bán ra đều là ngọc thiên nhiên nguyên bản, càng đeo càng sáng bóng, lên nước.' 
+              desc: isVi
+                ? 'Lê Công nói KHÔNG với ngọc xử lý hóa học, ngọc nhuộm màu hay bơm keo. Mỗi sản phẩm bán ra đều là ngọc thiên nhiên nguyên bản, càng đeo càng sáng bóng, lên nước.'
                 : 'Le Cong says NO to chemically treated jade, dyed jade, or polymer-filled jade. Every product sold is original natural jade, becoming brighter and shinier the more you wear it.',
             },
             {
               icon: 'policy',
               title: isVi ? 'Minh Bạch Kiểm Định' : 'Transparent Certification',
               subtitle: 'Liulab, Adlab...',
-              desc: isVi 
-                ? 'Mọi sản phẩm (đặc biệt là hàng giá trị cao) đều đi kèm Giấy chứng nhận kiểm định đá quý từ các trung tâm uy tín. Khách hàng có quyền kiểm tra, soi đèn thoải mái trước khi nhận.' 
+              desc: isVi
+                ? 'Mọi sản phẩm (đặc biệt là hàng giá trị cao) đều đi kèm Giấy chứng nhận kiểm định đá quý từ các trung tâm uy tín. Khách hàng có quyền kiểm tra, soi đèn thoải mái trước khi nhận.'
                 : 'All products (especially high-value items) come with Gemstone Certification from reputable centers. Customers have the right to comfortably inspect and shine a light before receiving.',
             },
             {
               icon: 'price_check',
               title: isVi ? 'Giá Tận Xưởng' : 'Factory Direct Price',
               subtitle: isVi ? 'Không qua trung gian' : 'No intermediaries',
-              desc: isVi 
-                ? 'Không chi phí mặt bằng đắt đỏ, không phí trung gian. Bạn đang mua ngọc trực tiếp từ người thợ và xưởng chế tác.' 
+              desc: isVi
+                ? 'Không chi phí mặt bằng đắt đỏ, không phí trung gian. Bạn đang mua ngọc trực tiếp từ người thợ và xưởng chế tác.'
                 : 'No expensive premise costs, no intermediary fees. You are buying jade directly from the craftsman and the crafting workshop.',
             },
             {
               icon: 'handshake',
               title: isVi ? 'Tư Vấn Tận Tâm' : 'Dedicated Consultation',
               subtitle: isVi ? 'Bán hàng bằng chữ Tín' : 'Selling with Trust',
-              desc: isVi 
-                ? 'Chúng tôi không ép khách mua hàng. Lê Công lắng nghe nhu cầu, mệnh lý và ngân sách để tư vấn món đồ phù hợp. "Bán một món hàng, kết giao một người bạn" là phương châm của chúng tôi.' 
+              desc: isVi
+                ? 'Chúng tôi không ép khách mua hàng. Lê Công lắng nghe nhu cầu, mệnh lý và ngân sách để tư vấn món đồ phù hợp. "Bán một món hàng, kết giao một người bạn" là phương châm của chúng tôi.'
                 : 'We do not pressure customers to buy. Le Cong listens to needs, destiny elements, and budgets to advise the most suitable piece. "Selling an item, making a friend" is our motto.',
             },
           ].map(val => (

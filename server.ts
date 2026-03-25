@@ -2,7 +2,7 @@ import './env.js';
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import { PRODUCTS } from './src/constants';
-import db, { initDb, seedProducts, getAllProducts, createOrder, addProduct, updateProduct, deleteProduct, getAllOrders, updateOrderStatus, deleteOrder, getAllVouchers, addVoucher, updateVoucher, deleteVoucher, getVoucherByCode, createUser, getUserByEmail, getUserById, updateUserProfile, getUserOrders, getAllPromotions, addPromotion, updatePromotion, deletePromotion, hasUserUsedVoucher, getUserTotalSpent, logSearchKeyword, getSearchAnalytics, clearSearchAnalytics, getAllBlogs, getBlogBySlug, getBlogById, addBlog, updateBlog, deleteBlog, createEmailVerification, verifyEmailCode, markUserVerified, createPasswordResetToken, verifyPasswordResetToken, updatePassword, saveOrderFeedback, getOrderFeedback, getAdminByEmail, getAdminById, getAllAdmins, addAdmin, updateAdminCredentials, updateAdminPassword, deleteAdmin, getBankSettings, updateBankSettings, getSocialSettings, updateSocialSettings, getContactSettings, updateContactSettings, getFeaturedBlogs, getRegistrationVoucherDiscount, updateRegistrationVoucherDiscount, getAllAvailableVouchersForUser, getAllCollections, addCollection, updateCollection, deleteCollection, getWishlist, addToWishlist, removeFromWishlist, isInWishlist } from './src/db';
+import db, { initDb, seedProducts, getAllProducts, createOrder, addProduct, updateProduct, deleteProduct, getAllOrders, updateOrderStatus, deleteOrder, getAllVouchers, addVoucher, updateVoucher, deleteVoucher, getVoucherByCode, createUser, getUserByEmail, getUserById, updateUserProfile, getUserOrders, getAllPromotions, addPromotion, updatePromotion, deletePromotion, hasUserUsedVoucher, getUserTotalSpent, logSearchKeyword, getSearchAnalytics, clearSearchAnalytics, getAllBlogs, getBlogBySlug, getBlogById, addBlog, updateBlog, deleteBlog, createEmailVerification, verifyEmailCode, markUserVerified, createPasswordResetToken, verifyPasswordResetToken, updatePassword, saveOrderFeedback, getOrderFeedback, getAdminByEmail, getAdminById, getAllAdmins, addAdmin, updateAdminCredentials, updateAdminPassword, deleteAdmin, getBankSettings, updateBankSettings, getSocialSettings, updateSocialSettings, getContactSettings, updateContactSettings, getFeaturedBlogs, getWelcomeVoucherTemplate, getAllAvailableVouchersForUser, getAllCollections, addCollection, updateCollection, deleteCollection, getWishlist, addToWishlist, removeFromWishlist, isInWishlist } from './src/db';
 import { sendVerificationEmail, sendPasswordResetEmail, sendFeedbackRequestEmail, sendWelcomeVoucherEmail } from './email';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -193,7 +193,10 @@ async function startServer() {
         }
         const totalSpent = await getUserTotalSpent(orderEmail);
         if (voucher.min_user_spending && totalSpent < voucher.min_user_spending) {
-          return res.status(400).json({ error: `Bạn cần chi tiêu ít nhất ${voucher.min_user_spending.toLocaleString()} VND để sử dụng mã giảm giá này` });
+          return res.status(400).json({ error: `Bạn cần thuộc cấp độ cao hơn (chi tiêu từ ${voucher.min_user_spending.toLocaleString()} VND) để sử dụng mã này` });
+        }
+        if (voucher.min_order_value && total < voucher.min_order_value) {
+          return res.status(400).json({ error: `Đơn hàng chưa đạt giá trị tối thiểu ${voucher.min_order_value.toLocaleString()} VND để sử dụng mã này` });
         }
       }
 
@@ -264,28 +267,16 @@ async function startServer() {
 
       // Issue Welcome Voucher
       try {
-        const regConfig = await getRegistrationVoucherDiscount();
-        const voucherCode = `WELCOME-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-        const voucherId = `reg-vouch-${Date.now()}`;
-
-        await addVoucher({
-          id: voucherId,
-          code: voucherCode,
-          discount: regConfig.discount,
-          type: regConfig.type,
-          is_active: true,
-          usage_limit: 1,
-          user_email: email,
-          is_registration: true
-        });
-
-        sendWelcomeVoucherEmail(email, voucherCode, regConfig.discount, regConfig.type).catch(console.error);
+        const template = await getWelcomeVoucherTemplate();
+        if (template && template.is_active) {
+          sendWelcomeVoucherEmail(email, template.code, template.discount, template.type).catch(console.error);
+        }
       } catch (vouchErr) {
-        console.error('Failed to issue welcome voucher:', vouchErr);
+        console.error('Failed to send welcome voucher:', vouchErr);
       }
 
       const token = jwt.sign({ id: userId, email }, JWT_SECRET, { expiresIn: '24h' });
-      res.json({ token, user: { id: userId, email, name, is_verified: true, phone: '', address: '' } });
+      res.json({ token, user: { id: userId, email, name, is_verified: true, phone: '', address: '', total_spent: 0 } });
     } catch (error) {
       res.status(500).json({ error: 'Đăng ký người dùng thất bại' });
     }
@@ -347,7 +338,14 @@ async function startServer() {
       }
 
       const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
-      res.json({ token, user: { id: user.id, email: user.email, name: user.name, phone: user.phone || '', address: user.address || '' } });
+      res.json({ token, user: { 
+        id: user.id, 
+        email: user.email, 
+        name: user.name, 
+        phone: user.phone || '', 
+        address: user.address || '',
+        total_spent: user.total_spent
+      } });
     } catch (error) {
       res.status(500).json({ error: 'Đăng nhập thất bại' });
     }
@@ -660,8 +658,8 @@ async function startServer() {
         return res.status(403).json({ error: 'Truy cập bị từ chối. Cần quyền quản trị.' });
       }
 
-      const { facebook, tiktok, instagram, telegram } = req.body;
-      const result = await updateSocialSettings({ facebook, tiktok, instagram, telegram });
+      const { facebook, tiktok, instagram, telegram, zalo } = req.body;
+      const result = await updateSocialSettings({ facebook, tiktok, instagram, telegram, zalo });
       res.json(result);
     } catch (error) {
       res.status(500).json({ error: 'Cập nhật liên kết mạng xã hội thất bại.' });
@@ -857,7 +855,10 @@ async function startServer() {
     try {
       const result = await addVoucher(req.body);
       res.json(result);
-    } catch (error) {
+    } catch (error: any) {
+      if (error && (error.code === '23505' || (error.message && error.message.toUpperCase().includes('UNIQUE')))) {
+        return res.status(400).json({ error: 'Mã giảm giá này đã tồn tại, vui lòng chọn tên mã khác.' });
+      }
       res.status(500).json({ error: 'Thêm mã giảm giá thất bại' });
     }
   });
@@ -866,26 +867,11 @@ async function startServer() {
     try {
       const result = await updateVoucher(req.params.id, req.body);
       res.json(result);
-    } catch (error) {
+    } catch (error: any) {
+      if (error && (error.code === '23505' || (error.message && error.message.toUpperCase().includes('UNIQUE')))) {
+        return res.status(400).json({ error: 'Mã giảm giá này đã bị trùng với một mã hiện có, vui lòng chọn tên mã khác.' });
+      }
       res.status(500).json({ error: 'Cập nhật mã giảm giá thất bại' });
-    }
-  });
-
-  app.get('/api/admin/settings/registration-discount', authenticateToken, async (req: any, res: any) => {
-    try {
-      res.json(await getRegistrationVoucherDiscount());
-    } catch (error) {
-      res.status(500).json({ error: 'Lấy thông tin giảm giá đăng ký thất bại' });
-    }
-  });
-
-  app.put('/api/admin/settings/registration-discount', authenticateToken, async (req: any, res: any) => {
-    try {
-      const { discount, type } = req.body;
-      const result = await updateRegistrationVoucherDiscount(parseFloat(discount), type || 'percent');
-      res.json(result);
-    } catch (error) {
-      res.status(500).json({ error: 'Cập nhật thông tin giảm giá đăng ký thất bại' });
     }
   });
 
@@ -915,7 +901,7 @@ async function startServer() {
 
   app.post('/api/vouchers/validate', async (req, res) => {
     try {
-      const { code, email } = req.body;
+      const { code, email, orderValue } = req.body;
       if (!code || !email) {
         return res.status(400).json({ error: 'Mã giảm giá và email là bắt buộc' });
       }
@@ -943,7 +929,12 @@ async function startServer() {
       // Check minimum spending eligibility
       const totalSpent = await getUserTotalSpent(email);
       if (voucher.min_user_spending && totalSpent < voucher.min_user_spending) {
-        return res.status(400).json({ error: `Bạn cần chi tiêu ít nhất ${voucher.min_user_spending.toLocaleString()} VND để sử dụng mã giảm giá này` });
+        return res.status(400).json({ error: `Bạn cần thuộc cấp độ cao hơn (chi tiêu từ ${voucher.min_user_spending.toLocaleString()} VND) để sử dụng mã này` });
+      }
+
+      // Check minimum order value eligibility
+      if (voucher.min_order_value && orderValue !== undefined && orderValue < voucher.min_order_value) {
+        return res.status(400).json({ error: `Đơn hàng chưa đạt giá trị tối thiểu ${voucher.min_order_value.toLocaleString()} VND để sử dụng mã này` });
       }
 
       // If all checks pass
@@ -959,6 +950,11 @@ async function startServer() {
       // Universal vouchers (where `user_email` is NULL) should still be returned
       // even if the client does not send an email (or sends an empty string).
       const email = typeof req.query.email === 'string' ? req.query.email : '';
+      
+      let totalSpent = 0;
+      if (email) {
+        totalSpent = await getUserTotalSpent(email);
+      }
 
       const allVouchers = await getAllAvailableVouchersForUser(email);
       const availableVouchers: any[] = [];
@@ -966,7 +962,7 @@ async function startServer() {
         if (!v.is_active) continue;
         if (v.usage_limit && v.usage_count >= v.usage_limit) continue;
         if (await hasUserUsedVoucher(email, v.code)) continue;
-        if (v.is_registration) continue;
+        if (v.min_user_spending > 0 && totalSpent < v.min_user_spending) continue;
         availableVouchers.push(v);
       }
 

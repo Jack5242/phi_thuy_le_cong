@@ -45,7 +45,7 @@ export const BlogDetailView: React.FC<BlogDetailViewProps> = ({ blog, setView })
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center mt-20">
 
 
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-be-vietnam font-bold text-white mb-6 leading-tight drop-shadow-lg">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-playfair font-bold text-white mb-6 leading-tight drop-shadow-lg">
             {blog.title}
           </h1>
 
@@ -74,7 +74,7 @@ export const BlogDetailView: React.FC<BlogDetailViewProps> = ({ blog, setView })
           {/* HTML Content */}
           <div
             className="prose prose-lg md:prose-xl prose-stone max-w-none break-words
-              prose-headings:font-be-vietnam prose-headings:text-teal-900 prose-headings:font-bold
+              prose-headings:font-playfair prose-headings:text-teal-900 prose-headings:font-bold
               prose-p:text-stone-700 prose-p:leading-relaxed
               prose-a:text-teal-600 prose-a:font-medium hover:prose-a:text-teal-800 transition-colors
               prose-img:rounded-xl prose-img:shadow-md

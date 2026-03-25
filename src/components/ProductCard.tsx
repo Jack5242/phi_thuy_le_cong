@@ -33,12 +33,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) =>
           </span>
         )}
       </div>
-      <h3 className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors tracking-tight">{displayName}</h3>
+      <h3 className="font-sans font-bold text-slate-900 group-hover:text-teal-700 transition-colors tracking-tight">{displayName}</h3>
       <p className="text-slate-500 text-sm mb-2">
         {product.category === 'Chủng tầm trung' ? t('category.midRange') : product.category === 'Chủng tầm cao' ? t('category.highEnd') : product.category} - {language === 'en' && product.collection_en ? product.collection_en : product.collection}
       </p>
       <p className="text-teal-900 font-bold">
-        {product.amount === 0 ? t('prod.outOfStock') : `${product.price.toLocaleString()} VND`}
+        {product.amount === 0 ? t('prod.outOfStock') : `${product.price.toLocaleString('vi-VN')} VND`}
       </p>
     </div>
   );

@@ -10,9 +10,10 @@ interface CheckoutViewProps {
   user: User | null;
   appliedVoucher?: { id?: string; code: string; discount: number; type: 'percent' | 'fixed' } | null;
   checkoutFormData: { name: string; phone: string; email: string; address: string; notes: string };
+  onUpdateUser: (user: User) => void;
 }
 
-export const CheckoutView: React.FC<CheckoutViewProps> = ({ setView, totalAmount, clearCart, cartItems, user, appliedVoucher, checkoutFormData }) => {
+export const CheckoutView: React.FC<CheckoutViewProps> = ({ setView, totalAmount, clearCart, cartItems, user, appliedVoucher, checkoutFormData, onUpdateUser }) => {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -80,7 +81,13 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ setView, totalAmount
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create order');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create order');
+      }
+
+      const data = await response.json();
+      if (data.user && user) {
+        onUpdateUser(data.user);
       }
 
       setIsSubmitting(false);
@@ -152,7 +159,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ setView, totalAmount
               </div>
               <div className="flex justify-between items-center border-b border-teal-200 pb-3">
                 <span className="text-slate-500">{t('checkout.bank.amount')}</span>
-                <span className="font-bold text-teal-900 text-lg">{totalAmount.toLocaleString()} VND</span>
+                <span className="font-bold text-teal-900 text-lg">{totalAmount.toLocaleString('vi-VN')} VND</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500">{t('checkout.bank.content')}</span>

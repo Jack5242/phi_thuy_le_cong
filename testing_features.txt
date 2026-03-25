@@ -1,69 +1,59 @@
-PHỈ THÚY LÊ CÔNG - TESTING CHECKLIST
+PHỈ THÚY LÊ CÔNG - TỔNG HỢP KỊCH BẢN KIỂM THỬ (TEST CASES)
 
-### I. ADMIN MANAGEMENT (Quản Trị)
-1.  **Đăng Nhập Quản Trị (Admin Login)**:
-    - Kiểm tra đăng nhập với email (huynhgiahuy071003@gmail.com) và mật khẩu (admin).
-    - Session-bound: Tự động đăng xuất khi thoát trình duyệt.
-2.  **Đặt Lại Mật Khẩu (Password Reset)**:
-    - Gửi email yêu cầu đặt lại mật khẩu cho tài khoản quản trị.
-3.  **Quản Lý Tài Khoản (Account Management)**:
-    - Thêm tài khoản quản trị mới thành công.
-    - Cập nhật thông tin email/mật khẩu quản trị.
+### I. XÁC THỰC & BẢO MẬT (AUTH & SECURITY)
+1.  **Đăng ký tài khoản mới**:
+    - Nhập Email, Tên, Mật khẩu. Nhận mã OTP qua email.
+    - *Mong đợi*: Đăng ký thành công, nhận được email "Chào Mừng" kèm mã Voucher (nếu có cấu hình).
+2.  **Đăng nhập Quản trị & Người dùng**:
+    - Kiểm tra đăng nhập với các cấp độ quyền hạn khác nhau.
+    - *Mong đợi*: Chuyển hướng đúng trang (Home cho User, Dashboard cho Admin).
+3.  **Quên & Đổi mật khẩu**:
+    - Kiểm tra luồng đổi mật khẩu tại trang Profile và luồng Quên mật khẩu qua email.
+    - *Mong đợi*: Mật khẩu được cập nhật chính xác, không cho phép mật khẩu yếu (< 8 ký tự, 1 hoa, 1 số).
 
-### II. QUẢN LÝ SẢN PHẨM (Product Management)
-1.  **Sản Phẩm (Products)**:
-    - Thêm sản phẩm mới kèm hình ảnh (tối đa nhiều ảnh).
-    - Chỉnh sửa thông tin sản phẩm (tên, giá, mô tả bằng cả tiếng Việt và tiếng Anh).
-    - Xóa sản phẩm.
-2.  **Trạng Thái Sản Phẩm (Product Status)**:
-    - Kiểm tra tick chọn isNew, isPremium, isBestSeller có hiển thị đúng trong popup và trang chủ.
-    - Kiểm tra số lượng tồn kho (Amount).
-3.  **Dòng Sản Phẩm & Phân Loại (Collections & Categories)**:
-    - Thêm/Sửa/Xóa dòng sản phẩm (Collections - Nếp băng chủng, đậu chủng, v.v.).
-    - Thêm/Sửa/Xóa chủng loại (Categories - Nhẫn, vòng tay, v.v.).
+### II. HỒ SƠ & HẠNG THÀNH VIÊN (PROFILE & MEMBERSHIP)
+1.  **Cập nhật thông tin cá nhân**:
+    - Thay đổi Họ tên, Số điện thoại, Địa chỉ.
+    - *Mong đợi*: Lưu thành công và hiển thị đúng thông tin tại lần tải trang sau.
+2.  **Kiểm tra Hạng Thành Viên Live**:
+    - Đặt hàng và chuyển trạng thái đơn sang "Đã Giao" (Delivered).
+    - *Mong đợi*: Tổng chi tiêu (Total Spent) tăng ngay lập tức. Hạng thành viên tự động cập nhật:
+        - **Ngọc Thô**: < 50.000.000 VND
+        - **Đậu Chủng**: ≥ 50.000.000 VND
+        - **Nếp Chủng**: ≥ 300.000.000 VND
+        - **Băng Chủng**: ≥ 1.000.000.000 VND
+3.  **Lịch sử đơn hàng**: Kiểm tra danh sách đơn đã đặt và chi tiết sản phẩm trong từng đơn.
 
-### III. QUẢN LÝ ĐƠN HÀNG (Order Management)
-1.  **Duyệt Đơn Hàng**:
-    - Xem danh sách đơn hàng đã đặt.
-    - Cập nhật trạng thái đơn hàng (Đang xử lý, Đã giao, Hủy).
-    - Xóa đơn hàng lỗi.
-2.  **Phản Hồi (Feedback)**:
-    - Xem đánh giá/phản hồi của khách hàng theo từng đơn hàng cụ thể.
+### III. TRẢI NGHIỆM MUA SẮM (SHOPPING EXPERIENCE)
+1.  **Tìm kiếm & Lọc sản phẩm**:
+    - Tìm kiếm theo tên (có dấu và không dấu). Lọc theo Category/Collection.
+    - *Mong đợi*: Kết quả chính xác. Giá hiển thị có dấu ngăn cách hàng nghìn (VD: 1.200.000 VND).
+2.  **Giỏ hàng (Cart)**:
+    - Thêm/Xóa sản phẩm, thay đổi số lượng.
+    - *Mong đợi*: Tổng tiền cập nhật chính xác.
+3.  **Áp dụng mã Voucher (Voucher Logic)**:
+    - Kiểm tra voucher %: Ví dụ giảm 10%, mã tối đa 1.000.000 VND. Đơn 20.000.000 VND -> Giảm đúng 1.000.000 VND (không phải 2.000.000 VND).
+    - Kiểm tra điều kiện "Đơn hàng tối thiểu" (Min Order Value).
+    - Kiểm tra điều kiện "Hạng thành viên tối thiểu".
+    - *Mong đợi*: Thông báo lỗi rõ ràng nếu không đủ điều kiện.
 
-### IV. QUẢN LÝ KHUYẾN MÃI (Marketing & Vouchers)
-1.  **Mã Giảm Giá (Vouchers)**:
-    - Tạo mã giảm giá (theo phần trăm hoặc giá tiền cố định).
-    - Giới hạn số lần sử dụng và chi tiêu tối thiểu.
-    - Tự động tặng voucher khi người dùng đăng ký tài khoản mới.
-2.  **Chương Trình Khuyến Mãi (Promotions)**:
-    - Quản lý banner khuyến mãi hiển thị trên Slider trang chủ.
+### IV. QUY TRÌNH THANH TOÁN (CHECKOUT FLOW)
+1.  **Xác thực thông tin**: Số điện thoại phải đúng định dạng, địa chỉ không được trống.
+2.  **Phương thức thanh toán**: Hiển thị QR Code ngân hàng dựa trên tổng tiền sau giảm giá.
+3.  **Hoàn tất đặt hàng**: Voucher được trừ lượt dùng, đơn hàng xuất hiện trong Admin.
 
-### V. CÀI ĐẶT HỆ THỐNG (System Settings)
-1.  **Thông Tin Ngân Hàng**:
-    - Cập nhật số tài khoản, tên ngân hàng và tải lên QR code thanh toán.
-2.  **Mạng Xã Hội (Social Media Icons)**:
-    - Cập nhật link Facebook, TikTok, Instagram, Telegram từ Admin (icons phải hiển thị to và trên một hàng tại Home page).
-
-### VI. BÀI VIẾT & TIN TỨC (Blog Management)
-- Thêm bài viết mới kèm hình ảnh.
-- Đặt bài viết làm 'Nổi bật' (Featured) để hiển thị ở trang chủ.
-- Xem danh sách bài viết quản trị.
-- display more than 3 blogs in home page
-
-### VII. TRẢI NGHIỆM NGƯỜI DÙNG (Public Site Experience)
-1.  **Đăng Ký & Xác Thực**:
-    - Đăng ký tài khoản người dùng kèm mã xác nhận gửi qua email.
-2.  **Giỏ Hàng & Thanh Toán (Checkout)**:
-    - Thêm/Xóa sản phẩm trong giỏ hàng.
-    - Áp dụng mã giảm giá (Voucher).
-    - Điền thông tin giao hàng (Kiểm tra xác thực số điện thoại và địa chỉ).
-    - Xem thông tin thanh toán (Bank QR).
-3.  **Tìm Kiếm (Search)**:
-    - Tìm kiếm sản phẩm theo tên.
-    - Kiểm tra nhật ký tìm kiếm trong Admin (Search Analytics).
-4.  **Đa Ngôn Ngữ (Localization)**:
-    - Chuyển đổi ngôn ngữ Tiếng Việt/Tiếng Anh.
-    - Kiểm tra tất cả thông báo lỗi (Error messages) đã được dịch sang Tiếng Việt.
+### V. QUẢN TRỊ VIÊN (ADMIN DASHBOARD)
+1.  **Quản lý Sản phẩm**:
+    - Tải lên nhiều hình ảnh. Thiết lập trạng thái: New, Premium, Bestseller.
+2.  **Quản lý Voucher**:
+    - Tạo mã mới, thiết lập "Số tiền giảm tối đa" (Cap).
+    - Tích chọn "Tặng Khi Đăng Ký" để biến mã đó thành mã Welcome.
+3.  **Cấu hình Hệ thống**:
+    - Cập nhật QR Ngân hàng, link Mạng xã hội (Facebook, TikTok, Zalo...).
+    - *Mong đợi*: Thay đổi phản ánh ngay lập tức trên trang chủ.
+4.  **Phân tích tìm kiếm (Search Analytics)**: Xem danh sách từ khóa khách hàng đã tìm.
+5.  **Quản lý Blog**: Viết bài, đặt bài viết nổi bật lên trang chủ.
 
 ---
-Ngày tạo: 2026-03-20
+Cập nhật cuối: 25/03/2026
+Trạng thái: Proper Test Suite ready.

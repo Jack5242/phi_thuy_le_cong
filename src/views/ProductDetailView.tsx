@@ -119,7 +119,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
               </button>
             </div>
             <p className="text-2xl font-bold text-teal-900">
-              {product.amount === 0 ? t('prod.outOfStock') : `${product.price.toLocaleString()} VND`}
+              {product.amount === 0 ? t('prod.outOfStock') : `${product.price.toLocaleString('vi-VN')} VND`}
             </p>
           </div>
 

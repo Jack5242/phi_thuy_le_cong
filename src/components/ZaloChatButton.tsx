@@ -5,12 +5,12 @@ export const ZaloChatButton: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
 
   useEffect(() => {
-    fetch('/api/settings/contact')
+    fetch('/api/settings/social')
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (data && data.phone) {
+        if (data && data.zalo) {
           // Clean the phone number (remove spaces, etc.) but keep leading zero
-          const cleaned = data.phone.replace(/[^0-9+]/g, '');
+          const cleaned = data.zalo.replace(/[^0-9+]/g, '');
           setPhoneNumber(cleaned);
         }
       })

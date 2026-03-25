@@ -89,7 +89,7 @@ export const BlogListView: React.FC<BlogListViewProps> = ({ setView, setSelected
                     </div>
                   </div>
 
-                  <h3 className="text-xl font-bold font-be-vietnam text-stone-900 mb-3 group-hover:text-teal-700 transition-colors leading-snug">
+                  <h3 className="text-2xl font-bold font-playfair text-stone-900 mb-3 group-hover:text-teal-700 transition-colors leading-snug">
                     {blog.title}
                   </h3>
 

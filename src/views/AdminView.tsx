@@ -48,7 +48,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
   const [bankSettingsMessage, setBankSettingsMessage] = useState({ type: '', text: '' });
 
   // Social Settings State
-  const [socialSettings, setSocialSettings] = useState({ facebook: '', tiktok: '', instagram: '', telegram: '' });
+  const [socialSettings, setSocialSettings] = useState({ facebook: '', tiktok: '', instagram: '', telegram: '', zalo: '' });
   const [isSavingSocialSettings, setIsSavingSocialSettings] = useState(false);
   const [socialSettingsMessage, setSocialSettingsMessage] = useState({ type: '', text: '' });
 
@@ -58,10 +58,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
   const [contactSettingsMessage, setContactSettingsMessage] = useState({ type: '', text: '' });
 
   // Registration Voucher Settings State
-  const [registrationDiscount, setRegistrationDiscount] = useState(0.1);
-  const [registrationDiscountType, setRegistrationDiscountType] = useState('percent');
-  const [isSavingRegistrationDiscount, setIsSavingRegistrationDiscount] = useState(false);
-  const [registrationDiscountMessage, setRegistrationDiscountMessage] = useState({ type: '', text: '' });
+
 
   useEffect(() => {
     const token = sessionStorage.getItem('adminToken');
@@ -339,27 +336,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
     }
   };
 
-  const handleSaveRegistrationDiscount = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSavingRegistrationDiscount(true);
-    setRegistrationDiscountMessage({ type: '', text: '' });
-    try {
-      const res = await fetch('/api/admin/settings/registration-discount', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
-        body: JSON.stringify({ discount: registrationDiscount, type: registrationDiscountType })
-      });
-      if (res.ok) {
-        setRegistrationDiscountMessage({ type: 'success', text: 'Cập nhật mức giảm giá đăng ký mới thành công!' });
-      } else {
-        setRegistrationDiscountMessage({ type: 'error', text: 'Cập nhật thất bại' });
-      }
-    } catch (err) {
-      setRegistrationDiscountMessage({ type: 'error', text: 'Lỗi khi cập nhật mức giảm giá' });
-    } finally {
-      setIsSavingRegistrationDiscount(false);
-    }
-  };
+
 
   // Orders State
   const [orders, setOrders] = useState<any[]>([]);
@@ -391,7 +368,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
   const [editingVoucher, setEditingVoucher] = useState<any | null>(null);
   const [isAddingVoucher, setIsAddingVoucher] = useState(false);
   const [voucherToDelete, setVoucherToDelete] = useState<string | null>(null);
-  const [voucherForm, setVoucherForm] = useState<{ id?: string, code: string, discount: number, type: string, is_active: boolean, usage_limit: number | '', min_user_spending: number }>({ code: '', discount: 0, type: 'percent', is_active: true, usage_limit: '', min_user_spending: 0 });
+  const [voucherForm, setVoucherForm] = useState<{ id?: string, code: string, discount: number, type: string, is_active: boolean, usage_limit: number | '', min_user_spending: number, min_order_value: number, max_discount_amount: number | '', is_hidden: boolean, is_registration: boolean }>({ code: '', discount: 0, type: 'percent', is_active: true, usage_limit: '', min_user_spending: 0, min_order_value: 0, max_discount_amount: '', is_hidden: false, is_registration: false });
 
   // Promotions State
   const [promotions, setPromotions] = useState<any[]>([]);
@@ -489,7 +466,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
       fetchBankSettings();
       fetchSocialSettings();
       fetchContactSettings();
-      fetchRegistrationDiscount();
     }
   }, [activeTab]);
 
@@ -548,20 +524,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
     }
   };
 
-  const fetchRegistrationDiscount = async () => {
-    try {
-      const res = await fetch('/api/admin/settings/registration-discount', {
-        headers: { 'Authorization': `Bearer ${adminToken}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setRegistrationDiscount(data.discount);
-        setRegistrationDiscountType(data.type || 'percent');
-      }
-    } catch (err) {
-      console.error('Failed to fetch registration discount', err);
-    }
-  };
+
 
   const fetchBankSettings = async () => {
     try {
@@ -588,7 +551,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
             facebook: data.facebook || '',
             tiktok: data.tiktok || '',
             instagram: data.instagram || '',
-            telegram: data.telegram || ''
+            telegram: data.telegram || '',
+            zalo: data.zalo || ''
           });
         }
       }
@@ -734,16 +698,28 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
       }
     });
 
-    // Add summary row at the end
-    data.push({}); // Empty row for spacing
-    data.push({
-      'Tên Sản Phẩm': 'TỔNG CỘNG THÁNG:',
-      'Số Lượng': totalMonthlyProducts,
-      'Giảm Giá (VND)': totalMonthlyDiscountAmount,
-      'Tổng Trước Giảm (VND)': totalMonthlyIncomeBeforeDiscount,
-      'Tổng Đơn KH (VND)': totalMonthlyIncome
-    });
+    // Add summary to the right side of the table
+    if (data.length > 0) {
+      const summaryLabels = [
+        'Tổng Sản Phẩm:',
+        'Tổng Giảm Giá (VND):',
+        'Tổng Trước Giảm (VND):',
+        'Tổng Doanh Thu (VND):'
+      ];
+      const summaryValues = [
+        totalMonthlyProducts,
+        totalMonthlyDiscountAmount,
+        totalMonthlyIncomeBeforeDiscount,
+        totalMonthlyIncome
+      ];
 
+      for (let i = 0; i < 4; i++) {
+        if (!data[i]) data.push({} as any);
+        data[i][' '] = ''; // Spacer column 
+        data[i]['BÁO CÁO THÁNG'] = summaryLabels[i];
+        data[i][' GIÁ TRỊ '] = summaryValues[i];
+      }
+    }
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Orders');
@@ -769,7 +745,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
     try {
       await fetch(`/api/admin/orders/${id}/status`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
         body: JSON.stringify({ status })
       });
       fetchOrders();
@@ -780,7 +756,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
 
   const confirmDeleteOrder = async (id: string) => {
     try {
-      await fetch(`/api/admin/orders/${id}`, { method: 'DELETE' });
+      await fetch(`/api/admin/orders/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
       fetchOrders();
       setOrderToDelete(null);
     } catch (err) {
@@ -866,13 +845,13 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
         const newProduct = { ...productForm, id: `prod-${Date.now()}` };
         await fetch('/api/admin/products', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
           body: JSON.stringify(newProduct)
         });
       } else if (editingProduct) {
         await fetch(`/api/admin/products/${editingProduct.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
           body: JSON.stringify(productForm)
         });
       }
@@ -890,7 +869,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
 
   const confirmDeleteProduct = async (id: string) => {
     try {
-      await fetch(`/api/admin/products/${id}`, { method: 'DELETE' });
+      await fetch(`/api/admin/products/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
       refreshProducts();
       setProductToDelete(null);
     } catch (err) {
@@ -900,25 +882,34 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
 
   const handleSaveVoucher = async () => {
     try {
+      let res;
       if (isAddingVoucher) {
         const newVoucher = { ...voucherForm, id: `vouch-${Date.now()}` };
-        await fetch('/api/admin/vouchers', {
+        res = await fetch('/api/admin/vouchers', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
           body: JSON.stringify(newVoucher)
         });
       } else if (editingVoucher) {
-        await fetch(`/api/admin/vouchers/${editingVoucher.id}`, {
+        res = await fetch(`/api/admin/vouchers/${editingVoucher.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
           body: JSON.stringify(voucherForm)
         });
       }
+      
+      if (res && (!res.ok)) {
+        const errorData = await res.json();
+        alert(errorData.error || 'Có lỗi khi lưu mã giảm giá');
+        return; // Prevents closing the modal so the user can fix the duplicate code
+      }
+
       setIsAddingVoucher(false);
       setEditingVoucher(null);
       fetchVouchers();
     } catch (err) {
       console.error('Failed to save voucher', err);
+      alert('Không thể kết nối đến máy chủ');
     }
   };
 
@@ -928,7 +919,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
 
   const confirmDeleteVoucher = async (id: string) => {
     try {
-      await fetch(`/api/admin/vouchers/${id}`, { method: 'DELETE' });
+      await fetch(`/api/admin/vouchers/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
       fetchVouchers();
       setVoucherToDelete(null);
     } catch (err) {
@@ -941,13 +935,13 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
       if (isAddingPromotion) {
         await fetch('/api/admin/promotions', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
           body: JSON.stringify(promotionForm)
         });
       } else if (editingPromotion) {
         await fetch(`/api/admin/promotions/${editingPromotion.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
           body: JSON.stringify(promotionForm)
         });
       }
@@ -965,7 +959,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
 
   const confirmDeletePromotion = async (id: string) => {
     try {
-      await fetch(`/api/admin/promotions/${id}`, { method: 'DELETE' });
+      await fetch(`/api/admin/promotions/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
       fetchPromotions();
       setPromotionToDelete(null);
     } catch (err) {
@@ -1005,11 +1002,13 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
       if (isAddingBlog) {
         response = await fetch('/api/admin/blogs', {
           method: 'POST',
+          headers: { 'Authorization': `Bearer ${adminToken}` },
           body: formData
         });
       } else if (editingBlog) {
         response = await fetch(`/api/admin/blogs/${editingBlog.id}`, {
           method: 'PUT',
+          headers: { 'Authorization': `Bearer ${adminToken}` },
           body: formData
         });
       }
@@ -1036,7 +1035,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
 
   const confirmDeleteBlog = async (id: string) => {
     try {
-      await fetch(`/api/admin/blogs/${id}`, { method: 'DELETE' });
+      await fetch(`/api/admin/blogs/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
       fetchBlogs();
       setBlogToDelete(null);
     } catch (err) {
@@ -2132,7 +2134,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
               onClick={() => {
                 setIsAddingVoucher(true);
                 setEditingVoucher(null);
-                setVoucherForm({ code: '', discount: 0, type: 'percent', is_active: true, usage_limit: '', min_user_spending: 0 });
+                setVoucherForm({ code: '', discount: 0, type: 'percent', is_active: true, usage_limit: '', min_user_spending: 0, min_order_value: 0, max_discount_amount: '', is_hidden: false, is_registration: false });
               }}
               className="flex items-center space-x-2 bg-teal-800 text-white px-4 py-2 rounded-md hover:bg-teal-900 transition-colors font-medium shadow-sm"
             >
@@ -2163,7 +2165,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                         const val = Number(e.target.value);
                         setVoucherForm({ ...voucherForm, discount: voucherForm.type === 'percent' ? val / 100 : val });
                       }}
-                      className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
+                      className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none no-spinner" />
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-800 mb-1">Loại</label>
@@ -2184,16 +2186,37 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-800 mb-1">Giới Hạn Lượt Dùng Toàn Cục (Trống = vô hạn)</label>
-                    <input type="number" value={voucherForm.usage_limit || ''} onChange={e => setVoucherForm({ ...voucherForm, usage_limit: e.target.value ? Number(e.target.value) : '' })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" placeholder="VD: 100" />
+                    <input type="number" value={voucherForm.usage_limit || ''} onChange={e => setVoucherForm({ ...voucherForm, usage_limit: e.target.value ? Number(e.target.value) : '' })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none no-spinner" placeholder="VD: 100" />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-gray-800 mb-1">Cần Chi Tiêu Tối Thiểu Của Khách Để Dùng (VND)</label>
-                    <input type="number" value={voucherForm.min_user_spending || 0} onChange={e => setVoucherForm({ ...voucherForm, min_user_spending: Number(e.target.value) })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" min="0" />
+                    <label className="block text-sm font-bold text-gray-800 mb-1">Cấp Độ Khách Hàng Tối Thiểu Được Dùng</label>
+                    <select value={voucherForm.min_user_spending || 0} onChange={e => setVoucherForm({ ...voucherForm, min_user_spending: Number(e.target.value) })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none">
+                      <option value={0}>Tất cả khách hàng</option>
+                      <option value={50000000}>Đậu Chủng (Từ 50tr VND)</option>
+                      <option value={300000000}>Nếp Chủng (Từ 300tr VND)</option>
+                      <option value={1000000000}>Băng Chủng (Từ 1 tỷ VND)</option>
+                    </select>
                   </div>
-                  <div className="flex items-center">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-1">Giá Trị Đơn Hàng Tối Thiểu (VND)</label>
+                    <input type="number" value={voucherForm.min_order_value || 0} onChange={e => setVoucherForm({ ...voucherForm, min_order_value: Number(e.target.value) })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none no-spinner" min="0" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-1">Số Tiền Giảm Tối Đa (Trống = Không giới hạn)</label>
+                    <input type="number" value={voucherForm.max_discount_amount || ''} onChange={e => setVoucherForm({ ...voucherForm, max_discount_amount: e.target.value ? Number(e.target.value) : '' })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none no-spinner" min="0" />
+                  </div>
+                  <div className="flex flex-col space-y-2">
                     <label className="flex items-center space-x-2 cursor-pointer">
                       <input type="checkbox" checked={voucherForm.is_active} onChange={e => setVoucherForm({ ...voucherForm, is_active: e.target.checked })} className="rounded text-teal-600 focus:ring-teal-500 w-4 h-4" />
                       <span className="text-sm font-semibold text-gray-800">Hoạt Động</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input type="checkbox" checked={voucherForm.is_hidden} onChange={e => setVoucherForm({ ...voucherForm, is_hidden: e.target.checked })} className="rounded text-teal-600 focus:ring-teal-500 w-4 h-4" />
+                      <span className="text-sm font-semibold text-gray-800">Ẩn (Không hiện ở Profile/Giỏ hàng)</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input type="checkbox" checked={voucherForm.is_registration} onChange={e => setVoucherForm({ ...voucherForm, is_registration: e.target.checked })} className="rounded text-teal-600 focus:ring-teal-500 w-4 h-4" />
+                      <span className="text-sm font-semibold text-gray-800">Tặng Khi Đăng Ký (Chào Mừng)</span>
                     </label>
                   </div>
                 </div>
@@ -2225,7 +2248,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Mã</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Giảm Giá</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Lượt Dùng</th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Mua Tối Thiểu</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Cấp Độ / Đơn T.Thiểu</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Giảm Tối Đa</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Trạng Thái</th>
                   <th className="px-6 py-3 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Hành Động</th>
                 </tr>
@@ -2241,12 +2265,28 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                       {voucher.usage_count} / {voucher.usage_limit || '∞'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
-                      {voucher.min_user_spending ? `${voucher.min_user_spending.toLocaleString()} VND` : '0 VND'}
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs">{voucher.min_user_spending === 1000000000 ? 'Băng Chủng' : voucher.min_user_spending === 300000000 ? 'Nếp Chủng' : voucher.min_user_spending === 50000000 ? 'Đậu Chủng' : 'Tất cả khách'}</span>
+                        <span className="text-xs text-teal-700 font-bold">{voucher.min_order_value ? `Đơn > ${voucher.min_order_value.toLocaleString()}₫` : 'Không giới hạn đơn'}</span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
+                      {voucher.max_discount_amount ? `${voucher.max_discount_amount.toLocaleString()}₫` : '∞'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap flex flex-col items-start gap-1">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${voucher.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                         {voucher.is_active ? 'Hoạt Động' : 'Không Hoạt Động'}
                       </span>
+                      {voucher.is_hidden ? (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-600">
+                          Đã Ẩn
+                        </span>
+                      ) : null}
+                      {voucher.is_registration ? (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-teal-100 text-teal-700">
+                          Chào Mừng
+                        </span>
+                      ) : null}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
@@ -2255,7 +2295,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                           setVoucherForm({
                             ...voucher,
                             usage_limit: voucher.usage_limit || '',
-                            min_user_spending: voucher.min_user_spending || 0
+                            min_user_spending: voucher.min_user_spending || 0,
+                            min_order_value: voucher.min_order_value || 0,
+                            max_discount_amount: voucher.max_discount_amount || '',
+                            is_hidden: voucher.is_hidden || false,
+                            is_registration: voucher.is_registration || false
                           });
                           setIsAddingVoucher(false);
                         }}
@@ -2276,71 +2320,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
             </table>
           </div>
 
-          <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <span className="material-symbols-outlined text-teal-700 text-2xl">local_offer</span>
-              Giảm Giá Chào Mừng Thành Viên
-            </h2>
-            <p className="text-sm text-gray-500 mb-6">Mức giảm giá này được áp dụng cho voucher tự động gửi đến email của thành viên ngay sau khi đăng ký thành công.</p>
-
-            <form onSubmit={handleSaveRegistrationDiscount} className="space-y-6">
-              {registrationDiscountMessage.text && (
-                <div className={`p-4 rounded-md text-sm ${registrationDiscountMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                  {registrationDiscountMessage.text}
-                </div>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Loại Giảm Giá</label>
-                  <select
-                    value={registrationDiscountType}
-                    onChange={e => {
-                      const newType = e.target.value;
-                      let newDiscount = registrationDiscount;
-                      if (registrationDiscountType === 'fixed' && newType === 'percent') {
-                        newDiscount = Math.min(newDiscount / 100, 1);
-                      } else if (registrationDiscountType === 'percent' && newType === 'fixed') {
-                        newDiscount = newDiscount * 100;
-                      }
-                      setRegistrationDiscountType(newType);
-                      setRegistrationDiscount(newDiscount);
-                    }}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                  >
-                    <option value="percent">Phần Trăm (%)</option>
-                    <option value="fixed">Số Tiền (VND)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Mức Giảm Giá</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      step={registrationDiscountType === 'percent' ? "1" : "1000"}
-                      min="0"
-                      value={registrationDiscountType === 'percent' ? Math.round(registrationDiscount * 100) : registrationDiscount}
-                      onChange={e => {
-                        const val = parseFloat(e.target.value);
-                        setRegistrationDiscount(registrationDiscountType === 'percent' ? val / 100 : val);
-                      }}
-                      required
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 font-mono"
-                    />
-                    <span className="text-lg font-bold text-gray-700">
-                      {registrationDiscountType === 'percent' ? '%' : 'VND'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4 flex justify-end">
-                <button type="submit" disabled={isSavingRegistrationDiscount} className="bg-teal-800 text-white px-6 py-2 rounded-md hover:bg-teal-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium">
-                  {isSavingRegistrationDiscount && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
-                  Lưu Thay Đổi
-                </button>
-              </div>
-            </form>
-          </div>
         </div>
       )}
 
@@ -3089,6 +3068,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Telegram</label>
                 <input type="url" placeholder="https://t.me/..." value={socialSettings.telegram} onChange={e => setSocialSettings({ ...socialSettings, telegram: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Zalo (Số điện thoại)</label>
+                <input type="text" placeholder="VD: 09..." value={socialSettings.zalo} onChange={e => setSocialSettings({ ...socialSettings, zalo: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500" />
               </div>
 
               <div className="pt-4 flex justify-end">

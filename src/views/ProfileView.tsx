@@ -235,8 +235,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
     }
   };
 
-  const totalSpent = orders.reduce((sum, order) => sum + order.total, 0);
-
+  const totalSpent = Number(user.total_spent) || 0;
+  
   const getRank = (spent: number): { label: string; color: string } => {
     if (spent >= 1_000_000_000) return { label: 'Băng Chủng', color: 'text-cyan-600' };
     if (spent >= 300_000_000) return { label: 'Nếp Chủng', color: 'text-emerald-600' };
@@ -308,7 +308,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
         <div className="flex-1 space-y-12">
           {activeTab === 'overview' && (
             <section>
-              <h1 className="text-3xl font-extrabold text-teal-900 mb-8">{t('profile.welcome')}{user.name || user.email}</h1>
+              <h1 className="text-3xl font-extrabold text-teal-900 mb-8 font-sans">{t('profile.welcome')}{user.name || user.email}</h1>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
                 <div className="p-6 bg-teal-50 rounded-sm border border-teal-100">
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">{t('profile.overview.totalOrders')}</p>
@@ -327,7 +327,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
                       <div className="w-8 h-8 rounded-full bg-teal-50 flex items-center justify-center">
                         <Package className="w-4 h-4 text-teal-700" />
                       </div>
-                      <h3 className="font-bold text-teal-900">{t('profile.overview.latestOrder')}</h3>
+                      <h3 className="font-bold text-teal-900 font-sans">{t('profile.overview.latestOrder')}</h3>
                     </div>
                     <button 
                       onClick={() => setActiveTab('orders')}
@@ -453,7 +453,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
 
           {activeTab === 'profile' && (
             <section>
-              <h2 className="text-xl font-bold text-teal-900 mb-6">{t('profile.tab.profile')}</h2>
+              <h2 className="text-xl font-bold text-teal-900 mb-6 font-sans">{t('profile.tab.profile')}</h2>
               <form onSubmit={handleUpdateProfile} className="max-w-2xl space-y-6 bg-white p-8 border border-teal-100 rounded-sm">
                 {saveMessage && (
                   <div className={`p-4 text-sm rounded-sm ${saveMessage.includes('thành công') || saveMessage.includes('successfully') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
@@ -512,7 +512,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
 
               {/* Password Management Section */}
               <div className="mt-12 max-w-2xl bg-white p-8 border border-teal-100 rounded-sm">
-                <h3 className="text-xl font-bold text-teal-900 mb-6">{t('profile.password.title')}</h3>
+                <h3 className="text-xl font-bold text-teal-900 mb-6 font-sans">{t('profile.password.title')}</h3>
                 
                 {passwordMessage && (
                   <div className={`mb-6 p-4 text-sm rounded-sm ${passwordMessage.includes('thành công') || passwordMessage.includes('successfully') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
@@ -625,7 +625,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
 
           {activeTab === 'orders' && (
             <section>
-              <h2 className="text-xl font-bold text-teal-900 mb-6">{t('profile.tab.orders')}</h2>
+              <h2 className="text-xl font-bold text-teal-900 mb-6 font-sans">{t('profile.tab.orders')}</h2>
             {loading ? (
               <p className="text-slate-500">{t('profile.orders.loading')}</p>
             ) : orders.length === 0 ? (
@@ -699,7 +699,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
 
           {activeTab === 'wishlist' && (
             <section>
-              <h2 className="text-xl font-bold text-teal-900 mb-6">{t('profile.tab.wishlist')}</h2>
+              <h2 className="text-xl font-bold text-teal-900 mb-6 font-sans">{t('profile.tab.wishlist')}</h2>
               {wishlistItems.length === 0 ? (
                 <div className="text-center py-12 p-6 bg-teal-50 rounded-sm border border-teal-100">
                   <Heart className="w-12 h-12 text-slate-300 mx-auto mb-4" />
@@ -724,7 +724,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
 
           {activeTab === 'vouchers' && (
             <section>
-              <h2 className="text-xl font-bold text-teal-900 mb-6">{t('profile.vouchers.title')}</h2>
+              <h2 className="text-xl font-bold text-teal-900 mb-6 font-sans">{t('profile.vouchers.title')}</h2>
               {vouchers.length === 0 ? (
                 <div className="text-center py-12 p-6 bg-teal-50 rounded-sm border border-teal-100">
                   <Ticket className="w-12 h-12 text-slate-300 mx-auto mb-4" />
@@ -735,19 +735,29 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
                   {vouchers.map(v => (
                     <div key={v.id} className="bg-white border-2 border-dashed border-teal-200 rounded-lg p-6 flex flex-col justify-between hover:border-teal-500 transition-colors">
                       <div>
-                        <div className="flex justify-between items-start mb-4">
-                          <span className="bg-teal-100 text-teal-800 text-xs font-bold px-3 py-1 uppercase rounded-full tracking-wider">
-                            {v.type === 'percent' ? `${v.discount * 100}%` : `${v.discount.toLocaleString('vi-VN')} VND`}
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-2xl font-black text-teal-900 tracking-wider font-mono border-2 border-dashed border-teal-300 bg-teal-50 px-4 py-1.5 rounded-lg shadow-sm">
+                            {v.code}
+                          </h3>
+                          <span className="bg-gradient-to-r from-teal-600 to-emerald-500 text-white text-lg font-bold px-4 py-1.5 rounded-full shadow-md whitespace-nowrap ml-4">
+                            - {v.type === 'percent' ? `${v.discount * 100}%` : `${v.discount.toLocaleString('vi-VN')} đ`}
                           </span>
-                          <span className="text-[10px] text-gray-500 mt-1 uppercase">{t('profile.vouchers.ready')}</span>
                         </div>
-                        <h3 className="text-lg font-extrabold text-teal-900 tracking-wider font-mono mb-2">{v.code}</h3>
-                        {v.min_user_spending > 0 && (
-                          <p className="text-xs text-slate-500 mt-2">{t('profile.vouchers.minSpend')} {v.min_user_spending.toLocaleString('vi-VN')} VND</p>
+                        {v.min_order_value > 0 ? (
+                          <p className="text-sm font-bold text-gray-600">
+                            Đơn tối thiểu: <span className="text-teal-700">{v.min_order_value.toLocaleString('vi-VN')} đ</span>
+                          </p>
+                        ) : (
+                          <p className="text-sm font-bold text-teal-600">Không giới hạn đơn hàng</p>
                         )}
-                        {v.usage_limit && (
-                          <p className="text-xs text-slate-500 mt-1">{t('profile.vouchers.limit')} {v.usage_limit}</p>
+                        {v.max_discount_amount > 0 && (
+                          <p className="text-sm font-bold text-red-500 mt-1">
+                            Giảm tối đa: <span>{v.max_discount_amount.toLocaleString('vi-VN')} đ</span>
+                          </p>
                         )}
+                        <span className="text-[10px] text-gray-400 mt-3 block uppercase tracking-wider font-semibold">
+                          {t('profile.vouchers.ready')}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -763,7 +773,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
                 {/* Modal Header */}
                 <div className="p-6 border-b border-teal-50 flex items-center justify-between bg-teal-50/30">
                   <div>
-                    <h3 className="text-xl font-bold text-teal-900">{t('profile.orderDetail.title')}</h3>
+                    <h3 className="text-xl font-bold text-teal-900 font-sans">{t('profile.orderDetail.title')}</h3>
                     <p className="text-xs text-teal-600 font-bold mt-1 uppercase tracking-wider">#{selectedOrderDetails.id}</p>
                   </div>
                   <button 

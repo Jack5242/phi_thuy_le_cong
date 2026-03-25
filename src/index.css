@@ -1,7 +1,25 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'RoyaleCouture Script';
+  src: url('./assets/MJ RoyaleCouture Script.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'RoyaleCouture Sans';
+  src: url('./assets/MJ Royale Couture Sans.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 @theme {
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-script: "RoyaleCouture Script", cursive;
+  --font-couture: "Playfair Display", serif;
+  --font-serif: "Playfair Display", serif;
+  --font-playfair: "Playfair Display", serif;
   --font-be-vietnam: "Be Vietnam Pro", sans-serif;
   --color-teal-900: #008080;
   --color-teal-800: #006666;
@@ -14,6 +32,9 @@
   body {
     @apply font-sans text-slate-900 bg-white;
   }
+  h1, h2, h3 {
+    @apply font-playfair;
+  }
 }
 
 .material-symbols-outlined {
@@ -22,4 +43,15 @@
     'wght' 400,
     'GRAD' 0,
     'opsz' 24;
+}
+
+@layer utilities {
+  .no-spinner::-webkit-inner-spin-button,
+  .no-spinner::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .no-spinner {
+    -moz-appearance: textfield;
+  }
 }

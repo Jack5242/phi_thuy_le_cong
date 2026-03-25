@@ -25,9 +25,6 @@ const DB_DEBUG = (process.env.DB_DEBUG || '').toLowerCase() === 'true';
 
 const db = {
   exec: async (sql: string): Promise<any> => {
-    sql = sql.replace(/INTEGER PRIMARY KEY AUTOINCREMENT/g, 'SERIAL PRIMARY KEY');
-    sql = sql.replace(/DATETIME/g, 'TIMESTAMPTZ');
-    sql = sql.replace(/REAL/g, 'NUMERIC');
     return pool.query(sql);
   },
   prepare: (sql: string) => {
@@ -81,39 +78,42 @@ export async function initDb() {
     phone TEXT,
     address TEXT,
     notes TEXT,
-    total REAL,
+    total NUMERIC,
     status TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
   );
 
   CREATE TABLE IF NOT EXISTS order_items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     order_id TEXT,
     product_id TEXT,
     quantity INTEGER,
-    price REAL,
+    price NUMERIC,
     FOREIGN KEY(order_id) REFERENCES orders(id)
   );
 
   CREATE TABLE IF NOT EXISTS vouchers (
     id TEXT PRIMARY KEY,
     code TEXT UNIQUE NOT NULL,
-    discount REAL NOT NULL,
+    discount NUMERIC NOT NULL,
     type TEXT NOT NULL,
     is_active INTEGER DEFAULT 1,
     usage_limit INTEGER DEFAULT NULL,
     usage_count INTEGER DEFAULT 0,
-    min_user_spending REAL DEFAULT 0,
+    min_user_spending NUMERIC DEFAULT 0,
     user_email TEXT DEFAULT NULL,
-    is_registration INTEGER DEFAULT 0
+    is_registration INTEGER DEFAULT 0,
+    is_hidden INTEGER DEFAULT 0,
+    min_order_value NUMERIC DEFAULT 0,
+    max_discount_amount NUMERIC DEFAULT NULL
   );
 
   CREATE TABLE IF NOT EXISTS used_vouchers (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     user_email TEXT NOT NULL,
     voucher_code TEXT NOT NULL,
     order_id TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_email, voucher_code)
   );
 
@@ -124,11 +124,12 @@ export async function initDb() {
     name TEXT,
     phone TEXT,
     address TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    total_spent NUMERIC DEFAULT 0
   );
 
   CREATE TABLE IF NOT EXISTS promotions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     title_en TEXT,
     subtitle TEXT NOT NULL,
@@ -140,10 +141,10 @@ export async function initDb() {
   );
 
   CREATE TABLE IF NOT EXISTS search_keywords (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     keyword TEXT NOT NULL,
     normalized_keyword TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
   );
 
   CREATE TABLE IF NOT EXISTS blogs (
@@ -154,27 +155,27 @@ export async function initDb() {
     content TEXT,
     image TEXT,
     author TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     is_published INTEGER DEFAULT 0
   );
   CREATE TABLE IF NOT EXISTS email_verifications (
     email TEXT PRIMARY KEY,
     code TEXT NOT NULL,
-    expires_at DATETIME NOT NULL
+    expires_at TIMESTAMPTZ NOT NULL
   );
 
   CREATE TABLE IF NOT EXISTS password_resets (
     email TEXT PRIMARY KEY,
     token TEXT NOT NULL,
-    expires_at DATETIME NOT NULL
+    expires_at TIMESTAMPTZ NOT NULL
   );
 
   CREATE TABLE IF NOT EXISTS order_feedback (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     order_id TEXT NOT NULL,
     rating INTEGER NOT NULL,
     comment TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(order_id) REFERENCES orders(id)
   );
 
@@ -190,7 +191,7 @@ export async function initDb() {
   );
 
   CREATE TABLE IF NOT EXISTS collections (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     name TEXT UNIQUE NOT NULL,
     name_en TEXT,
     description TEXT,
@@ -199,10 +200,10 @@ export async function initDb() {
   );
 
   CREATE TABLE IF NOT EXISTS wishlist (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     user_email TEXT NOT NULL,
     product_id TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_email, product_id)
   );
 `);
@@ -236,6 +237,13 @@ export async function initDb() {
     await db.exec('ALTER TABLE vouchers ALTER COLUMN id TYPE TEXT;');
     await db.exec('ALTER TABLE vouchers ALTER COLUMN id DROP DEFAULT;');
   } catch (e) { /* Incompatible or already altered */ }
+
+  try {
+    await db.exec('ALTER TABLE vouchers ADD COLUMN is_hidden INTEGER DEFAULT 0;');
+  } catch (e) { /* Column already exists */ }
+  try {
+    await db.exec('ALTER TABLE vouchers ADD COLUMN min_order_value NUMERIC DEFAULT 0;');
+  } catch (e) { /* Column already exists */ }
 
   // Seed default admin if none exists
   const checkAdmin = await db.prepare('SELECT count(*) as count FROM admins').get() as { count: number };
@@ -453,6 +461,51 @@ export async function seedProducts(products: Product[]) {
     await insertMany(allProducts);
     console.log(`Database seeded with ${allProducts.length} product line(s) from existing products.`);
   }
+
+  // PostgreSQL Migration: Add total_spent column if it doesn't exist
+  try {
+    const columnCheck = await db.prepare(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'users' AND column_name = 'total_spent'
+    `).get();
+
+    if (!columnCheck) {
+      console.log('Migrating: Adding total_spent column to users table...');
+      await db.exec('ALTER TABLE users ADD COLUMN total_spent NUMERIC DEFAULT 0');
+      
+      // Perform one-time backfill
+      await db.exec(`
+        UPDATE users 
+        SET total_spent = COALESCE((
+          SELECT SUM(total) 
+          FROM orders 
+          WHERE orders.user_email = users.email 
+            AND status != 'Cancelled' 
+            AND status != 'Đã Hủy'
+        ), 0)
+      `);
+      console.log('Successfully added total_spent column and synchronized historical data.');
+    }
+    // PostgreSQL Migration: Add max_discount_amount column to vouchers if it doesn't exist
+  try {
+    const voucherColumnCheck = await db.prepare(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'vouchers' AND column_name = 'max_discount_amount'
+    `).get();
+
+    if (!voucherColumnCheck) {
+      console.log('Migrating: Adding max_discount_amount column to vouchers table...');
+      await db.exec('ALTER TABLE vouchers ADD COLUMN max_discount_amount NUMERIC DEFAULT NULL');
+      console.log('Successfully added max_discount_amount column to vouchers table.');
+    }
+  } catch (err: any) {
+    console.error('Error during vouchers migration:', err.message);
+  }
+} catch (err: any) {
+    console.error('Error during total_spent migration:', err.message);
+  }
 }
 
 // Collections
@@ -510,24 +563,9 @@ export async function updateBankSettings(settings: { bankName?: string, bankOwne
   return { success: true };
 }
 
-export async function getRegistrationVoucherDiscount() {
-  const discountSetting = await db.prepare('SELECT value FROM settings WHERE key = ?').get('registration_voucher_discount') as { value: string };
-  const typeSetting = await db.prepare('SELECT value FROM settings WHERE key = ?').get('registration_voucher_type') as { value: string };
-  return {
-    discount: discountSetting ? parseFloat(discountSetting.value) : 0.1,
-    type: typeSetting ? typeSetting.value : 'percent'
-  };
-}
-
-export async function updateRegistrationVoucherDiscount(discount: number, type: string) {
-  db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value').run('registration_voucher_discount', discount.toString());
-  db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value').run('registration_voucher_type', type);
-  return { success: true };
-}
-
 export async function getSocialSettings() {
-  const settings = await db.prepare('SELECT * FROM settings WHERE key IN (?, ?, ?, ?)').all('social_facebook', 'social_tiktok', 'social_instagram', 'social_telegram') as any[];
-  const result: any = { facebook: '', tiktok: '', instagram: '', telegram: '' };
+  const settings = await db.prepare('SELECT * FROM settings WHERE key IN (?, ?, ?, ?, ?)').all('social_facebook', 'social_tiktok', 'social_instagram', 'social_telegram', 'social_zalo') as any[];
+  const result: any = { facebook: '', tiktok: '', instagram: '', telegram: '', zalo: '' };
   settings.forEach(s => {
     const platform = s.key.replace('social_', '');
     result[platform] = s.value;
@@ -535,7 +573,7 @@ export async function getSocialSettings() {
   return result;
 }
 
-export async function updateSocialSettings(settings: { facebook?: string, tiktok?: string, instagram?: string, telegram?: string }) {
+export async function updateSocialSettings(settings: { facebook?: string, tiktok?: string, instagram?: string, telegram?: string, zalo?: string }) {
   const update = db.prepare('UPDATE settings SET value = ? WHERE key = ?');
   const insert = db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT (key) DO NOTHING');
 
@@ -596,6 +634,8 @@ export async function getAllProducts(): Promise<Product[]> {
 
     return {
       ...row,
+      price: Number(row.price),
+      amount: row.amount !== null ? Number(row.amount) : undefined,
       images,
       isNew: Boolean(row.isNew ?? row.isnew),
       isPremium: Boolean(row.isPremium ?? row.ispremium),
@@ -618,10 +658,14 @@ export async function createOrder(order: { id: string; email: string; name: stri
       db.prepare('INSERT INTO used_vouchers (user_email, voucher_code, order_id) VALUES (?, ?, ?)').run(data.email, data.voucher_code, data.id);
       await db.prepare('UPDATE vouchers SET usage_count = usage_count + 1 WHERE code = ?').run(data.voucher_code);
     }
+
+    // Increment user's total_spent
+    await db.prepare('UPDATE users SET total_spent = total_spent + ? WHERE email = ?').run(data.total, data.email);
   });
 
   await executeOrder(order);
-  return { success: true, orderId: order.id };
+  const updatedUser = await getUserByEmail(order.email);
+  return { success: true, orderId: order.id, user: updatedUser };
 }
 
 // Admin Functions
@@ -697,44 +741,68 @@ export async function getAllOrders() {
 }
 
 export async function updateOrderStatus(id: string, status: string) {
+  const order = await db.prepare('SELECT user_email, total, status FROM orders WHERE id = ?').get(id) as { user_email: string; total: number; status: string } | undefined;
+  
+  if (order && order.user_email) {
+    const isOldCancelled = order.status === 'Cancelled' || order.status === 'Đã Hủy';
+    const isNewCancelled = status === 'Cancelled' || status === 'Đã Hủy';
+    
+    if (!isOldCancelled && isNewCancelled) {
+      await db.prepare('UPDATE users SET total_spent = total_spent - ? WHERE email = ?').run(order.total, order.user_email);
+    } else if (isOldCancelled && !isNewCancelled) {
+      await db.prepare('UPDATE users SET total_spent = total_spent + ? WHERE email = ?').run(order.total, order.user_email);
+    }
+  }
+
   await db.prepare('UPDATE orders SET status = ? WHERE id = ?').run(status, id);
   return { success: true };
 }
 
 export async function deleteOrder(id: string) {
+  const order = await db.prepare('SELECT user_email, total, status FROM orders WHERE id = ?').get(id) as { user_email: string; total: number; status: string } | undefined;
+
   await db.prepare('DELETE FROM order_items WHERE order_id = ?').run(id);
   await db.prepare('DELETE FROM orders WHERE id = ?').run(id);
+
+  if (order && order.user_email && order.status !== 'Cancelled' && order.status !== 'Đã Hủy' && order.status !== 'Delivered' && order.status !== 'Hoàn Thành') {
+    await db.prepare('UPDATE users SET total_spent = total_spent - ? WHERE email = ?').run(order.total, order.user_email);
+  }
+
   return { success: true };
 }
 
 export async function getAllVouchers() {
-  const vouchers = await db.prepare('SELECT * FROM vouchers WHERE is_registration = 0').all() as any[];
+  const vouchers = await db.prepare('SELECT * FROM vouchers').all() as any[];
   return vouchers.map(v => ({
     ...v,
     is_active: Boolean(v.is_active),
     discount: parseFloat(v.discount),
-    min_user_spending: parseFloat(v.min_user_spending),
+    min_user_spending: parseFloat(v.min_user_spending || 0),
+    min_order_value: parseFloat(v.min_order_value || 0),
+    max_discount_amount: v.max_discount_amount !== null ? parseFloat(v.max_discount_amount) : null,
+    is_hidden: Boolean(v.is_hidden),
     type: v.type === 'percentage' ? 'percent' : v.type
   }));
 }
 
-export async function addVoucher(voucher: { id: string; code: string; discount: number; type: string; is_active: boolean; usage_limit?: number; min_user_spending?: number; user_email?: string; is_registration?: boolean }) {
-  db.prepare('INSERT INTO vouchers (id, code, discount, type, is_active, usage_limit, min_user_spending, usage_count, user_email, is_registration) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)')
-    .run(voucher.id, voucher.code, voucher.discount, voucher.type, voucher.is_active ? 1 : 0, voucher.usage_limit || null, voucher.min_user_spending || 0, voucher.user_email || null, voucher.is_registration ? 1 : 0);
+export async function addVoucher(voucher: { id: string; code: string; discount: number; type: string; is_active: boolean; usage_limit?: number; min_user_spending?: number; min_order_value?: number; is_hidden?: boolean; user_email?: string; is_registration?: boolean; max_discount_amount?: number | null }) {
+  await db.prepare('INSERT INTO vouchers (id, code, discount, type, is_active, usage_limit, min_user_spending, min_order_value, is_hidden, usage_count, user_email, is_registration, max_discount_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)')
+    .run(voucher.id, voucher.code, voucher.discount, voucher.type, voucher.is_active ? 1 : 0, voucher.usage_limit || null, voucher.min_user_spending || 0, voucher.min_order_value || 0, voucher.is_hidden ? 1 : 0, voucher.user_email || null, voucher.is_registration ? 1 : 0, voucher.max_discount_amount || null);
   return { success: true };
 }
 
-export async function updateVoucher(id: string, voucher: Partial<{ code: string; discount: number; type: string; is_active: boolean; usage_limit: number | null; min_user_spending: number }>) {
-  const setClause = Object.keys(voucher)
-    .filter(k => k !== 'id')
-    .map(k => `${k} = ?`)
-    .join(', ');
+export async function updateVoucher(id: string, voucher: Partial<{ code: string; discount: number; type: string; is_active: boolean; usage_limit: number | null; min_user_spending: number; min_order_value: number; max_discount_amount: number | null; is_hidden: boolean }>) {
+  const allowedKeys = ['code', 'discount', 'type', 'is_active', 'usage_limit', 'min_user_spending', 'min_order_value', 'max_discount_amount', 'is_hidden', 'is_registration'];
+  const filteredKeys = Object.keys(voucher).filter(k => allowedKeys.includes(k));
+  
+  if (filteredKeys.length === 0) return { success: true };
 
-  const values = Object.keys(voucher)
-    .filter(k => k !== 'id')
-    .map(k => {
-      const val = (voucher as any)[k];
+  const setClause = filteredKeys.map(k => `${k} = ?`).join(', ');
+
+  const values = filteredKeys.map(k => {
+    const val = (voucher as any)[k];
       if (typeof val === 'boolean') return val ? 1 : 0;
+      if (val === '') return null;
       return val;
     });
 
@@ -744,15 +812,33 @@ export async function updateVoucher(id: string, voucher: Partial<{ code: string;
 
 export async function getAllAvailableVouchersForUser(email: string) {
   if (DB_DEBUG) console.log(`[DB Debug] Fetching vouchers for: '${email}'`);
-  const vouchers = await db.prepare('SELECT * FROM vouchers WHERE is_active = 1 AND (user_email IS NULL OR TRIM(user_email) = \'\' OR LOWER(user_email) = LOWER(?))').all(email) as any[];
+  const vouchers = await db.prepare('SELECT * FROM vouchers WHERE is_active = 1 AND is_hidden = 0 AND (user_email IS NULL OR TRIM(user_email) = \'\' OR LOWER(user_email) = LOWER(?))').all(email) as any[];
   if (DB_DEBUG) console.log(`[DB Debug] Query matched ${vouchers.length} vouchers`);
   return vouchers.map(v => ({
     ...v,
     is_active: Boolean(v.is_active),
     discount: parseFloat(v.discount),
-    min_user_spending: parseFloat(v.min_user_spending),
+    min_user_spending: parseFloat(v.min_user_spending || 0),
+    min_order_value: parseFloat(v.min_order_value || 0),
+    max_discount_amount: v.max_discount_amount !== null ? parseFloat(v.max_discount_amount) : null,
+    is_hidden: Boolean(v.is_hidden),
     type: v.type === 'percentage' ? 'percent' : v.type
   }));
+}
+
+export async function getWelcomeVoucherTemplate() {
+  const voucher = await db.prepare('SELECT * FROM vouchers WHERE is_registration = 1 LIMIT 1').get() as any;
+  if (!voucher) return null;
+  return {
+    ...voucher,
+    is_active: Boolean(voucher.is_active),
+    discount: parseFloat(voucher.discount),
+    min_user_spending: parseFloat(voucher.min_user_spending || 0),
+    min_order_value: parseFloat(voucher.min_order_value || 0),
+    max_discount_amount: voucher.max_discount_amount !== null ? parseFloat(voucher.max_discount_amount) : null,
+    is_hidden: Boolean(voucher.is_hidden),
+    is_registration: Boolean(voucher.is_registration)
+  };
 }
 
 export async function deleteVoucher(id: string) {
@@ -763,21 +849,26 @@ export async function deleteVoucher(id: string) {
 export async function getVoucherByCode(code: string) {
   const voucher = await db.prepare('SELECT * FROM vouchers WHERE code = ? AND is_active = 1').get(code) as any;
   if (!voucher) return null;
-  return { ...voucher, is_active: Boolean(voucher.is_active) };
+  return {
+    ...voucher,
+    is_active: Boolean(voucher.is_active),
+    discount: parseFloat(voucher.discount),
+    min_user_spending: parseFloat(voucher.min_user_spending || 0),
+    min_order_value: parseFloat(voucher.min_order_value || 0),
+    max_discount_amount: voucher.max_discount_amount !== null ? parseFloat(voucher.max_discount_amount) : null,
+    is_hidden: Boolean(voucher.is_hidden),
+    type: voucher.type === 'percentage' ? 'percent' : voucher.type
+  };
 }
 
-// Check usage limits and return boolean if the email has used it
 export async function hasUserUsedVoucher(email: string, voucherCode: string): Promise<boolean> {
   const record = await db.prepare('SELECT id FROM used_vouchers WHERE LOWER(user_email) = LOWER(?) AND voucher_code = ?').get(email, voucherCode);
   return !!record;
 }
 
 export async function getUserTotalSpent(email: string): Promise<number> {
-  const result = await db.prepare(`
-    SELECT SUM(total) as total_spent FROM orders 
-    WHERE user_email = ? AND status != 'Cancelled' AND status != 'Đã Hủy'
-  `).get(email) as { total_spent: number | null };
-  return result?.total_spent || 0;
+  const result = await db.prepare(`SELECT total_spent FROM users WHERE email = ?`).get(email) as { total_spent: number | null };
+  return Number(result?.total_spent) || 0;
 }
 
 // User Functions
@@ -838,6 +929,8 @@ export async function getWishlist(email: string) {
 
     return {
       ...row,
+      price: Number(row.price),
+      amount: row.amount !== null ? Number(row.amount) : undefined,
       images,
       isNew: Boolean(row.isNew ?? row.isnew),
       isPremium: Boolean(row.isPremium ?? row.ispremium),

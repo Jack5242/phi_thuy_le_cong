@@ -75,7 +75,7 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved) : null;
   });
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
-  const [appliedVoucher, setAppliedVoucher] = useState<{ code: string; discount: number; type: 'percent' | 'fixed' } | null>(null);
+  const [appliedVoucher, setAppliedVoucher] = useState<any | null>(null);
   const [checkoutFormData, setCheckoutFormData] = useState({
     name: user?.name || '',
     phone: user?.phone || '',
@@ -230,6 +230,10 @@ const App: React.FC = () => {
     if (appliedVoucher) {
       if (appliedVoucher.type === 'percent') {
         discountAmount = subtotal * appliedVoucher.discount;
+        // Apply maximum discount amount cap if specified
+        if (appliedVoucher.max_discount_amount) {
+          discountAmount = Math.min(discountAmount, appliedVoucher.max_discount_amount);
+        }
       } else {
         discountAmount = appliedVoucher.discount;
       }
@@ -319,6 +323,7 @@ const App: React.FC = () => {
             user={user}
             appliedVoucher={appliedVoucher}
             checkoutFormData={checkoutFormData}
+            onUpdateUser={handleUpdateUser}
           />
         );
       case 'admin':
