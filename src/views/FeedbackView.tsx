@@ -50,8 +50,8 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ setView }) => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-16 flex justify-center">
-      <div className="w-full max-w-lg bg-white border border-teal-100 p-6 sm:p-10 rounded-xl shadow-lg">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 flex justify-center">
+      <div className="w-full max-w-lg bg-white border border-teal-100 p-10 rounded-xl shadow-lg">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-extrabold text-teal-900">Đánh Giá Đơn Hàng</h2>
           {orderId && <p className="text-slate-500 mt-2 font-mono">Mã ĐH: {orderId}</p>}
@@ -63,7 +63,7 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ setView }) => {
           <div className="text-center py-10">
             <h3 className="text-xl font-bold text-teal-800 mb-4">Cảm ơn bạn!</h3>
             <p className="text-slate-600 mb-8">Đánh giá của bạn đã được ghi nhận. Phỉ Thúy Lê Công rất trân trọng những đóng góp của bạn.</p>
-            <button 
+            <button
               onClick={() => {
                 window.history.pushState({}, '', '/');
                 setView('home');
@@ -106,9 +106,9 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ setView }) => {
 
             <div className="space-y-2 pt-4">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Góp ý thêm (Không bắt buộc)</label>
-              <textarea 
-                className="w-full px-4 py-3 bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-teal-900 rounded-lg text-slate-800 outline-none resize-none" 
-                placeholder="Chia sẻ trải nghiệm của bạn với chúng tôi..." 
+              <textarea
+                className="w-full px-4 py-3 bg-stone-50 border border-stone-200 focus:ring-2 focus:ring-teal-900 rounded-lg text-slate-800 outline-none resize-none"
+                placeholder="Chia sẻ trải nghiệm của bạn với chúng tôi..."
                 rows={4}
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
@@ -116,7 +116,7 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ setView }) => {
               />
             </div>
 
-            <button 
+            <button
               type="submit"
               disabled={loading || !orderId}
               className="w-full bg-teal-900 text-white font-bold py-4 hover:shadow-lg hover:-translate-y-1 transition-all rounded-lg mt-8 disabled:opacity-50 disabled:hover:translate-y-0"

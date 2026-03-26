@@ -91,26 +91,26 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
 
           {/* Centered Elegant Brand (Icon Removed) */}
           <div
-            className="flex flex-col items-center cursor-pointer group px-1 md:px-8 min-w-0 overflow-hidden"
+            className="flex flex-col items-center cursor-pointer group px-2 md:px-8"
             onClick={() => setView('home')}
           >
-            <div className="flex items-center justify-center gap-1 md:gap-4 md:-translate-x-2 transition-transform duration-500 min-w-0">
+            <div className="flex items-center justify-center gap-1 md:gap-4 md:-translate-x-2 transition-transform duration-500">
               <img
                 src={logo}
                 alt="Logo"
                 style={{ colorScheme: 'only light' }}
-                className="h-7 md:h-16 w-auto flex-shrink-0 object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] group-hover:drop-shadow-[0_4px_8px_rgba(255,255,255,0.2)] group-hover:scale-105 transition-all duration-500"
+                className="h-8 md:h-16 w-auto object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] group-hover:drop-shadow-[0_4px_8px_rgba(255,255,255,0.2)] group-hover:scale-105 transition-all duration-500"
               />
-              <h2 className="text-base sm:text-xl md:text-5xl font-script leading-none text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] group-hover:text-teal-200 transition-colors duration-300 text-center whitespace-nowrap">
+              <h2 className="text-2xl md:text-5xl font-script leading-none text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] group-hover:text-teal-200 transition-colors duration-300 text-center">
                 Phỉ Thúy Lê Công
               </h2>
             </div>
             <div className="flex items-center gap-2 md:gap-3 w-full mt-1 md:mt-2">
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-              <p className="text-[6px] sm:text-[7px] md:text-[9px] font-bold text-white tracking-[0.1em] md:tracking-[0.4em] whitespace-nowrap text-center drop-shadow-sm">
+              <p className="text-[7px] md:text-[9px] font-bold text-white uppercase tracking-[0.15em] md:tracking-[0.4em] whitespace-normal md:whitespace-nowrap text-center drop-shadow-sm">
                 Kết duyên Phỉ Thúy
+                <span className="md:hidden"><br /></span>
                 <span className="hidden md:inline"> - </span>
-                <span className="md:hidden"> · </span>
                 Cát tường như ý
               </p>
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/40 to-transparent" />

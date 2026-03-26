@@ -212,9 +212,6 @@ async function startServer() {
         voucher_code, voucher_id
       });
 
-      if (email) {
-        sendFeedbackRequestEmail(email, orderId).catch(console.error);
-      }
 
       res.json(result);
     } catch (error) {
@@ -830,7 +827,25 @@ async function startServer() {
 
   app.put('/api/admin/orders/:id/status', async (req, res) => {
     try {
-      const result = await updateOrderStatus(req.params.id, req.body.status);
+      const newStatus: string = req.body.status;
+      const DELIVERED_STATUSES = ['Delivered', 'Đã Giao', 'Hoàn Thành'];
+
+      // Fetch order before updating to detect delivered transition
+      const orderBefore = await db.prepare('SELECT user_email, status FROM orders WHERE id = ?').get(req.params.id) as { user_email: string; status: string } | undefined;
+
+      const result = await updateOrderStatus(req.params.id, newStatus);
+
+      // Send feedback email only when transitioning into a delivered state
+      if (
+        orderBefore &&
+        orderBefore.user_email &&
+        orderBefore.user_email !== 'guest@example.com' &&
+        !DELIVERED_STATUSES.includes(orderBefore.status) &&
+        DELIVERED_STATUSES.includes(newStatus)
+      ) {
+        sendFeedbackRequestEmail(orderBefore.user_email, req.params.id).catch(console.error);
+      }
+
       res.json(result);
     } catch (error) {
       res.status(500).json({ error: 'Cập nhật trạng thái đơn hàng thất bại' });
