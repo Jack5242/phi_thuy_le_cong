@@ -23,7 +23,7 @@ export const Footer: React.FC<FooterProps> = ({ setView }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
         <div className="col-span-1 md:col-span-1">
           <div className="flex items-center gap-2 text-white mb-6">
-            <h2 className="text-lg font-extrabold tracking-tight uppercase">Phỉ Thúy Lê Công</h2>
+            <h2 className="text-lg font-extrabold tracking-tight">Phỉ Thúy Lê Công</h2>
           </div>
           <p className="text-white/60 text-sm leading-relaxed">
             {t('footer.desc')}

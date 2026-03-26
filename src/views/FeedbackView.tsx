@@ -50,8 +50,8 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ setView }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 flex justify-center">
-      <div className="w-full max-w-lg bg-white border border-teal-100 p-10 rounded-xl shadow-lg">
+    <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-16 flex justify-center">
+      <div className="w-full max-w-lg bg-white border border-teal-100 p-6 sm:p-10 rounded-xl shadow-lg">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-extrabold text-teal-900">Đánh Giá Đơn Hàng</h2>
           {orderId && <p className="text-slate-500 mt-2 font-mono">Mã ĐH: {orderId}</p>}
@@ -62,7 +62,7 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ setView }) => {
         {success ? (
           <div className="text-center py-10">
             <h3 className="text-xl font-bold text-teal-800 mb-4">Cảm ơn bạn!</h3>
-            <p className="text-slate-600 mb-8">Đánh giá của bạn đã được ghi nhận. Jade Elegance rất trân trọng những đóng góp của bạn.</p>
+            <p className="text-slate-600 mb-8">Đánh giá của bạn đã được ghi nhận. Phỉ Thúy Lê Công rất trân trọng những đóng góp của bạn.</p>
             <button 
               onClick={() => {
                 window.history.pushState({}, '', '/');
