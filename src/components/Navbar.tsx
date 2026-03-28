@@ -101,19 +101,21 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
                 style={{ colorScheme: 'only light' }}
                 className="h-8 md:h-16 w-auto object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] group-hover:drop-shadow-[0_4px_8px_rgba(255,255,255,0.2)] group-hover:scale-105 transition-all duration-500"
               />
-              <h2 className="text-2xl md:text-5xl font-script leading-none text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] group-hover:text-teal-200 transition-colors duration-300 text-center">
-                Phỉ Thúy Lê Công
+              <h2
+                className="text-2xl md:text-7xl font-script leading-none transition-colors duration-300 text-center"
+                style={{ background: 'linear-gradient(135deg, #f5c842 0%, #e8a115 35%, #fde68a 60%, #c97b10 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', filter: 'drop-shadow(0 2px 6px rgba(200,130,20,0.5))' }}
+              >
+                Ngọc Lê Công
               </h2>
             </div>
             <div className="flex items-center gap-2 md:gap-3 w-full mt-1 md:mt-2">
-              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-              <p className="text-[7px] md:text-[9px] font-bold text-white uppercase tracking-[0.15em] md:tracking-[0.4em] whitespace-normal md:whitespace-nowrap text-center drop-shadow-sm">
-                Kết duyên Phỉ Thúy
-                <span className="md:hidden"><br /></span>
-                <span className="hidden md:inline"> - </span>
-                Cát tường như ý
+              <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, transparent, rgba(245,200,66,0.4), transparent)' }} />
+              {/* SLOGAN FONT SIZE: change text-[7px] (mobile) and md:text-[9px] (desktop) below */}
+              <p className="text-[7px] md:text-[10px] font-bold uppercase tracking-[0.15em] md:tracking-[0.4em] whitespace-nowrap text-center"
+                style={{ background: 'linear-gradient(135deg, #f5c842 0%, #e8a115 35%, #fde68a 60%, #c97b10 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', filter: 'drop-shadow(0 1px 4px rgba(200,130,20,0.4))' }}>
+                Ngọc từ duyên tâm
               </p>
-              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+              <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, transparent, rgba(245,200,66,0.4), transparent)' }} />
             </div>
           </div>
 
