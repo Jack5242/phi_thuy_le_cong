@@ -456,7 +456,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
     });
 
   useEffect(() => {
-    if (activeTab === 'orders') fetchOrders();
+    if (activeTab === 'orders') {
+      fetchOrders();
+      const interval = setInterval(fetchOrders, 15000);
+      return () => clearInterval(interval);
+    }
     if (activeTab === 'vouchers') fetchVouchers();
     if (activeTab === 'promotions') fetchPromotions();
     if (activeTab === 'analytics') fetchAnalytics();
