@@ -236,7 +236,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.3 }}
-                    className="text-white text-5xl md:text-7xl font-couture tracking-tight mb-4 leading-tight"
+                    className="text-white text-5xl md:text-7xl font-playfair tracking-tight mb-4 leading-tight"
                   >
                     {language === 'vi' ? promotions[currentPromo]?.title : (promotions[currentPromo]?.title_en || promotions[currentPromo]?.title)}
                   </motion.h2>
@@ -307,7 +307,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
         <div className="flex items-end justify-between mb-8">
           <div className="space-y-2">
             <span className="text-teal-600 font-bold tracking-[0.3em] text-sm uppercase block mb-3">{t('home.new.subtitle')}</span>
-            <h2 className="text-5xl md:text-6xl font-couture text-teal-900 tracking-tight italic drop-shadow-sm">{t('home.new.title')}</h2>
+            <h2 className="text-5xl md:text-6xl font-playfair text-teal-900 tracking-tight italic drop-shadow-sm">{t('home.new.title')}</h2>
           </div>
           <div className="flex items-center gap-4">
             <button
@@ -344,7 +344,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
           <div className="flex items-end justify-between mb-8">
             <div className="space-y-2">
               <span className="text-teal-600 font-bold tracking-[0.3em] text-sm uppercase block mb-3">{t('home.best.subtitle')}</span>
-              <h2 className="text-5xl md:text-6xl font-couture text-teal-900 tracking-tight italic drop-shadow-sm">{t('home.best.title')}</h2>
+              <h2 className="text-5xl md:text-6xl font-playfair text-teal-900 tracking-tight italic drop-shadow-sm">{t('home.best.title')}</h2>
             </div>
             <div className="flex items-center gap-4">
               <button
@@ -389,7 +389,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
               />
             </div>
             <div className="absolute -bottom-8 -right-8 bg-teal-900 text-white p-8 hidden md:block max-w-xs shadow-2xl">
-              <p className="text-sm italic font-serif leading-relaxed">
+              <p className="text-sm italic font-playfair leading-relaxed">
                 "{t('home.story.quote')}"
               </p>
               <p className="mt-4 font-bold text-xs uppercase tracking-widest"> {t('home.story.author')}</p>
@@ -398,7 +398,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
           <div className="w-full lg:w-1/2 space-y-8">
             <div className="space-y-4">
               <span className="text-teal-700 font-bold tracking-[0.3em] text-xs uppercase">{t('home.story.subtitle')}</span>
-              <h2 className="text-4xl md:text-5xl font-couture text-teal-900 leading-tight tracking-tight">
+              <h2 className="text-4xl md:text-5xl font-playfair text-teal-900 leading-tight tracking-tight">
                 {t('home.story.title')}
               </h2>
             </div>
@@ -425,7 +425,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
             <span className="text-teal-400 font-bold tracking-[0.3em] text-sm uppercase block mb-3">
               {language === 'vi' ? 'Kết Nối Với Chúng Tôi' : 'Follow Us'}
             </span>
-            <h2 className="text-5xl md:text-6xl font-couture text-white tracking-tight italic drop-shadow-md mb-4">
+            <h2 className="text-5xl md:text-6xl font-playfair text-white tracking-tight italic drop-shadow-md mb-4">
               {language === 'vi' ? 'Mạng Xã Hội' : 'Social Media'}
             </h2>
             <p className="text-white/60 mb-10 text-sm max-w-md mx-auto">
@@ -495,7 +495,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-8">
             <span className="text-teal-700 font-bold tracking-[0.3em] text-xs uppercase">{t('home.blog.subtitle')}</span>
-            <h2 className="text-4xl font-couture text-teal-900 tracking-tight">{t('home.blog.title')}</h2>
+            <h2 className="text-4xl font-playfair text-teal-900 tracking-tight">{t('home.blog.title')}</h2>
           </div>
 
           {featuredBlogs.length > 0 ? (
@@ -559,7 +559,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setSelectedProduct,
           <div className="relative z-10 max-w-2xl mx-auto space-y-8">
             <div className="space-y-4">
               <span className="text-teal-200 font-bold tracking-[0.4em] text-xs uppercase">{t('home.sub.subtitle')}</span>
-              <h2 className="text-4xl md:text-5xl font-couture text-white tracking-tight">{t('home.sub.title')}</h2>
+              <h2 className="text-4xl md:text-5xl font-playfair text-white tracking-tight">{t('home.sub.title')}</h2>
               <p className="text-teal-100/70 text-lg">
                 {t('home.sub.desc')}
               </p>

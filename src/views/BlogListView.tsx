@@ -52,7 +52,7 @@ export const BlogListView: React.FC<BlogListViewProps> = ({ setView, setSelected
         {blogs.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-stone-100">
             <BookOpen className="h-16 w-16 text-stone-300 mx-auto mb-4" />
-            <h2 className="text-2xl font-serif text-stone-500">{t('blog.list.empty.title')}</h2>
+            <h2 className="text-2xl font-playfair text-stone-500">{t('blog.list.empty.title')}</h2>
             <p className="text-stone-400 mt-2">{t('blog.list.empty.desc')}</p>
           </div>
         ) : (

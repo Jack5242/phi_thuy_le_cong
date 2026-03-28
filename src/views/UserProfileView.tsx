@@ -44,7 +44,7 @@ const UserProfileView: React.FC = () => {
       exit={{ opacity: 0 }}
       className="max-w-4xl mx-auto px-4 py-12"
     >
-      <h1 className="text-4xl font-serif text-emerald-900 mb-8">My Account</h1>
+      <h1 className="text-4xl font-playfair text-emerald-900 mb-8">My Account</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-emerald-100 flex items-center space-x-4">
@@ -78,7 +78,7 @@ const UserProfileView: React.FC = () => {
         </div>
       </div>
 
-      <h2 className="text-2xl font-serif text-emerald-900 mb-6">Order History</h2>
+      <h2 className="text-2xl font-playfair text-emerald-900 mb-6">Order History</h2>
       {orders.length === 0 ? (
         <p className="text-gray-500 bg-white p-8 rounded-xl text-center border border-gray-100">You haven't placed any orders yet.</p>
       ) : (

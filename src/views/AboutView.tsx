@@ -20,7 +20,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ setView }) => {
         <h1 className="text-4xl md:text-5xl font-extrabold text-teal-900 tracking-tight">
           {isVi ? 'Phỉ Thúy Lê Công' : 'Phi Thuy Le Cong'}
         </h1>
-        <div className="text-xl md:text-2xl text-teal-800 italic font-serif max-w-3xl mx-auto leading-relaxed px-4 py-8 border-y border-teal-100">
+        <div className="text-xl md:text-2xl text-teal-800 italic font-playfair max-w-3xl mx-auto leading-relaxed px-4 py-8 border-y border-teal-100">
           "{isVi
             ? 'Ngọc vạn năm kết tinh từ linh khí đất trời – Người gặp Ngọc âu cũng là một chữ Duyên.'
             : 'A thousand years of jade crystallized from the aura of heaven and earth – Meeting jade is a matter of Destiny.'}"

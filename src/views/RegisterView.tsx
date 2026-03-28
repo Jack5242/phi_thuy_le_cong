@@ -42,7 +42,7 @@ const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate }) => {
       exit={{ opacity: 0, y: -20 }}
       className="max-w-md mx-auto mt-20 p-8 bg-white rounded-xl shadow-md"
     >
-      <h2 className="text-3xl font-serif text-emerald-900 mb-6 text-center">Create Account</h2>
+      <h2 className="text-3xl font-playfair text-emerald-900 mb-6 text-center">Create Account</h2>
       {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

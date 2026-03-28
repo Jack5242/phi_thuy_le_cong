@@ -67,7 +67,7 @@ export const BlogDetailView: React.FC<BlogDetailViewProps> = ({ blog, setView })
         <div className="bg-white rounded-2xl shadow-xl border border-stone-100 p-8 md:p-12 lg:p-16">
 
           {/* Excerpt */}
-          <div className="text-xl md:text-2xl font-serif text-teal-900 italic font-medium leading-relaxed mb-10 border-l-4 border-teal-500 pl-6 bg-teal-50/50 py-4 pr-4 rounded-r-lg">
+          <div className="text-xl md:text-2xl font-playfair text-teal-900 italic font-medium leading-relaxed mb-10 border-l-4 border-teal-500 pl-6 bg-teal-50/50 py-4 pr-4 rounded-r-lg">
             {blog.excerpt}
           </div>
 
@@ -78,7 +78,7 @@ export const BlogDetailView: React.FC<BlogDetailViewProps> = ({ blog, setView })
               prose-p:text-stone-700 prose-p:leading-relaxed
               prose-a:text-teal-600 prose-a:font-medium hover:prose-a:text-teal-800 transition-colors
               prose-img:rounded-xl prose-img:shadow-md
-              prose-blockquote:border-l-teal-500 prose-blockquote:bg-stone-50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:font-serif prose-blockquote:italic
+              prose-blockquote:border-l-teal-500 prose-blockquote:bg-stone-50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:font-playfair prose-blockquote:italic
               prose-strong:text-stone-900
               prose-li:text-stone-700"
             dangerouslySetInnerHTML={{ __html: blog.content ? blog.content.replace(/&nbsp;/g, ' ') : '' }}

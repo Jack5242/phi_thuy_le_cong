@@ -1056,7 +1056,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
         <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
           <div className="sm:mx-auto sm:w-full sm:max-w-md">
             <ShieldCheck className="mx-auto h-12 w-12 text-teal-700" />
-            <h2 className="mt-6 text-center text-3xl font-serif font-bold text-teal-900">
+            <h2 className="mt-6 text-center text-3xl font-playfair font-bold text-teal-900">
               Quên Mật Khẩu
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">Nhập email quản trị để nhận link khôi phục</p>
@@ -1110,7 +1110,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <ShieldCheck className="mx-auto h-12 w-12 text-teal-700" />
-          <h2 className="mt-6 text-center text-3xl font-serif font-bold text-teal-900">
+          <h2 className="mt-6 text-center text-3xl font-playfair font-bold text-teal-900">
             Quản Trị Viên
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">Đăng nhập để vào bảng điều khiển</p>
@@ -1191,7 +1191,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-serif text-teal-900">Bảng Điều Khiển Quản Trị</h1>
+        <h1 className="text-3xl font-playfair text-teal-900">Bảng Điều Khiển Quản Trị</h1>
         <div className="flex space-x-4">
           <button onClick={() => setView('home')} className="text-teal-700 hover:text-teal-900 font-medium">
             &larr; Cửa hàng

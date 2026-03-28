@@ -108,7 +108,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
               {product.category === 'Chủng tầm trung' ? t('category.midRange') : product.category === 'Chủng tầm cao' ? t('category.highEnd') : product.category}
             </span>
             <div className="flex justify-between items-start gap-4">
-              <h1 className="text-4xl font-serif text-teal-900 mb-2 tracking-tight drop-shadow-sm flex-1">{displayName}</h1>
+              <h1 className="text-4xl font-playfair text-teal-900 mb-2 tracking-tight drop-shadow-sm flex-1">{displayName}</h1>
               <button 
                 onClick={toggleWishlist}
                 disabled={isWishlistLoading}

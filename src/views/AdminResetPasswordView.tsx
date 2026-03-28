@@ -63,7 +63,7 @@ export const AdminResetPasswordView: React.FC<AdminResetPasswordViewProps> = ({ 
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex justify-center">
       <div className="w-full max-w-md bg-white border border-gray-200 p-10 shadow-sm rounded-lg">
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-serif text-teal-900">Đặt Lại Mật Khẩu Quản Trị</h2>
+          <h2 className="text-3xl font-playfair text-teal-900">Đặt Lại Mật Khẩu Quản Trị</h2>
           <p className="text-gray-500 mt-2">Nhập mật khẩu mới cho tài khoản quản trị của bạn</p>
         </div>
 
