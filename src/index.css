@@ -14,10 +14,19 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'STIXTwoText';
+  src: url('./assets/STIXTwoText-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-script: "RoyaleCouture Script", cursive;
   --font-playfair: "Playfair Display", serif;
+  --font-brand: "STIXTwoText", "Georgia", serif;
 
   /* Brand color: #104E39 — full teal scale override */
   --color-teal-950: #071f17;
