@@ -102,7 +102,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, cartCount,
                 className="h-8 md:h-16 w-auto object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] group-hover:drop-shadow-[0_4px_8px_rgba(255,255,255,0.2)] group-hover:scale-105 transition-all duration-500"
               />
               <h2
-                className="text-4xl font-brand italic tracking-widest uppercase leading-tight py-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] transition-colors duration-300"
+                className="text-xl md:text-4xl font-brand italic tracking-widest uppercase leading-tight py-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] transition-colors duration-300"
                 style={{ background: 'linear-gradient(135deg, #f5c842 0%, #e8a115 35%, #fde68a 60%, #c97b10 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', filter: 'drop-shadow(0 2px 6px rgba(200,130,20,0.5))' }}
               >
                 Ngọc Lê Công
