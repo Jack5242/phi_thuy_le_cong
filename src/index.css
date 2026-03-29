@@ -18,11 +18,26 @@
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-script: "RoyaleCouture Script", cursive;
   --font-playfair: "Playfair Display", serif;
-  --color-teal-900: #008080;
-  --color-teal-800: #006666;
-  --color-teal-700: #004d4d;
-  --color-teal-100: #ccffff;
-  --color-teal-50: #e6ffff;
+
+  /* Brand color: #104E39 — full teal scale override */
+  --color-teal-950: #071f17;
+  --color-teal-900: #104E39;
+  --color-teal-800: #0d3f2e;
+  --color-teal-700: #155f45;
+  --color-teal-600: #1a7455;
+  --color-teal-500: #228a66;
+  --color-teal-400: #34b585;
+  --color-teal-300: #5ecfa6;
+  --color-teal-200: #96e3c6;
+  --color-teal-100: #cbf0e2;
+  --color-teal-50:  #eaf8f2;
+
+  /* jade aliases — same scale */
+  --color-jade-900: #104E39;
+  --color-jade-800: #0d3f2e;
+  --color-jade-700: #155f45;
+  --color-jade-100: #cbf0e2;
+  --color-jade-50:  #eaf8f2;
 }
 
 @layer base {
