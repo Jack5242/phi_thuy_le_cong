@@ -8,30 +8,42 @@ interface CollectionsViewProps {
   setSelectedProduct: (product: Product) => void;
   products: Product[];
   searchQuery?: string;
-  initialCategory?: string;
-  onCategoryChange?: (cat: string) => void;
+  filters: {
+    selectedCategory: string;
+    selectedCollections: string[];
+    minPrice: number | null;
+    maxPrice: number | null;
+    sortOrder: string;
+    currentPage: number;
+    itemsPerPage: number;
+  };
+  setFilters: React.Dispatch<React.SetStateAction<{
+    selectedCategory: string;
+    selectedCollections: string[];
+    minPrice: number | null;
+    maxPrice: number | null;
+    sortOrder: string;
+    currentPage: number;
+    itemsPerPage: number;
+  }>>;
 }
 
-export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSelectedProduct, products, searchQuery, initialCategory, onCategoryChange }) => {
+export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSelectedProduct, products, searchQuery, filters, setFilters }) => {
   const { t, language } = useLanguage();
   const [dbCollections, setDbCollections] = useState<any[]>([]);
   // Compute absolute min/max from available products
   const priceMin = React.useMemo(() => products.length ? Math.min(...products.map(p => p.price)) : 0, [products]);
   const priceMax = React.useMemo(() => products.length ? Math.max(...products.map(p => p.price)) : 100000, [products]);
 
-  const [minPrice, setMinPrice] = useState<number>(0);
-  const [maxPrice, setMaxPrice] = useState<number>(100000);
-  const [sortOrder, setSortOrder] = useState<string>('featured');
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
-  const [itemsPerPage, setItemsPerPage] = useState<number>(12);
+  const minPrice = filters.minPrice !== null ? filters.minPrice : priceMin;
+  const maxPrice = filters.maxPrice !== null ? filters.maxPrice : priceMax;
+  const { selectedCategory, sortOrder, currentPage, selectedCollections, itemsPerPage } = filters;
   const ALL_CAT = 'all';
   const categories = [
     { id: ALL_CAT, label: t('col.filter.all') },
     { id: 'Chủng tầm trung', label: t('category.midRange') },
     { id: 'Chủng tầm cao', label: t('category.highEnd') }
   ];
-  const [selectedCategory, setSelectedCategory] = useState(() => initialCategory || ALL_CAT);
   const collections = React.useMemo(() => {
     const fromProducts = Array.from(new Set(products.map(p => p.collection))).filter(Boolean);
     const fromDb = dbCollections.map(c => c.name);
@@ -42,16 +54,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
     return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   };
 
-  // Sync when initialCategory changes (e.g. from nav bar click)
-  useEffect(() => {
-    if (initialCategory !== undefined) {
-      if (initialCategory === '' || initialCategory === 'Tất cả' || initialCategory === 'All') {
-        setSelectedCategory(ALL_CAT);
-      } else {
-        setSelectedCategory(initialCategory);
-      }
-    }
-  }, [initialCategory]);
+
 
   useEffect(() => {
     const fetchDbCollections = async () => {
@@ -68,10 +71,14 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
   // Reset slider bounds when product list changes
   useEffect(() => {
     if (products.length > 0) {
-      setMinPrice(priceMin);
-      setMaxPrice(priceMax);
+      if (filters.minPrice === null) {
+        setFilters(prev => ({ ...prev, minPrice: priceMin }));
+      }
+      if (filters.maxPrice === null) {
+        setFilters(prev => ({ ...prev, maxPrice: priceMax }));
+      }
     }
-  }, [priceMin, priceMax]);
+  }, [priceMin, priceMax, products]);
 
   useEffect(() => {
     if (!searchQuery || searchQuery.trim() === '') return;
@@ -124,10 +131,16 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
   };
 
   const handleCollectionChange = (collection: string) => {
-    setSelectedCollections(prev =>
-      prev.includes(collection) ? prev.filter(c => c !== collection) : [...prev, collection]
-    );
-    setCurrentPage(1);
+    setFilters(prev => {
+      const nextCollections = prev.selectedCollections.includes(collection)
+        ? prev.selectedCollections.filter(c => c !== collection)
+        : [...prev.selectedCollections, collection];
+      return {
+        ...prev,
+        selectedCollections: nextCollections,
+        currentPage: 1
+      };
+    });
   };
 
   return (
@@ -153,8 +166,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
                 <button
                   key={cat.id}
                   onClick={() => {
-                    setSelectedCategory(cat.id);
-                    setCurrentPage(1);
+                    setFilters(prev => ({ ...prev, selectedCategory: cat.id, currentPage: 1 }));
                   }}
                   className={`flex items-center justify-between px-3 py-2 rounded-sm text-sm transition-colors ${selectedCategory === cat.id ? 'bg-teal-900 text-white font-bold' : 'text-slate-600 hover:bg-teal-50 font-medium'}`}
                 >
@@ -214,8 +226,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
                   value={minPrice}
                   onChange={(e) => {
                     const value = Math.min(Number(e.target.value), maxPrice - 1);
-                    setMinPrice(value);
-                    setCurrentPage(1);
+                    setFilters(prev => ({ ...prev, minPrice: value, currentPage: 1 }));
                   }}
                   className={`absolute w-full h-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-teal-700 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:-mt-1.5 [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-teal-700 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:-mt-1.5 ${minPrice > priceMax - (priceMax - priceMin) * 0.05 ? 'z-20' : 'z-10'}`}
                 />
@@ -227,8 +238,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
                   value={maxPrice}
                   onChange={(e) => {
                     const value = Math.max(Number(e.target.value), minPrice + 1);
-                    setMaxPrice(value);
-                    setCurrentPage(1);
+                    setFilters(prev => ({ ...prev, maxPrice: value, currentPage: 1 }));
                   }}
                   className="absolute w-full h-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-teal-700 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:-mt-1.5 [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-teal-700 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:-mt-1.5 z-10"
                 />
@@ -251,8 +261,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
               <select
                 value={itemsPerPage}
                 onChange={(e) => {
-                  setItemsPerPage(Number(e.target.value));
-                  setCurrentPage(1);
+                  setFilters(prev => ({ ...prev, itemsPerPage: Number(e.target.value), currentPage: 1 }));
                 }}
                 className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-teal-100 bg-white text-teal-900 rounded-sm focus:ring-teal-900 focus:border-teal-900 outline-none"
               >
@@ -263,8 +272,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
               <select
                 value={sortOrder}
                 onChange={(e) => {
-                  setSortOrder(e.target.value);
-                  setCurrentPage(1);
+                  setFilters(prev => ({ ...prev, sortOrder: e.target.value, currentPage: 1 }));
                 }}
                 className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-teal-100 bg-white text-teal-900 rounded-sm focus:ring-teal-900 focus:border-teal-900 outline-none"
               >
@@ -292,7 +300,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
           {totalPages > 1 && (
             <div className="mt-12 flex justify-center items-center gap-4">
               <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                onClick={() => setFilters(prev => ({ ...prev, currentPage: Math.max(prev.currentPage - 1, 1) }))}
                 disabled={currentPage === 1}
                 className="size-10 flex items-center justify-center border border-teal-100 text-slate-400 hover:bg-teal-50 transition-all rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -302,7 +310,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
                 {Array.from({ length: totalPages }).map((_, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setCurrentPage(idx + 1)}
+                    onClick={() => setFilters(prev => ({ ...prev, currentPage: idx + 1 }))}
                     className={`size-10 flex items-center justify-center rounded-sm transition-all ${currentPage === idx + 1 ? 'bg-teal-900 text-white font-bold' : 'border border-teal-100 text-slate-600 hover:bg-teal-50'}`}
                   >
                     {idx + 1}
@@ -310,7 +318,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
                 ))}
               </div>
               <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                onClick={() => setFilters(prev => ({ ...prev, currentPage: Math.min(prev.currentPage + 1, totalPages) }))}
                 disabled={currentPage === totalPages}
                 className="size-10 flex items-center justify-center border border-teal-100 text-slate-400 hover:bg-teal-50 transition-all rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >

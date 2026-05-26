@@ -98,14 +98,15 @@ const translations = {
     'prod.details.desc.content2': ' của chúng tôi là minh chứng cho vẻ đẹp của ngọc phỉ thúy tự nhiên. Được lấy từ những mỏ ngọc huyền thoại của Myanmar, món đồ này đã được các nghệ nhân bậc thầy đánh bóng thủ công để làm lộ ra vẻ rạng rỡ bên trong. Ngọc không chỉ là một viên đá; nó là biểu tượng của sự bảo vệ, thịnh vượng và bình an.',
     'prod.details.care.title': 'Hướng Dẫn Bảo Quản',
     'prod.details.care.1': 'Lau sạch bằng vải mềm, ẩm sau mỗi lần đeo.',
-    'prod.details.care.2': 'Tránh tiếp xúc với hóa chất mạnh hoặc nước hoa.',
-    'prod.details.care.3': 'Bảo quản trong hộp lót nhung đi kèm để tránh trầy xước.',
-    'prod.details.care.4': 'Tránh thay đổi nhiệt độ đột ngột hoặc nhiệt độ cao.',
+    'prod.details.care.2': 'Bảo quản Ngọc bằng nước chuyên dụng dưỡng ngọc hoặc nước sạch.',
+    'prod.details.care.3': 'Tránh tiếp xúc với hóa chất mạnh hoặc nước hoa.',
+    'prod.details.care.4': 'Bảo quản trong hộp lót nhung đi kèm để tránh trầy xước.',
     'prod.shipping.policy.title': 'Chính Sách Giao Hàng',
-    'prod.shipping.policy.1': 'Giao hàng hỏa tốc miễn phí cho mọi đơn hàng trên toàn quốc.',
+    'prod.shipping.policy.1': 'Giao hàng miễn phí cho mọi đơn hàng trên toàn quốc.',
     'prod.shipping.policy.2': 'Thời gian giao hàng dự kiến: 1-3 ngày làm việc đối với khu vực nội thành, 3-5 ngày đối với các tỉnh thành khác.',
-    'prod.shipping.policy.3': 'Tất cả các kiện hàng đều được đóng gói cẩn thận, niêm phong và bảo hiểm 100% giá trị.',
+    'prod.shipping.policy.3': 'Tất cả các kiện hàng đều được đóng gói cẩn thận và niêm phong.',
     'prod.shipping.policy.4': 'Quý khách được quyền kiểm tra hàng trước khi thanh toán.',
+    'prod.shipping.note': 'LƯU Ý: Vui lòng quay video khi mở hộp. Nhà sản xuất xin phép từ chối giải quyết nếu không có video bằng chứng.',
     'prod.return.policy.title': 'Chính Sách Trả Hàng & Hoàn Tiền',
     'prod.return.policy.1': 'Hỗ trợ đổi trả miễn phí trong vòng 7 ngày kể từ ngày nhận hàng nếu có lỗi từ nhà sản xuất.',
     'prod.return.policy.2': 'Sản phẩm đổi trả phải còn nguyên vẹn, chưa qua sử dụng, đầy đủ hộp, phụ kiện và giấy tờ đi kèm.',
@@ -132,6 +133,7 @@ const translations = {
     'prod.return.2': 'Sản phẩm đổi trả phải còn nguyên vẹn, đầy đủ giấy tờ và hộp đi kèm.',
     'prod.return.3': 'Hoàn tiền 100% nếu phát hiện ngọc giả hoặc không đúng cam kết.',
     'prod.outOfStock': 'Liên Hệ',
+    'prod.availableQuantity': 'Số lượng',
 
     // CartView
     'cart.empty.title': 'Giỏ hàng của bạn đang trống',
@@ -165,6 +167,7 @@ const translations = {
     'cart.voucher.loginPrompt': 'Vui lòng đăng nhập để xem danh sách ưu đãi của bạn. Bạn có muốn đăng nhập tiếp tục?',
     'cart.voucher.emailRequired': 'Vui lòng nhập Email của bạn ở form bên trái trước khi áp dụng mã giảm giá.',
     'cart.added': 'Đã thêm vào giỏ hàng!',
+    'cart.stockError': 'Số lượng sản phẩm trong kho không đủ.',
 
     // AuthView
     'auth.login.title': 'Chào Mừng Trở Lại',
@@ -406,14 +409,15 @@ const translations = {
     'prod.details.desc.content2': ' is a testament to the beauty of natural teal. Sourced from the legendary mines of Myanmar, this piece has been hand-polished by master artisans to reveal its inner radiance. Jade is not just a stone; it is a symbol of protection, prosperity, and peace.',
     'prod.details.care.title': 'Care Instructions',
     'prod.details.care.1': 'Wipe clean with a soft, damp cloth after each wear.',
-    'prod.details.care.2': 'Avoid contact with harsh chemicals or perfumes.',
-    'prod.details.care.3': 'Store in the provided velvet-lined box to prevent scratches.',
-    'prod.details.care.4': 'Avoid sudden temperature changes or high heat.',
+    'prod.details.care.2': 'Preserve your jade using specialized jade conditioning solution or clean water.',
+    'prod.details.care.3': 'Avoid contact with harsh chemicals or perfumes.',
+    'prod.details.care.4': 'Store in the provided velvet-lined box to prevent scratches.',
     'prod.shipping.policy.title': 'Shipping Policy',
-    'prod.shipping.policy.1': 'Free express shipping for all orders nationwide.',
+    'prod.shipping.policy.1': 'Free shipping for all orders nationwide.',
     'prod.shipping.policy.2': 'Estimated delivery time: 1-3 business days for urban areas, 3-5 days for other provinces.',
-    'prod.shipping.policy.3': 'All packages are carefully packed, sealed, and 100% insured.',
+    'prod.shipping.policy.3': 'All packages are carefully packed and sealed.',
     'prod.shipping.policy.4': 'Customers have the right to inspect the goods before payment.',
+    'prod.shipping.note': 'NOTE: Please record a video when opening the package. The manufacturer reserves the right to refuse resolution if there is no video evidence.',
     'prod.return.policy.title': 'Return & Refund Policy',
     'prod.return.policy.1': 'Free returns within 7 days of receipt for manufacturer defects.',
     'prod.return.policy.2': 'Returned products must be intact, unused, with full box, accessories, and accompanying papers.',
@@ -440,6 +444,7 @@ const translations = {
     'prod.return.2': 'Returned products must be intact, with all papers and accompanying boxes.',
     'prod.return.3': '100% refund if fake teal is detected or not as promised.',
     'prod.outOfStock': 'Contact',
+    'prod.availableQuantity': 'Available quantity',
 
     // CartView
     'cart.empty.title': 'Your cart is empty',
@@ -473,6 +478,7 @@ const translations = {
     'cart.voucher.loginPrompt': 'Please login to view your available offers. Would you like to login now?',
     'cart.voucher.emailRequired': 'Please enter your email in the form on the left before applying a discount code.',
     'cart.added': 'Item added to cart!',
+    'cart.stockError': 'Not enough stock available.',
 
     // AuthView
     'auth.login.title': 'Welcome Back',

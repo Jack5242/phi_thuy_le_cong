@@ -86,9 +86,25 @@ const App: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [collectionFilters, setCollectionFilters] = useState({
+    selectedCategory: 'all',
+    selectedCollections: [] as string[],
+    minPrice: null as number | null,
+    maxPrice: null as number | null,
+    sortOrder: 'featured',
+    currentPage: 1,
+    itemsPerPage: 12,
+  });
   const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const { t } = useLanguage();
+
+  const displayToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+  };
 
   const fetchProducts = () => {
     fetch('/api/products')
@@ -193,19 +209,30 @@ const App: React.FC = () => {
     }
   }, [user]);
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, quantity: number = 1) => {
+    const availableStock = product.amount ?? 0;
+    const existing = cartItems.find(item => item.product.id === product.id);
+    const currentQuantity = existing ? existing.quantity : 0;
+
+    if (availableStock <= 0 || currentQuantity + quantity > availableStock) {
+      displayToast(t('cart.stockError'), 'error');
+      return false;
+    }
+
     setCartItems(prev => {
-      const existing = prev.find(item => item.product.id === product.id);
-      if (existing) {
+      const existingItem = prev.find(item => item.product.id === product.id);
+      if (existingItem) {
         return prev.map(item => 
           item.product.id === product.id 
-            ? { ...item, quantity: item.quantity + 1 } 
+            ? { ...item, quantity: item.quantity + quantity } 
             : item
         );
       }
-      return [...prev, { product, quantity: 1 }];
+      return [...prev, { product, quantity }];
     });
-    setShowToast(true);
+
+    displayToast(t('cart.added'), 'success');
+    return true;
   };
 
   const removeFromCart = (productId: string) => {
@@ -213,9 +240,18 @@ const App: React.FC = () => {
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
-    setCartItems(prev => prev.map(item => 
-      item.product.id === productId ? { ...item, quantity } : item
-    ));
+    setCartItems(prev => prev.map(item => {
+      if (item.product.id !== productId) return item;
+
+      const availableStock = item.product.amount ?? 0;
+      const newQuantity = Math.max(1, quantity);
+      if (newQuantity > availableStock) {
+        displayToast(t('cart.stockError'), 'error');
+        return item;
+      }
+
+      return { ...item, quantity: newQuantity };
+    }));
   };
 
   const clearCart = () => {
@@ -286,7 +322,16 @@ const App: React.FC = () => {
       case 'home':
         return <HomeView setView={setCurrentView} setSelectedProduct={setSelectedProduct} products={products} />;
       case 'collections':
-        return <CollectionsView setView={setCurrentView} setSelectedProduct={setSelectedProduct} products={products} searchQuery={searchQuery} initialCategory={selectedCategory} onCategoryChange={setSelectedCategory} />;
+        return (
+          <CollectionsView 
+            setView={setCurrentView} 
+            setSelectedProduct={setSelectedProduct} 
+            products={products} 
+            searchQuery={searchQuery} 
+            filters={collectionFilters}
+            setFilters={setCollectionFilters}
+          />
+        );
       case 'detail':
         return selectedProduct ? (
           <ProductDetailView 
@@ -386,7 +431,7 @@ const App: React.FC = () => {
           isLoggedIn={isLoggedIn}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          setSelectedCategory={setSelectedCategory}
+          setSelectedCategory={(cat) => setCollectionFilters(prev => ({ ...prev, selectedCategory: cat || 'all', currentPage: 1 }))}
           user={user}
         />
       )}
@@ -409,7 +454,8 @@ const App: React.FC = () => {
 
       {showToast && (
         <Toast 
-          message={t('cart.added')} 
+          message={toastMessage} 
+          type={toastType}
           onClose={() => setShowToast(false)} 
         />
       )}

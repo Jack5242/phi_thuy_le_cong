@@ -14,6 +14,8 @@ export interface Product {
   isPremium?: boolean;
   isBestSeller?: boolean;
   amount?: number;
+  details_description?: string;
+  details_description_en?: string;
 }
 
 export interface User {

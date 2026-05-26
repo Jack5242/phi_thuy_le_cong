@@ -60,6 +60,8 @@ export async function initDb() {
     name_en TEXT,
     description TEXT,
     description_en TEXT,
+    details_description TEXT,
+    details_description_en TEXT,
     price REAL NOT NULL,
     category TEXT,
     collection TEXT,
@@ -196,7 +198,8 @@ export async function initDb() {
     name_en TEXT,
     description TEXT,
     description_en TEXT,
-    slug TEXT UNIQUE
+    slug TEXT UNIQUE,
+    order_index INTEGER DEFAULT 0
   );
 
   CREATE TABLE IF NOT EXISTS wishlist (
@@ -232,6 +235,9 @@ export async function initDb() {
   try {
     await db.exec('ALTER TABLE collections ADD UNIQUE (name);');
   } catch (e) { /* Constraint already exists */ }
+  try {
+    await db.exec('ALTER TABLE collections ADD COLUMN order_index INTEGER DEFAULT 0;');
+  } catch (e) { /* Column already exists */ }
 
   try {
     await db.exec('ALTER TABLE vouchers ALTER COLUMN id TYPE TEXT;');
@@ -280,6 +286,18 @@ export async function initDb() {
 
   try {
     await db.exec('ALTER TABLE products ADD COLUMN description_en TEXT;');
+  } catch (e) {
+    // Column already exists
+  }
+
+  try {
+    await db.exec('ALTER TABLE products ADD COLUMN details_description TEXT;');
+  } catch (e) {
+    // Column already exists
+  }
+
+  try {
+    await db.exec('ALTER TABLE products ADD COLUMN details_description_en TEXT;');
   } catch (e) {
     // Column already exists
   }
@@ -510,21 +528,34 @@ export async function seedProducts(products: Product[]) {
 
 // Collections
 export async function getAllCollections() {
-  return await db.prepare('SELECT * FROM collections ORDER BY id ASC').all();
+  return await db.prepare('SELECT * FROM collections ORDER BY order_index ASC, id ASC').all();
 }
 
-export async function addCollection(collection: { name: string; name_en?: string; description?: string; description_en?: string; slug?: string }) {
-  const { name, name_en, description, description_en, slug } = collection;
+export async function addCollection(collection: { name: string; name_en?: string; description?: string; description_en?: string; slug?: string; order_index?: number }) {
+  const { name, name_en, description, description_en, slug, order_index } = collection;
   const autoSlug = slug || name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-  return db.prepare('INSERT INTO collections (name, name_en, description, description_en, slug) VALUES (?, ?, ?, ?, ?)')
-    .run(name, name_en || null, description || null, description_en || null, autoSlug);
+  
+  let finalOrderIndex = order_index;
+  if (finalOrderIndex === undefined) {
+    const maxRow = await db.prepare('SELECT MAX(order_index) as max_idx FROM collections').get() as { max_idx: number | null };
+    finalOrderIndex = (maxRow && maxRow.max_idx !== null ? Number(maxRow.max_idx) : -1) + 1;
+  }
+
+  return db.prepare('INSERT INTO collections (name, name_en, description, description_en, slug, order_index) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(name, name_en || null, description || null, description_en || null, autoSlug, finalOrderIndex);
 }
 
-export async function updateCollection(id: string | number, collection: { name: string; name_en?: string; description?: string; description_en?: string; slug?: string }) {
-  const { name, name_en, description, description_en, slug } = collection;
+export async function updateCollection(id: string | number, collection: { name: string; name_en?: string; description?: string; description_en?: string; slug?: string; order_index?: number }) {
+  const { name, name_en, description, description_en, slug, order_index } = collection;
   const autoSlug = slug || name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-  return db.prepare('UPDATE collections SET name = ?, name_en = ?, description = ?, description_en = ?, slug = ? WHERE id = ?')
-    .run(name, name_en || null, description || null, description_en || null, autoSlug, id);
+  
+  if (order_index !== undefined) {
+    return db.prepare('UPDATE collections SET name = ?, name_en = ?, description = ?, description_en = ?, slug = ?, order_index = ? WHERE id = ?')
+      .run(name, name_en || null, description || null, description_en || null, autoSlug, order_index, id);
+  } else {
+    return db.prepare('UPDATE collections SET name = ?, name_en = ?, description = ?, description_en = ?, slug = ? WHERE id = ?')
+      .run(name, name_en || null, description || null, description_en || null, autoSlug, id);
+  }
 }
 
 export async function deleteCollection(id: string | number) {
@@ -669,8 +700,8 @@ export async function createOrder(order: { id: string; email: string; name: stri
 
 export async function addProduct(product: Product) {
   const insert = db.prepare(`
-    INSERT INTO products (id, name, name_en, description, description_en, price, category, collection, image, images, isNew, isPremium, isBestSeller, amount)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO products (id, name, name_en, description, description_en, details_description, details_description_en, price, category, collection, image, images, isNew, isPremium, isBestSeller, amount)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   await insert.run(
     product.id,
@@ -678,6 +709,8 @@ export async function addProduct(product: Product) {
     product.name_en || null,
     product.description,
     product.description_en || null,
+    product.details_description || null,
+    product.details_description_en || null,
     product.price,
     product.category,
     product.collection,
@@ -692,7 +725,7 @@ export async function addProduct(product: Product) {
 }
 
 export async function updateProduct(id: string, product: Partial<Product>) {
-  const allowedKeys = ['name', 'name_en', 'description', 'description_en', 'price', 'category', 'collection', 'image', 'images', 'isNew', 'isPremium', 'isBestSeller', 'amount'];
+  const allowedKeys = ['name', 'name_en', 'description', 'description_en', 'details_description', 'details_description_en', 'price', 'category', 'collection', 'image', 'images', 'isNew', 'isPremium', 'isBestSeller', 'amount'];
   const filteredKeys = Object.keys(product).filter(k => allowedKeys.includes(k) && k !== 'id');
   const setClause = filteredKeys.map(k => `${k} = ?`).join(', ');
 

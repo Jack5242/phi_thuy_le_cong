@@ -284,7 +284,8 @@ export const CartView: React.FC<CartViewProps> = ({
                         <button 
                           type="button"
                           onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                          className="px-1 py-0.5 hover:bg-teal-50 transition-colors"
+                          disabled={item.quantity >= (item.product.amount ?? 0)}
+                          className="px-1 py-0.5 hover:bg-teal-50 transition-colors disabled:text-slate-300 disabled:cursor-not-allowed"
                         >
                           <span className="material-symbols-outlined text-[10px]">add</span>
                         </button>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { View, Product } from '../types';
-import { Plus, Edit, Trash2, Check, X, Tag, Package, ShoppingBag, Search, Filter, ArrowUpDown, LayoutTemplate, BarChart3, FileText, Settings, User, Mail, Lock, ShieldCheck } from 'lucide-react';
+import { Plus, Edit, Trash2, Check, X, Tag, Package, ShoppingBag, Search, Filter, ArrowUpDown, GripVertical, LayoutTemplate, BarChart3, FileText, Settings, User, Mail, Lock, ShieldCheck } from 'lucide-react';
 import { validatePassword } from '../utils/validation';
 import { useLanguage } from '../context/LanguageContext';
 import {
@@ -393,7 +393,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [productForm, setProductForm] = useState<Partial<Product>>({
-    name: '', name_en: '', description: '', description_en: '', price: 0, category: 'Chủng tầm trung', collection: 'Nếp băng chủng', image: '', images: [], isNew: false, isPremium: false, isBestSeller: false, amount: 1
+    name: '', name_en: '', description: '', description_en: '', details_description: '', details_description_en: '', price: 0, category: 'Chủng tầm trung', collection: 'Nếp băng chủng', image: '', images: [], isNew: false, isPremium: false, isBestSeller: false, amount: 1
   });
   const [isDragging, setIsDragging] = useState(false);
   const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
@@ -407,6 +407,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
   const [collectionForm, setCollectionForm] = useState({ name: '', name_en: '', description: '', description_en: '', slug: '' });
   const [collectionMsg, setCollectionMsg] = useState({ type: '', text: '' });
   const [isSavingCollection, setIsSavingCollection] = useState(false);
+
+  // Drag and Drop State for Collections
+  const [draggedCollectionIdx, setDraggedCollectionIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   // Product Filter & Sort State
   const [searchQuery, setSearchQuery] = useState('');
@@ -525,6 +529,61 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
       if (res.ok) { fetchDbCollections(); setCollectionToDelete(null); }
     } catch (err) {
       console.error('Failed to delete collection', err);
+    }
+  };
+
+  const handleDragStartCollection = (e: React.DragEvent<HTMLTableRowElement>, index: number) => {
+    setDraggedCollectionIdx(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOverCollection = (e: React.DragEvent<HTMLTableRowElement>, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverIdx(index);
+  };
+
+  const handleDragLeaveCollection = () => {
+    setDragOverIdx(null);
+  };
+
+  const handleDropCollection = async (e: React.DragEvent<HTMLTableRowElement>, dropIndex: number) => {
+    e.preventDefault();
+    setDragOverIdx(null);
+
+    if (draggedCollectionIdx === null) {
+      return;
+    }
+
+    const draggedIdx = draggedCollectionIdx;
+    
+    // Create a new array with the reordered collections
+    const newCollections = [...dbCollections];
+    const draggedCollection = newCollections[draggedIdx];
+    
+    // Remove from current position
+    newCollections.splice(draggedIdx, 1);
+    
+    // Insert at new position
+    const insertIdx = draggedIdx < dropIndex ? dropIndex - 1 : dropIndex;
+    newCollections.splice(insertIdx, 0, draggedCollection);
+
+    try {
+      // Update all collections with new order_index values
+      const updatePromises = newCollections.map((collection, idx) =>
+        fetch(`/api/admin/collections/${collection.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+          body: JSON.stringify({ ...collection, order_index: idx })
+        })
+      );
+
+      await Promise.all(updatePromises);
+      fetchDbCollections();
+    } catch (err) {
+      console.error('Failed to reorder collections', err);
+    } finally {
+      setDraggedCollectionIdx(null);
     }
   };
 
@@ -1270,7 +1329,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
               onClick={() => {
                 setIsAddingProduct(true);
                 setEditingProduct(null);
-                setProductForm({ name: '', name_en: '', description: '', description_en: '', price: 0, category: existingCategories[0] || 'Chủng tầm trung', collection: existingCollections[0] || 'Nếp băng chủng', image: '', images: [], isNew: false, isPremium: false, isBestSeller: false });
+                setProductForm({ name: '', name_en: '', description: '', description_en: '', details_description: '', details_description_en: '', price: 0, category: existingCategories[0] || 'Chủng tầm trung', collection: existingCollections[0] || 'Nếp băng chủng', image: '', images: [], isNew: false, isPremium: false, isBestSeller: false });
                 setIsAddingNewCategory(false);
                 setIsAddingNewCollection(false);
               }}
@@ -1506,6 +1565,35 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                       </button>
                     </div>
                     <textarea value={productForm.description_en || ''} onChange={e => setProductForm({ ...productForm, description_en: e.target.value })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none shadow-inner bg-gray-50 h-24" placeholder="English description..." />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-bold text-gray-800 mb-1">Mô tả chi tiết (Tiếng Việt)</label>
+                    <textarea value={productForm.details_description || ''} onChange={e => setProductForm({ ...productForm, details_description: e.target.value })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none h-28" placeholder="Mô tả chi tiết sản phẩm hiển thị ở tab dưới..." />
+                  </div>
+                  <div className="md:col-span-2">
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-sm font-bold text-gray-800">Mô tả chi tiết (Tiếng Anh)</label>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!productForm.details_description) return;
+                          try {
+                            const res = await fetch('/api/admin/translate', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ text: productForm.details_description })
+                            });
+                            const data = await res.json();
+                            if (data.translatedText) setProductForm(prev => ({ ...prev, details_description_en: data.translatedText }));
+                          } catch (err) { console.error('Translation failed', err); }
+                        }}
+                        className="text-xs text-teal-700 hover:text-teal-900 font-bold flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-xs">translate</span>
+                        Tự động dịch
+                      </button>
+                    </div>
+                    <textarea value={productForm.details_description_en || ''} onChange={e => setProductForm({ ...productForm, details_description_en: e.target.value })} className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none shadow-inner bg-gray-50 h-28" placeholder="Detailed English description..." />
                   </div>
                   <div className="flex items-center space-x-4 mt-2">
                     <label className="flex items-center space-x-2 cursor-pointer">
@@ -1745,11 +1833,30 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {dbCollections.length > 0 ? (
-                  dbCollections.map(c => (
-                    <tr key={c.id} className="hover:bg-gray-50 transition-colors">
+                  dbCollections.map((c, idx) => (
+                    <tr 
+                      key={c.id} 
+                      draggable
+                      onDragStart={(e) => handleDragStartCollection(e, idx)}
+                      onDragOver={(e) => handleDragOverCollection(e, idx)}
+                      onDragLeave={handleDragLeaveCollection}
+                      onDrop={(e) => handleDropCollection(e, idx)}
+                      className={`transition-colors cursor-move ${
+                        draggedCollectionIdx === idx 
+                          ? 'opacity-50 bg-gray-100' 
+                          : dragOverIdx === idx 
+                          ? 'bg-teal-50 border-l-4 border-teal-500' 
+                          : 'hover:bg-gray-50'
+                      }`}
+                    >
                       <td className="px-6 py-4">
-                        <div className="font-bold text-gray-900">{c.name}</div>
-                        <div className="text-sm text-gray-500 italic">{c.name_en || <span className="text-gray-300">Chưa có bản dịch</span>}</div>
+                        <div className="flex items-center gap-3">
+                          <GripVertical size={18} className="text-gray-400 flex-shrink-0 cursor-grab active:cursor-grabbing" title="Kéo để sắp xếp" />
+                          <div>
+                            <div className="font-bold text-gray-900">{c.name}</div>
+                            <div className="text-sm text-gray-500 italic">{c.name_en || <span className="text-gray-300">Chưa có bản dịch</span>}</div>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <button
@@ -1759,12 +1866,16 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                             setCollectionForm({ name: c.name, name_en: c.name_en || '', description: c.description || '', description_en: c.description_en || '', slug: c.slug || '' });
                             setCollectionMsg({ type: '', text: '' });
                           }}
-                          className="text-teal-700 hover:text-teal-900 mr-3"
+                          className="text-teal-700 hover:text-teal-900 mr-3 inline-flex items-center align-middle"
                           title="Chỉnh sửa"
                         >
                           <Edit size={18} />
                         </button>
-                        <button onClick={() => setCollectionToDelete(c.id)} className="text-red-500 hover:text-red-700" title="Xóa">
+                        <button 
+                          onClick={() => setCollectionToDelete(c.id)} 
+                          className="text-red-500 hover:text-red-700 inline-flex items-center align-middle" 
+                          title="Xóa"
+                        >
                           <Trash2 size={18} />
                         </button>
                       </td>

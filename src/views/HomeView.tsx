@@ -3,7 +3,7 @@ import { Product, View } from '../types';
 import { ProductCard } from '../components/ProductCard';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLanguage } from '../context/LanguageContext';
-import aboutUsPic from '../assets/aboutUsPic.webp';
+import aboutUsPic from '../assets/aboutUs.jpg';
 
 interface HomeViewProps {
   setView: (view: View) => void;

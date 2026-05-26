@@ -6,7 +6,7 @@ import { Heart } from 'lucide-react';
 
 interface ProductDetailViewProps {
   product: Product;
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product, quantity?: number) => boolean;
   setView: (view: View) => void;
   setSelectedProduct: (product: Product) => void;
   products: Product[];
@@ -27,6 +27,11 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
   const relatedProducts = products.filter(p => p.id !== product.id).slice(0, 4);
 
   const displayImages = product.images && product.images.length > 0 ? product.images : [product.image, product.image, product.image, product.image];
+
+  const detailsDescription = language === 'en'
+    ? product.details_description_en || product.details_description
+    : product.details_description || product.details_description_en;
+  const hasDetailsDescription = Boolean(detailsDescription);
 
   const handleRelatedClick = (p: Product) => {
     setSelectedProduct(p);
@@ -123,7 +128,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
             </p>
           </div>
 
-          <p className="text-slate-600 leading-relaxed">
+          <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">
             {displayDescription}
           </p>
 
@@ -140,6 +145,12 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
                 {language === 'en' && product.collection_en ? product.collection_en : product.collection}
               </span>
             </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-500 font-medium">{t('prod.availableQuantity')}</span>
+              <span className={`font-bold ${product.amount === 0 ? 'text-red-600' : 'text-teal-900'}`}>
+                {product.amount ?? 0}
+              </span>
+            </div>
           </div>
 
           <div className="flex flex-col gap-4">
@@ -154,7 +165,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
                 </button>
                 <span className="w-12 text-center font-bold text-teal-900">{quantity}</span>
                 <button 
-                  onClick={() => setQuantity(quantity + 1)}
+                  onClick={() => setQuantity(prev => Math.min(prev + 1, product.amount ?? prev + 1))}
                   disabled={product.amount === 0}
                   className="px-4 py-2 hover:bg-teal-50 transition-colors"
                 >
@@ -162,7 +173,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
                 </button>
               </div>
               <button 
-                onClick={() => addToCart(product)}
+                onClick={() => addToCart(product, quantity)}
                 disabled={product.amount === 0}
                 className="flex-1 bg-teal-900 text-white font-bold py-3 hover:bg-teal-800 transition-all rounded-sm flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:cursor-not-allowed shadow-md hover:shadow-lg active:scale-[0.98]"
               >
@@ -173,8 +184,8 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
             <button 
               onClick={() => {
                 if (product.amount === 0) return;
-                for (let i = 0; i < quantity; i++) addToCart(product);
-                setView('cart');
+                const added = addToCart(product, quantity);
+                if (added) setView('cart');
               }}
               disabled={product.amount === 0}
               className="w-full border border-teal-900 text-teal-900 font-bold py-3 hover:bg-teal-900 transition-all rounded-sm disabled:border-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed group">
@@ -215,9 +226,32 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             <div className="space-y-4">
               <h3 className="font-bold text-teal-900">{t('prod.details.desc.title')}</h3>
-              <p className="text-slate-600 text-sm leading-relaxed">
-                {t('prod.details.desc.content1')}<span className="font-bold text-teal-800">{displayName}</span>{t('prod.details.desc.content2')}
-              </p>
+              {hasDetailsDescription ? (
+                <ul className="text-slate-600 text-sm space-y-2 list-disc pl-4">
+                  {detailsDescription
+                    .split(/\r?\n/)
+                    .map((line, index) => line.trim())
+                    .filter(Boolean)
+                    .map((line, index) => (
+                      <li key={index}>{line}</li>
+                    ))}
+                </ul>
+              ) : (
+                <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">
+                  {language === 'en' && product.details_description_en
+                    ? product.details_description_en
+                    : product.details_description
+                      ? product.details_description
+                      : (
+                        <>
+                          {t('prod.details.desc.content1')}
+                          <span className="font-bold text-teal-800">{displayName}</span>
+                          {t('prod.details.desc.content2')}
+                        </>
+                      )
+                  }
+                </p>
+              )}
             </div>
             <div className="space-y-4">
               <h3 className="font-bold text-teal-900">{t('prod.details.care.title')}</h3>
@@ -247,6 +281,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
                 <li>{t('prod.return.policy.2')}</li>
                 <li>{t('prod.return.policy.3')}</li>
                 <li>{t('prod.return.policy.4')}</li>
+                <li>{t('prod.shipping.note')}</li>
               </ul>
             </div>
           </div>
