@@ -926,8 +926,15 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
     }
   };
 
-  const handleDeleteProduct = (id: string) => {
-    setProductToDelete(id);
+  const openEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setProductForm({
+      ...product,
+      images: product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : [])
+    });
+    setIsAddingProduct(false);
+    setIsAddingNewCategory(!existingCategories.includes(product.category) && !!product.category);
+    setIsAddingNewCollection(!existingCollections.includes(product.collection) && !!product.collection);
   };
 
   const confirmDeleteProduct = async (id: string) => {
@@ -937,6 +944,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });
       refreshProducts();
+      if (editingProduct?.id === id) {
+        setEditingProduct(null);
+        setIsAddingProduct(false);
+      }
       setProductToDelete(null);
     } catch (err) {
       console.error('Failed to delete product', err);
@@ -1610,8 +1621,19 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                     </label>
                   </div>
                 </div>
-                <div className="mt-8 flex justify-end space-x-3 border-t pt-4">
-                  <button onClick={() => { setIsAddingProduct(false); setEditingProduct(null); }} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium">Hủy</button>
+                <div className="mt-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border-t pt-4">
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => { setIsAddingProduct(false); setEditingProduct(null); }} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium">Hủy</button>
+                    {editingProduct && (
+                      <button
+                        type="button"
+                        onClick={() => setProductToDelete(editingProduct.id)}
+                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-medium"
+                      >
+                        Xóa Sản Phẩm
+                      </button>
+                    )}
+                  </div>
                   <button onClick={handleSaveProduct} className="px-4 py-2 bg-teal-800 text-white rounded-md hover:bg-teal-900 font-medium">Lưu Sản Phẩm</button>
                 </div>
               </div>
@@ -1640,7 +1662,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Dòng Sản Phẩm</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Giá</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Số Lượng</th>
-                  <th className="px-6 py-3 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Hành Động</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -1648,9 +1669,14 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                   <tr key={product.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="h-10 w-10 flex-shrink-0">
-                          <img className="h-10 w-10 rounded-md object-cover border border-gray-200" src={product.image} alt="" />
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => openEditProduct(product)}
+                          className="h-10 w-10 flex-shrink-0 rounded-md overflow-hidden border border-gray-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                          title="Chỉnh sửa sản phẩm"
+                        >
+                          <img className="h-full w-full object-cover transition-transform duration-300 hover:scale-105" src={product.image} alt={product.name} />
+                        </button>
                         <div className="ml-4">
                           <div className="text-sm font-bold text-gray-900">{product.name}</div>
                           <div className="text-xs font-medium text-gray-500">{product.id}</div>
@@ -1667,37 +1693,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                       <span className={`px-2 py-1 rounded-full text-xs font-bold ${product.amount === 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                         {product.amount !== undefined ? product.amount : 1}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => {
-                          setEditingProduct(product);
-                          setProductForm({
-                            ...product,
-                            images: product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : [])
-                          });
-                          setIsAddingProduct(false);
-                          if (!existingCategories.includes(product.category) && product.category) {
-                            setIsAddingNewCategory(true);
-                          } else {
-                            setIsAddingNewCategory(false);
-                          }
-                          if (!existingCollections.includes(product.collection) && product.collection) {
-                            setIsAddingNewCollection(true);
-                          } else {
-                            setIsAddingNewCollection(false);
-                          }
-                        }}
-                        className="text-indigo-600 hover:text-indigo-900 mr-4"
-                      >
-                        <Edit size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProduct(product.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        <Trash2 size={18} />
-                      </button>
                     </td>
                   </tr>
                 ))}
