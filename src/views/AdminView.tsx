@@ -77,6 +77,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
       const res = await fetch('/api/admin/admins', {
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });
+      if (handleAuthError(res)) return;
       if (res.ok) {
         const data = await res.json();
         setAllAdmins(data);
@@ -148,6 +149,15 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
     sessionStorage.removeItem('adminUser');
   };
 
+  const handleAuthError = (res: Response) => {
+    if (res.status === 401 || res.status === 403) {
+      handleAdminLogout();
+      alert('Phiên làm việc đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.');
+      return true;
+    }
+    return false;
+  };
+
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     setSettingsMessage({ type: '', text: '' });
@@ -173,6 +183,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
           newPassword: settingNewPassword
         })
       });
+      if (handleAuthError(res)) return;
       const data = await res.json();
       if (res.ok) {
         alert('Cập nhật thành công!');
@@ -208,6 +219,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
         },
         body: JSON.stringify({ email: newAdminEmail, password: newAdminPassword })
       });
+      if (handleAuthError(res)) return;
       const data = await res.json();
       if (res.ok) {
         alert('Tạo tài khoản quản trị mới thành công!');
@@ -244,6 +256,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
           'Authorization': `Bearer ${adminToken}`
         }
       });
+      if (handleAuthError(res)) return;
       if (res.ok) {
         alert('Đã xóa quản trị viên thành công!');
         fetchAllAdmins();
@@ -275,6 +288,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
         headers: { 'Authorization': `Bearer ${adminToken}` },
         body: formData
       });
+      if (handleAuthError(res)) return;
       const data = await res.json();
       if (res.ok) {
         setBankSettingsMessage({ type: 'success', text: 'Cập nhật thông tin ngân hàng thành công!' });
@@ -303,6 +317,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
         body: JSON.stringify(socialSettings)
       });
+      if (handleAuthError(res)) return;
       if (res.ok) {
         setSocialSettingsMessage({ type: 'success', text: 'Cập nhật links mạng xã hội thành công!' });
       } else {
@@ -325,6 +340,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
         body: JSON.stringify(contactSettings)
       });
+      if (handleAuthError(res)) return;
       if (res.ok) {
         setContactSettingsMessage({ type: 'success', text: 'Cập nhật thông tin liên hệ thành công!' });
       } else {
