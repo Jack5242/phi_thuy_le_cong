@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { Product, View } from '../types';
 import { ProductCard } from '../components/ProductCard';
 import { useLanguage } from '../context/LanguageContext';
+import { isVideoUrl } from '../utils/media';
 import { Heart } from 'lucide-react';
 
 interface ProductDetailViewProps {
   product: Product;
-  addToCart: (product: Product, quantity?: number) => boolean;
+  addToCart: (product: Product, quantity?: number, size?: string) => boolean;
   setView: (view: View) => void;
   setSelectedProduct: (product: Product) => void;
   products: Product[];
@@ -16,6 +17,7 @@ interface ProductDetailViewProps {
 
 export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, addToCart, setView, setSelectedProduct, products, user, token }) => {
   const [quantity, setQuantity] = useState(1);
+  const [selectedSize, setSelectedSize] = useState<string | undefined>(undefined);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'details' | 'shipping'>('details');
   const [isInWishlist, setIsInWishlist] = useState(false);
@@ -37,6 +39,11 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
     setSelectedProduct(p);
     window.scrollTo(0, 0);
   };
+
+  React.useEffect(() => {
+    setSelectedSize(undefined);
+    setQuantity(1);
+  }, [product.id]);
 
   React.useEffect(() => {
     if (user && token && product) {
@@ -91,7 +98,11 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
         {/* Image Gallery */}
         <div className="w-full lg:w-1/2 space-y-4">
           <div className="aspect-[1/1] bg-teal-50 rounded-sm overflow-hidden shadow-sm">
-            <img src={displayImages[activeImageIndex]} alt={displayName} className="w-full h-full object-cover" />
+            {isVideoUrl(displayImages[activeImageIndex]) ? (
+              <video src={displayImages[activeImageIndex]} controls className="w-full h-full object-contain" />
+            ) : (
+              <img src={displayImages[activeImageIndex]} alt={displayName} className="w-full h-full object-cover" />
+            )}
           </div>
           <div className="grid grid-cols-4 gap-4">
             {displayImages.map((img, index) => (
@@ -100,7 +111,11 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
                 className={`aspect-square bg-teal-50 rounded-sm overflow-hidden cursor-pointer border-2 transition-all ${index === activeImageIndex ? 'border-teal-900 scale-95 shadow-inner' : 'border-transparent opacity-70 hover:opacity-100'}`}
                 onClick={() => setActiveImageIndex(index)}
               >
-                <img src={img} alt={`${displayName} view ${index + 1}`} className="w-full h-full object-cover" />
+                {isVideoUrl(img) ? (
+                  <video src={img} muted loop playsInline className="w-full h-full object-contain" />
+                ) : (
+                  <img src={img} alt={`${displayName} view ${index + 1}`} className="w-full h-full object-cover" />
+                )}
               </div>
             ))}
           </div>
@@ -153,6 +168,29 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
             </div>
           </div>
 
+          {product.sizesEnabled && Array.isArray(product.sizes) && product.sizes.length > 0 && (
+            <div className="space-y-3">
+              <span className="text-sm font-bold text-teal-900">{t('prod.selectSize')}</span>
+              <div className="flex flex-wrap gap-2">
+                {product.sizes.map((size: string) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => setSelectedSize(size)}
+                    className={`px-4 py-2 border rounded-sm text-sm font-bold transition-all cursor-pointer ${
+                      selectedSize === size
+                        ? 'border-teal-900 bg-teal-900 text-white'
+                        : 'border-teal-200 text-teal-900 hover:border-teal-900 hover:bg-teal-50'
+                    } ${product.amount === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={false}
+                  >
+                    {size}{product.sizeUnit ? ` ${product.sizeUnit}` : ''}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
               <div className={`flex items-center border border-teal-100 rounded-sm ${product.amount === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
@@ -173,7 +211,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
                 </button>
               </div>
               <button 
-                onClick={() => addToCart(product, quantity)}
+                onClick={() => addToCart(product, quantity, selectedSize)}
                 disabled={product.amount === 0}
                 className="flex-1 bg-teal-900 text-white font-bold py-3 hover:bg-teal-800 transition-all rounded-sm flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:cursor-not-allowed shadow-md hover:shadow-lg active:scale-[0.98]"
               >
@@ -184,7 +222,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product, a
             <button 
               onClick={() => {
                 if (product.amount === 0) return;
-                const added = addToCart(product, quantity);
+                const added = addToCart(product, quantity, selectedSize);
                 if (added) setView('cart');
               }}
               disabled={product.amount === 0}

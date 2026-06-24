@@ -1,6 +1,7 @@
 import React from 'react';
 import { Product } from '../types';
 import { useLanguage } from '../context/LanguageContext';
+import { isVideoUrl } from '../utils/media';
 
 interface ProductCardProps {
   product: Product;
@@ -17,11 +18,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) =>
       onClick={() => onClick(product)}
     >
       <div className="relative aspect-square overflow-hidden mb-4 bg-teal-100 rounded-sm">
-        <img 
-          src={product.image} 
-          alt={displayName}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-        />
+        {isVideoUrl(product.image) ? (
+          <video
+            src={product.image}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            muted
+            loop
+            playsInline
+            controls
+          />
+        ) : (
+          <img 
+            src={product.image} 
+            alt={displayName}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        )}
         {product.isNew && (
           <span className="absolute top-3 left-3 bg-teal-900 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
             {t('prod.badge.new')}

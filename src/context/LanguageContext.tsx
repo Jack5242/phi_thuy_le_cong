@@ -134,6 +134,8 @@ const translations = {
     'prod.return.3': 'Hoàn tiền 100% nếu phát hiện ngọc giả hoặc không đúng cam kết.',
     'prod.outOfStock': 'Liên Hệ',
     'prod.availableQuantity': 'Số lượng',
+    'prod.selectSize': 'Chọn kích thước',
+    'prod.sizeRequired': 'Vui lòng chọn kích thước trước khi thêm vào giỏ hàng.',
 
     // CartView
     'cart.empty.title': 'Giỏ hàng của bạn đang trống',
@@ -167,6 +169,7 @@ const translations = {
     'cart.voucher.loginPrompt': 'Vui lòng đăng nhập để xem danh sách ưu đãi của bạn. Bạn có muốn đăng nhập tiếp tục?',
     'cart.voucher.emailRequired': 'Vui lòng nhập Email của bạn ở form bên trái trước khi áp dụng mã giảm giá.',
     'cart.added': 'Đã thêm vào giỏ hàng!',
+    'cart.size': 'Kích thước',
     'cart.stockError': 'Số lượng sản phẩm trong kho không đủ.',
 
     // AuthView
@@ -445,6 +448,8 @@ const translations = {
     'prod.return.3': '100% refund if fake teal is detected or not as promised.',
     'prod.outOfStock': 'Contact',
     'prod.availableQuantity': 'Available quantity',
+    'prod.selectSize': 'Select size',
+    'prod.sizeRequired': 'Please select a size before adding to cart.',
 
     // CartView
     'cart.empty.title': 'Your cart is empty',
@@ -478,6 +483,7 @@ const translations = {
     'cart.voucher.loginPrompt': 'Please login to view your available offers. Would you like to login now?',
     'cart.voucher.emailRequired': 'Please enter your email in the form on the left before applying a discount code.',
     'cart.added': 'Item added to cart!',
+    'cart.size': 'Size',
     'cart.stockError': 'Not enough stock available.',
 
     // AuthView

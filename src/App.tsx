@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Product, User } from './types';
+import { View, Product, User, CartItem } from './types';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { Toast } from './components/Toast';
@@ -68,7 +68,7 @@ const App: React.FC = () => {
   });
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedBlog, setSelectedBlog] = useState<any>(null);
-  const [cartItems, setCartItems] = useState<{ product: Product; quantity: number }[]>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('token'));
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('user');
@@ -209,49 +209,68 @@ const App: React.FC = () => {
     }
   }, [user]);
 
-  const addToCart = (product: Product, quantity: number = 1) => {
-    const availableStock = product.amount ?? 0;
-    const existing = cartItems.find(item => item.product.id === product.id);
-    const currentQuantity = existing ? existing.quantity : 0;
+  const matchesCartLine = (item: CartItem, productId: string, size?: string) =>
+    item.product.id === productId && (item.size ?? undefined) === (size ?? undefined);
 
-    if (availableStock <= 0 || currentQuantity + quantity > availableStock) {
+  const getProductCartTotal = (items: CartItem[], productId: string) =>
+    items.filter(item => item.product.id === productId).reduce((sum, item) => sum + item.quantity, 0);
+
+  const addToCart = (product: Product, quantity: number = 1, size?: string) => {
+    if (product.sizesEnabled && product.sizes?.length && !size) {
+      displayToast(t('prod.sizeRequired'), 'error');
+      return false;
+    }
+
+    const availableStock = product.amount ?? 0;
+    const currentTotal = getProductCartTotal(cartItems, product.id);
+
+    if (availableStock <= 0 || currentTotal + quantity > availableStock) {
       displayToast(t('cart.stockError'), 'error');
       return false;
     }
 
     setCartItems(prev => {
-      const existingItem = prev.find(item => item.product.id === product.id);
+      const existingItem = prev.find(item => matchesCartLine(item, product.id, size));
       if (existingItem) {
-        return prev.map(item => 
-          item.product.id === product.id 
-            ? { ...item, quantity: item.quantity + quantity } 
+        return prev.map(item =>
+          matchesCartLine(item, product.id, size)
+            ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
-      return [...prev, { product, quantity }];
+      return [...prev, { product, quantity, size }];
     });
 
     displayToast(t('cart.added'), 'success');
     return true;
   };
 
-  const removeFromCart = (productId: string) => {
-    setCartItems(prev => prev.filter(item => item.product.id !== productId));
+  const removeFromCart = (productId: string, size?: string) => {
+    setCartItems(prev => prev.filter(item => !matchesCartLine(item, productId, size)));
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
-    setCartItems(prev => prev.map(item => {
-      if (item.product.id !== productId) return item;
+  const updateQuantity = (productId: string, quantity: number, size?: string) => {
+    setCartItems(prev => {
+      const targetItem = prev.find(item => matchesCartLine(item, productId, size));
+      if (!targetItem) return prev;
 
-      const availableStock = item.product.amount ?? 0;
+      const availableStock = targetItem.product.amount ?? 0;
       const newQuantity = Math.max(1, quantity);
-      if (newQuantity > availableStock) {
+      const currentTotal = getProductCartTotal(prev, productId);
+      const oldLineQty = targetItem.quantity;
+      const newTotal = currentTotal - oldLineQty + newQuantity;
+
+      if (newTotal > availableStock) {
         displayToast(t('cart.stockError'), 'error');
-        return item;
+        return prev;
       }
 
-      return { ...item, quantity: newQuantity };
-    }));
+      return prev.map(item =>
+        matchesCartLine(item, productId, size)
+          ? { ...item, quantity: newQuantity }
+          : item
+      );
+    });
   };
 
   const clearCart = () => {

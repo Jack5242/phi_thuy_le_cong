@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, User } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { validatePhone, validateAddress } from '../utils/validation';
+import { isVideoUrl } from '../utils/media';
 import { Package, Truck, CheckCircle2, Clock, Eye, ChevronRight, X, Heart, Ticket } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 
@@ -439,7 +440,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
                         <div className="flex -space-x-4 overflow-hidden mb-4 p-2">
                           {orders[0].items?.slice(0, 3).map((item: any, i: number) => (
                             <div key={i} className="relative inline-block w-12 h-12 rounded-full border-2 border-white overflow-hidden shadow-sm">
-                              <img src={item.product_image || item.image} alt="" className="w-full h-full object-cover" />
+                              {isVideoUrl(item.product_image || item.image || '') ? (
+                                <video src={item.product_image || item.image} muted loop playsInline className="w-full h-full object-contain" />
+                              ) : (
+                                <img src={item.product_image || item.image} alt="" className="w-full h-full object-cover" />
+                              )}
                             </div>
                           ))}
                           {(orders[0].items?.length || 0) > 3 && (
@@ -870,15 +875,24 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, token, onLogout,
                       {selectedOrderDetails.items?.map((item: any, idx: number) => (
                         <div key={idx} className="flex items-center gap-4 bg-gray-50 p-4 rounded-sm border border-gray-100 hover:border-teal-200 transition-colors">
                           <div className="w-20 h-20 rounded-md overflow-hidden border border-gray-200 flex-shrink-0">
-                            <img 
-                              src={item.product_image || item.image || item.product?.image} 
-                              alt={item.product?.name || item.name} 
-                              className="w-full h-full object-cover" 
-                            />
+                            {isVideoUrl(item.product_image || item.image || item.product?.image || '') ? (
+                              <video src={item.product_image || item.image || item.product?.image} muted loop playsInline className="w-full h-full object-contain" />
+                            ) : (
+                              <img 
+                                src={item.product_image || item.image || item.product?.image} 
+                                alt={item.product?.name || item.name} 
+                                className="w-full h-full object-cover" 
+                              />
+                            )}
                           </div>
                           <div className="flex-1">
                         <h4 className="font-bold text-teal-900 text-sm">{item.product_name || item.product?.name || item.name}</h4>
                         <p className="text-xs text-slate-500 mt-1">{item.product_category || item.category || item.product?.category}</p>
+                        {item.size && (
+                          <p className="text-xs text-teal-700 font-medium mt-0.5">
+                            {t('cart.size')}: {item.size}{item.size_unit ? ` ${item.size_unit}` : ''}
+                          </p>
+                        )}
                         <div className="flex items-center justify-between mt-2">
                               <p className="text-xs font-bold text-slate-400">x{item.quantity}</p>
                                <p className="text-sm font-extrabold text-teal-900">{Number(item.price || 0).toLocaleString('vi-VN')}₫</p>

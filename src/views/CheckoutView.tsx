@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, User } from '../types';
+import { View, User, CartItem } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 
 interface CheckoutViewProps {
   setView: (view: View) => void;
   totalAmount: number;
   clearCart: () => void;
-  cartItems: { product: any; quantity: number }[];
+  cartItems: CartItem[];
   user: User | null;
   appliedVoucher?: { id?: string; code: string; discount: number; type: 'percent' | 'fixed' } | null;
   checkoutFormData: { name: string; phone: string; email: string; address: string; notes: string };

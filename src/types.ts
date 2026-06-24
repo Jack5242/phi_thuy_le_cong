@@ -16,6 +16,15 @@ export interface Product {
   amount?: number;
   details_description?: string;
   details_description_en?: string;
+  sizesEnabled?: boolean;
+  sizeUnit?: string;
+  sizes?: string[];
+}
+
+export interface CartItem {
+  product: Product;
+  quantity: number;
+  size?: string;
 }
 
 export interface User {

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Product, View, User } from '../types';
+import { Product, View, User, CartItem } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { validatePhone, validateAddress } from '../utils/validation';
+import { isVideoUrl } from '../utils/media';
 
 interface CartViewProps {
-  cartItems: { product: Product; quantity: number }[];
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  cartItems: CartItem[];
+  removeFromCart: (productId: string, size?: string) => void;
+  updateQuantity: (productId: string, quantity: number, size?: string) => void;
   setView: (view: View) => void;
   appliedVoucher: any | null;
   setAppliedVoucher: (voucher: any | null) => void;
@@ -252,20 +253,35 @@ export const CartView: React.FC<CartViewProps> = ({
             
             {/* Cart Items List */}
             <div className="space-y-4 mb-6 max-h-64 overflow-y-auto pr-2">
-              {cartItems.map(item => (
-                <div key={item.product.id} className="flex gap-4 bg-white p-3 rounded-sm border border-teal-100">
+              {cartItems.map(item => {
+                const productCartTotal = cartItems
+                  .filter(cartItem => cartItem.product.id === item.product.id)
+                  .reduce((sum, cartItem) => sum + cartItem.quantity, 0);
+                const canIncrease = productCartTotal < (item.product.amount ?? 0);
+
+                return (
+                <div key={`${item.product.id}-${item.size ?? ''}`} className="flex gap-4 bg-white p-3 rounded-sm border border-teal-100">
                   <div className="w-16 h-16 bg-teal-50 rounded-sm overflow-hidden flex-shrink-0">
-                    <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
+                    {isVideoUrl(item.product.image) ? (
+                      <video src={item.product.image} muted loop playsInline className="w-full h-full object-contain" />
+                    ) : (
+                      <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
+                    )}
                   </div>
                   <div className="flex-1 flex flex-col justify-between">
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-bold text-sm text-teal-900 line-clamp-1">{item.product.name}</h3>
                         <p className="text-xs text-slate-500">{item.product.category}</p>
+                        {item.size && (
+                          <p className="text-xs text-teal-700 font-medium mt-0.5">
+                            {t('cart.size')}: {item.size}{item.product.sizeUnit ? ` ${item.product.sizeUnit}` : ''}
+                          </p>
+                        )}
                       </div>
                       <button 
                         type="button"
-                        onClick={() => removeFromCart(item.product.id)}
+                        onClick={() => removeFromCart(item.product.id, item.size)}
                         className="text-slate-400 hover:text-red-500 transition-colors"
                       >
                         <span className="material-symbols-outlined text-sm">close</span>
@@ -275,7 +291,7 @@ export const CartView: React.FC<CartViewProps> = ({
                       <div className="flex items-center border border-teal-100 rounded-sm">
                         <button 
                           type="button"
-                          onClick={() => updateQuantity(item.product.id, Math.max(1, item.quantity - 1))}
+                          onClick={() => updateQuantity(item.product.id, Math.max(1, item.quantity - 1), item.size)}
                           className="px-1 py-0.5 hover:bg-teal-50 transition-colors"
                         >
                           <span className="material-symbols-outlined text-[10px]">remove</span>
@@ -283,8 +299,8 @@ export const CartView: React.FC<CartViewProps> = ({
                         <span className="w-6 text-center text-xs font-bold text-teal-900">{item.quantity}</span>
                         <button 
                           type="button"
-                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                          disabled={item.quantity >= (item.product.amount ?? 0)}
+                          onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.size)}
+                          disabled={!canIncrease}
                           className="px-1 py-0.5 hover:bg-teal-50 transition-colors disabled:text-slate-300 disabled:cursor-not-allowed"
                         >
                           <span className="material-symbols-outlined text-[10px]">add</span>
@@ -294,7 +310,7 @@ export const CartView: React.FC<CartViewProps> = ({
                     </div>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
 
             {/* Voucher Section */}

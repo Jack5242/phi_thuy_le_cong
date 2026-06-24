@@ -64,13 +64,22 @@ function processProductImages(productId: string, images: string[]) {
   const processedImages: string[] = [];
 
   images.forEach((img, index) => {
-    if (img.startsWith('data:image')) {
-      const matches = img.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/);
-      if (matches && matches.length === 3) {
-        let ext = matches[1];
-        if (ext === 'jpeg') ext = 'jpg';
-        const buffer = Buffer.from(matches[2], 'base64');
-        const filename = `img_${Date.now()}_${index}.${ext}`;
+    if (img.startsWith('data:image') || img.startsWith('data:video')) {
+      const matches = img.match(/^data:(image|video)\/([A-Za-z0-9-+.]+);base64,(.+)$/);
+      if (matches && matches.length === 4) {
+        const type = matches[1];
+        let ext = matches[2];
+        if (type === 'image' && ext === 'jpeg') ext = 'jpg';
+        if (type === 'video') {
+          if (ext === 'quicktime') ext = 'mov';
+          if (ext === 'x-msvideo') ext = 'avi';
+          if (ext === 'x-matroska') ext = 'mkv';
+          if (ext === 'x-ms-wmv') ext = 'wmv';
+          if (ext === 'mpeg') ext = 'mpg';
+          if (ext === '3gpp') ext = '3gp';
+        }
+        const buffer = Buffer.from(matches[3], 'base64');
+        const filename = `media_${Date.now()}_${index}.${ext}`;
         const filepath = path.join(productDir, filename);
         fs.writeFileSync(filepath, buffer);
         processedImages.push(`/uploads/products/${productId}/${filename}`);

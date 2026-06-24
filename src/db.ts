@@ -70,7 +70,10 @@ export async function initDb() {
     isNew INTEGER DEFAULT 0,
     isPremium INTEGER DEFAULT 0,
     isBestSeller INTEGER DEFAULT 0,
-    amount INTEGER DEFAULT 1
+    amount INTEGER DEFAULT 1,
+    sizes_enabled INTEGER DEFAULT 0,
+    size_unit TEXT,
+    sizes TEXT
   );
 
   CREATE TABLE IF NOT EXISTS orders (
@@ -91,6 +94,7 @@ export async function initDb() {
     product_id TEXT,
     quantity INTEGER,
     price NUMERIC,
+    size TEXT,
     FOREIGN KEY(order_id) REFERENCES orders(id)
   );
 
@@ -298,6 +302,30 @@ export async function initDb() {
 
   try {
     await db.exec('ALTER TABLE products ADD COLUMN details_description_en TEXT;');
+  } catch (e) {
+    // Column already exists
+  }
+
+  try {
+    await db.exec('ALTER TABLE products ADD COLUMN sizes_enabled INTEGER DEFAULT 0;');
+  } catch (e) {
+    // Column already exists
+  }
+
+  try {
+    await db.exec('ALTER TABLE products ADD COLUMN size_unit TEXT;');
+  } catch (e) {
+    // Column already exists
+  }
+
+  try {
+    await db.exec('ALTER TABLE products ADD COLUMN sizes TEXT;');
+  } catch (e) {
+    // Column already exists
+  }
+
+  try {
+    await db.exec('ALTER TABLE order_items ADD COLUMN size TEXT;');
   } catch (e) {
     // Column already exists
   }
@@ -663,6 +691,15 @@ export async function getAllProducts(): Promise<Product[]> {
       images = row.image ? [row.image] : [];
     }
 
+    let sizes: string[] = [];
+    try {
+      if (row.sizes) {
+        sizes = JSON.parse(row.sizes);
+      }
+    } catch (e) {
+      sizes = [];
+    }
+
     return {
       ...row,
       price: Number(row.price),
@@ -670,19 +707,22 @@ export async function getAllProducts(): Promise<Product[]> {
       images,
       isNew: Boolean(row.isNew ?? row.isnew),
       isPremium: Boolean(row.isPremium ?? row.ispremium),
-      isBestSeller: Boolean(row.isBestSeller ?? row.isbestseller)
+      isBestSeller: Boolean(row.isBestSeller ?? row.isbestseller),
+      sizesEnabled: Boolean(row.sizes_enabled),
+      sizeUnit: row.size_unit || undefined,
+      sizes,
     };
   });
 }
 
 export async function createOrder(order: { id: string; email: string; name: string; phone: string; address: string; notes?: string; total: number; items: any[]; receipt?: string; voucher_code?: string; voucher_id?: string }) {
   const insertOrder = db.prepare('INSERT INTO orders (id, user_email, name, phone, address, notes, total, status, receipt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
-  const insertItem = db.prepare('INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)');
+  const insertItem = db.prepare('INSERT INTO order_items (order_id, product_id, quantity, price, size) VALUES (?, ?, ?, ?, ?)');
 
   const executeOrder = db.transaction(async (data) => {
     await insertOrder.run(data.id, data.email, data.name, data.phone, data.address, data.notes || '', data.total, 'Pending', data.receipt || null);
     for (const item of data.items) {
-      await insertItem.run(data.id, item.product.id, item.quantity, item.product.price);
+      await insertItem.run(data.id, item.product.id, item.quantity, item.product.price, item.size || null);
     }
 
     if (data.voucher_code) {
@@ -700,8 +740,8 @@ export async function createOrder(order: { id: string; email: string; name: stri
 
 export async function addProduct(product: Product) {
   const insert = db.prepare(`
-    INSERT INTO products (id, name, name_en, description, description_en, details_description, details_description_en, price, category, collection, image, images, isNew, isPremium, isBestSeller, amount)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO products (id, name, name_en, description, description_en, details_description, details_description_en, price, category, collection, image, images, isNew, isPremium, isBestSeller, amount, sizes_enabled, size_unit, sizes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   await insert.run(
     product.id,
@@ -719,20 +759,28 @@ export async function addProduct(product: Product) {
     product.isNew ? 1 : 0,
     product.isPremium ? 1 : 0,
     product.isBestSeller ? 1 : 0,
-    product.amount !== undefined ? product.amount : 1
+    product.amount !== undefined ? product.amount : 1,
+    product.sizesEnabled ? 1 : 0,
+    product.sizeUnit || null,
+    JSON.stringify(product.sizes || [])
   );
   return { success: true, product };
 }
 
+const productFieldToColumn: Record<string, string> = {
+  sizesEnabled: 'sizes_enabled',
+  sizeUnit: 'size_unit',
+};
+
 export async function updateProduct(id: string, product: Partial<Product>) {
-  const allowedKeys = ['name', 'name_en', 'description', 'description_en', 'details_description', 'details_description_en', 'price', 'category', 'collection', 'image', 'images', 'isNew', 'isPremium', 'isBestSeller', 'amount'];
+  const allowedKeys = ['name', 'name_en', 'description', 'description_en', 'details_description', 'details_description_en', 'price', 'category', 'collection', 'image', 'images', 'isNew', 'isPremium', 'isBestSeller', 'amount', 'sizesEnabled', 'sizeUnit', 'sizes'];
   const filteredKeys = Object.keys(product).filter(k => allowedKeys.includes(k) && k !== 'id');
-  const setClause = filteredKeys.map(k => `${k} = ?`).join(', ');
+  const setClause = filteredKeys.map(k => `${productFieldToColumn[k] || k} = ?`).join(', ');
 
   const values = filteredKeys.map(k => {
     const val = (product as any)[k];
     if (typeof val === 'boolean') return val ? 1 : 0;
-    if (k === 'images') return JSON.stringify(val);
+    if (k === 'images' || k === 'sizes') return JSON.stringify(val || []);
     return val;
   });
 
@@ -756,7 +804,7 @@ export async function getAllOrders() {
   `).all() as any[];
   return await Promise.all(orders.map(async order => {
     const items = await db.prepare(`
-      SELECT oi.*, p.name, p.name_en, p.image, p.category, p.collection, c.name_en AS collection_en
+      SELECT oi.*, p.name, p.name_en, p.image, p.category, p.collection, p.size_unit, c.name_en AS collection_en
       FROM order_items oi
       JOIN products p ON oi.product_id = p.id
       LEFT JOIN collections c ON p.collection = c.name
@@ -997,7 +1045,7 @@ export async function getUserOrders(email: string) {
   `).all(email) as any[];
   return await Promise.all(orders.map(async order => {
     const items = await db.prepare(`
-      SELECT oi.*, p.name as product_name, p.name_en as product_name_en, p.image as product_image, p.collection, c.name_en AS collection_en
+      SELECT oi.*, p.name as product_name, p.name_en as product_name_en, p.image as product_image, p.collection, p.size_unit, c.name_en AS collection_en
       FROM order_items oi
       JOIN products p ON oi.product_id = p.id
       LEFT JOIN collections c ON p.collection = c.name

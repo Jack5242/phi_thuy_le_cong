@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import { View, Product } from '../types';
 import { Plus, Edit, Trash2, Check, X, Tag, Package, ShoppingBag, Search, Filter, ArrowUpDown, GripVertical, LayoutTemplate, BarChart3, FileText, Settings, User, Mail, Lock, ShieldCheck } from 'lucide-react';
 import { validatePassword } from '../utils/validation';
+import { isVideoUrl } from '../utils/media';
 import { useLanguage } from '../context/LanguageContext';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -393,8 +394,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [productForm, setProductForm] = useState<Partial<Product>>({
-    name: '', name_en: '', description: '', description_en: '', details_description: '', details_description_en: '', price: 0, category: 'Chủng tầm trung', collection: 'Nếp băng chủng', image: '', images: [], isNew: false, isPremium: false, isBestSeller: false, amount: 1
+    name: '', name_en: '', description: '', description_en: '', details_description: '', details_description_en: '', price: 0, category: 'Chủng tầm trung', collection: 'Nếp băng chủng', image: '', images: [], isNew: false, isPremium: false, isBestSeller: false, amount: 1, sizesEnabled: false, sizeUnit: '', sizes: []
   });
+  const [newSizeValue, setNewSizeValue] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
   const [isAddingNewCollection, setIsAddingNewCollection] = useState(false);
@@ -837,7 +839,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
     let processed = 0;
 
     files.forEach(file => {
-      if (!file.type.startsWith('image/')) {
+      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
         processed += 1;
         if (processed === files.length && newImages.length > 0) {
           updateFormImages(newImages);
@@ -903,9 +905,24 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
   };
 
   const handleSaveProduct = async () => {
+    if (productForm.sizesEnabled) {
+      if (!productForm.sizeUnit?.trim()) {
+        alert('Vui lòng nhập đơn vị kích thước (ví dụ: mm, cm, size).');
+        return;
+      }
+      if (!productForm.sizes?.length) {
+        alert('Vui lòng thêm ít nhất một kích thước.');
+        return;
+      }
+    }
+
     try {
+      const payload = productForm.sizesEnabled
+        ? productForm
+        : { ...productForm, sizeUnit: '', sizes: [] };
+
       if (isAddingProduct) {
-        const newProduct = { ...productForm, id: `prod-${Date.now()}` };
+        const newProduct = { ...payload, id: `prod-${Date.now()}` };
         await fetch('/api/admin/products', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
@@ -915,11 +932,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
         await fetch(`/api/admin/products/${editingProduct.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
-          body: JSON.stringify(productForm)
+          body: JSON.stringify(payload)
         });
       }
       setIsAddingProduct(false);
       setEditingProduct(null);
+      setNewSizeValue('');
       refreshProducts();
     } catch (err) {
       console.error('Failed to save product', err);
@@ -930,11 +948,34 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
     setEditingProduct(product);
     setProductForm({
       ...product,
-      images: product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : [])
+      images: product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : []),
+      sizesEnabled: product.sizesEnabled || false,
+      sizeUnit: product.sizeUnit || '',
+      sizes: product.sizes || [],
     });
+    setNewSizeValue('');
     setIsAddingProduct(false);
     setIsAddingNewCategory(!existingCategories.includes(product.category) && !!product.category);
     setIsAddingNewCollection(!existingCollections.includes(product.collection) && !!product.collection);
+  };
+
+  const addSizeToForm = () => {
+    const value = newSizeValue.trim();
+    if (!value) return;
+    const currentSizes = productForm.sizes || [];
+    if (currentSizes.includes(value)) {
+      setNewSizeValue('');
+      return;
+    }
+    setProductForm({ ...productForm, sizes: [...currentSizes, value] });
+    setNewSizeValue('');
+  };
+
+  const removeSizeFromForm = (size: string) => {
+    setProductForm({
+      ...productForm,
+      sizes: (productForm.sizes || []).filter(s => s !== size),
+    });
   };
 
   const confirmDeleteProduct = async (id: string) => {
@@ -1340,7 +1381,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
               onClick={() => {
                 setIsAddingProduct(true);
                 setEditingProduct(null);
-                setProductForm({ name: '', name_en: '', description: '', description_en: '', details_description: '', details_description_en: '', price: 0, category: existingCategories[0] || 'Chủng tầm trung', collection: existingCollections[0] || 'Nếp băng chủng', image: '', images: [], isNew: false, isPremium: false, isBestSeller: false });
+                setProductForm({ name: '', name_en: '', description: '', description_en: '', details_description: '', details_description_en: '', price: 0, category: existingCategories[0] || 'Chủng tầm trung', collection: existingCollections[0] || 'Nếp băng chủng', image: '', images: [], isNew: false, isPremium: false, isBestSeller: false, amount: 1, sizesEnabled: false, sizeUnit: '', sizes: [] });
+                setNewSizeValue('');
                 setIsAddingNewCategory(false);
                 setIsAddingNewCollection(false);
               }}
@@ -1509,6 +1551,80 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                     </div>
                   </div>
                   <div className="md:col-span-2">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={productForm.sizesEnabled || false}
+                        onChange={e => setProductForm({
+                          ...productForm,
+                          sizesEnabled: e.target.checked,
+                          sizes: e.target.checked ? (productForm.sizes || []) : [],
+                          sizeUnit: e.target.checked ? (productForm.sizeUnit || '') : '',
+                        })}
+                        className="rounded text-teal-600 focus:ring-teal-500 w-4 h-4"
+                      />
+                      <span className="text-sm font-semibold text-gray-800">Bật chọn kích thước</span>
+                    </label>
+
+                    {productForm.sizesEnabled && (
+                      <div className="space-y-4 pl-1 mt-3">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1 whitespace-nowrap">Đơn vị kích thước</label>
+                            <input
+                              type="text"
+                              value={productForm.sizeUnit || ''}
+                              onChange={e => setProductForm({ ...productForm, sizeUnit: e.target.value })}
+                              placeholder="mm, cm, size..."
+                              className="w-full border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1 whitespace-nowrap">Danh sách kích thước</label>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={newSizeValue}
+                                onChange={e => setNewSizeValue(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addSizeToForm(); } }}
+                                placeholder="Nhập kích thước..."
+                                className="flex-1 border border-gray-300 rounded-md p-2 text-gray-900 font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={addSizeToForm}
+                                className="px-4 py-2 bg-teal-700 text-white rounded-md hover:bg-teal-800 font-medium text-sm"
+                              >
+                                Thêm
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          {(productForm.sizes || []).length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {(productForm.sizes || []).map(size => (
+                                <span key={size} className="inline-flex items-center gap-1 px-3 py-1 bg-teal-50 border border-teal-200 rounded-full text-sm text-teal-900 font-medium whitespace-nowrap">
+                                  {size}{productForm.sizeUnit ? ` ${productForm.sizeUnit}` : ''}
+                                  <button
+                                    type="button"
+                                    onClick={() => removeSizeFromForm(size)}
+                                    className="text-teal-600 hover:text-red-600 ml-1"
+                                  >
+                                    <span className="material-symbols-outlined text-sm">close</span>
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500">Chưa có kích thước nào.</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-bold text-gray-800 mb-1">Hình Ảnh</label>
                     <div
                       className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors ${isDragging ? 'border-teal-500 bg-teal-50' : 'border-gray-300 bg-white'}`}
@@ -1522,12 +1638,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                         </svg>
                         <div className="flex text-sm text-gray-600 justify-center">
                           <label htmlFor="file-upload" className="relative cursor-pointer rounded-md font-medium text-teal-600 hover:text-teal-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-teal-500">
-                            <span>Tải ảnh lên</span>
-                            <input id="file-upload" name="file-upload" type="file" className="sr-only" multiple accept="image/*" onChange={handleImageUpload} />
+                            <span>Tải ảnh/video lên</span>
+                            <input id="file-upload" name="file-upload" type="file" className="sr-only" multiple accept="image/*,video/*" onChange={handleImageUpload} />
                           </label>
                           <p className="pl-1">hoặc kéo thả vào đây</p>
                         </div>
-                        <p className="text-xs text-gray-500">PNG, JPG, GIF tối đa 10MB</p>
+                        <p className="text-xs text-gray-500">PNG, JPG, GIF, MP4 tối đa 10MB</p>
                       </div>
                     </div>
 
@@ -1535,7 +1651,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                       <div className="mt-4 grid grid-cols-4 gap-4">
                         {productForm.images.map((img, index) => (
                           <div key={index} className="relative group aspect-square rounded-md overflow-hidden border border-gray-200">
-                            <img src={img} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                            {isVideoUrl(img) ? (
+                              <video src={img} controls className="w-full h-full object-contain" />
+                            ) : (
+                              <img src={img} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                            )}
                             <button
                               type="button"
                               onClick={() => handleRemoveImage(index)}
@@ -1620,6 +1740,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                       <span className="text-sm font-semibold text-gray-800">Bán Chạy Nhất</span>
                     </label>
                   </div>
+
                 </div>
                 <div className="mt-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border-t pt-4">
                   <div className="flex items-center gap-3">
@@ -1675,7 +1796,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                           className="h-10 w-10 flex-shrink-0 rounded-md overflow-hidden border border-gray-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
                           title="Chỉnh sửa sản phẩm"
                         >
-                          <img className="h-full w-full object-cover transition-transform duration-300 hover:scale-105" src={product.image} alt={product.name} />
+                          {isVideoUrl(product.image) ? (
+                            <video src={product.image} className="h-full w-full object-contain transition-transform duration-300 hover:scale-105" muted loop playsInline />
+                          ) : (
+                            <img className="h-full w-full object-cover transition-transform duration-300 hover:scale-105" src={product.image} alt={product.name} />
+                          )}
                         </button>
                         <div className="ml-4">
                           <div className="text-sm font-bold text-gray-900">{product.name}</div>
@@ -2175,10 +2300,19 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                           <tr key={index} className="hover:bg-gray-50">
                             <td className="px-4 py-3">
                               <div className="flex items-center">
-                                <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded mr-3" />
+                                {isVideoUrl(item.image) ? (
+                                  <video src={item.image} className="w-12 h-12 object-contain rounded mr-3" muted loop playsInline />
+                                ) : (
+                                  <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded mr-3" />
+                                )}
                                 <div>
                                   <div className="text-sm font-medium text-gray-900">{item.name}</div>
                                   <div className="text-xs text-gray-500">{item.category}</div>
+                                  {item.size && (
+                                    <div className="text-xs text-teal-700 font-medium mt-0.5">
+                                      Kích thước: {item.size}{item.size_unit ? ` ${item.size_unit}` : ''}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </td>
