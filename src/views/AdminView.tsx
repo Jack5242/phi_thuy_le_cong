@@ -1483,7 +1483,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
               <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold text-teal-900">{isAddingProduct ? 'Thêm Sản Phẩm Mới' : 'Chỉnh Sửa Sản Phẩm'}</h3>
+                  <div>
+                    <h3 className="text-xl font-bold text-teal-900">{isAddingProduct ? 'Thêm Sản Phẩm Mới' : 'Chỉnh Sửa Sản Phẩm'}</h3>
+                    {editingProduct && editingProduct.created_at && (
+                      <p className="text-sm text-gray-500 mt-1">Được tạo lúc: {new Date(editingProduct.created_at).toLocaleString('vi-VN')}</p>
+                    )}
+                  </div>
                   <button onClick={() => { setIsAddingProduct(false); setEditingProduct(null); }} className="text-gray-500 hover:text-gray-700">
                     <X size={24} />
                   </button>

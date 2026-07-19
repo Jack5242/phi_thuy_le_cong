@@ -19,6 +19,7 @@ export interface Product {
   sizesEnabled?: boolean;
   sizeUnit?: string;
   sizes?: string[];
+  created_at?: string;
 }
 
 export interface CartItem {

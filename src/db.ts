@@ -73,7 +73,8 @@ export async function initDb() {
     amount INTEGER DEFAULT 1,
     sizes_enabled INTEGER DEFAULT 0,
     size_unit TEXT,
-    sizes TEXT
+    sizes TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
   );
 
   CREATE TABLE IF NOT EXISTS orders (
@@ -214,6 +215,10 @@ export async function initDb() {
     UNIQUE(user_email, product_id)
   );
 `);
+
+  try {
+    await db.exec('ALTER TABLE products ADD COLUMN created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;');
+  } catch (e) { /* Column already exists */ }
 
   // Migration for promotions localized fields
   const promotionsCols = await db.prepare("SELECT column_name as name FROM information_schema.columns WHERE table_name = 'promotions'").all();
