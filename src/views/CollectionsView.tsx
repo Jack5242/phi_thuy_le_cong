@@ -307,15 +307,39 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({ setView, setSe
                 <span className="material-symbols-outlined">chevron_left</span>
               </button>
               <div className="flex gap-2">
-                {Array.from({ length: totalPages }).map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setFilters(prev => ({ ...prev, currentPage: idx + 1 }))}
-                    className={`size-10 flex items-center justify-center rounded-sm transition-all ${currentPage === idx + 1 ? 'bg-teal-900 text-white font-bold' : 'border border-teal-100 text-slate-600 hover:bg-teal-50'}`}
-                  >
-                    {idx + 1}
-                  </button>
-                ))}
+                {(() => {
+                  const pages: (number | string)[] = [];
+                  if (totalPages <= 7) {
+                    for (let i = 1; i <= totalPages; i++) pages.push(i);
+                  } else {
+                    if (currentPage <= 4) {
+                      pages.push(1, 2, 3, 4, 5, '...', totalPages);
+                    } else if (currentPage >= totalPages - 3) {
+                      pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+                    } else {
+                      pages.push(1, '...', currentPage - 2, currentPage - 1, currentPage, currentPage + 1, currentPage + 2, '...', totalPages);
+                    }
+                  }
+                  
+                  return pages.map((page, idx) => {
+                    if (page === '...') {
+                      return (
+                        <span key={`ellipsis-${idx}`} className="size-10 flex items-center justify-center text-slate-400">
+                          ...
+                        </span>
+                      );
+                    }
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => setFilters(prev => ({ ...prev, currentPage: page as number }))}
+                        className={`size-10 flex items-center justify-center rounded-sm transition-all ${currentPage === page ? 'bg-teal-900 text-white font-bold' : 'border border-teal-100 text-slate-600 hover:bg-teal-50'}`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  });
+                })()}
               </div>
               <button
                 onClick={() => setFilters(prev => ({ ...prev, currentPage: Math.min(prev.currentPage + 1, totalPages) }))}
