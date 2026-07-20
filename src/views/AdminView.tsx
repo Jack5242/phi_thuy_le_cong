@@ -17,6 +17,31 @@ interface AdminViewProps {
   refreshProducts: () => void;
 }
 
+const formatCustomDate = (isoString: string) => {
+  const d = new Date(isoString);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}, ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+};
+
+const parseCustomDate = (dateStr: string) => {
+  try {
+    const parts = dateStr.split(', ');
+    if (parts.length !== 2) return null;
+    const timeParts = parts[0].split(':');
+    if (timeParts.length !== 3) return null;
+    const [hours, minutes, seconds] = timeParts.map(Number);
+    const dateParts = parts[1].split('/');
+    if (dateParts.length !== 3) return null;
+    const [day, month, year] = dateParts.map(Number);
+    
+    const d = new Date(year, month - 1, day, hours, minutes, seconds);
+    if (isNaN(d.getTime())) return null;
+    return d;
+  } catch {
+    return null;
+  }
+};
+
 export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refreshProducts }) => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'products' | 'collections' | 'orders' | 'vouchers' | 'promotions' | 'analytics' | 'blogs' | 'settings'>('products');
@@ -416,6 +441,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
   const [isDragging, setIsDragging] = useState(false);
   const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
   const [isAddingNewCollection, setIsAddingNewCollection] = useState(false);
+  const [isEditingCreatedAt, setIsEditingCreatedAt] = useState(false);
+  const [tempCreatedAt, setTempCreatedAt] = useState('');
+  const [isSavingCreatedAt, setIsSavingCreatedAt] = useState(false);
 
   // Collections State
   const [dbCollections, setDbCollections] = useState<any[]>([]);
@@ -960,6 +988,41 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
     }
   };
 
+  const handleUpdateCreatedAt = async () => {
+    if (!editingProduct || !tempCreatedAt) return;
+    
+    // Validate date
+    const newDate = parseCustomDate(tempCreatedAt);
+    if (!newDate) {
+      alert('Vui lòng nhập ngày giờ đúng định dạng HH:mm:ss, DD/MM/YYYY');
+      return;
+    }
+
+    setIsSavingCreatedAt(true);
+    try {
+      const isoString = newDate.toISOString();
+      const res = await fetch(`/api/admin/products/${editingProduct.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        body: JSON.stringify({ created_at: isoString })
+      });
+      
+      if (res.ok) {
+        setEditingProduct({ ...editingProduct, created_at: isoString });
+        setIsEditingCreatedAt(false);
+        refreshProducts();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Không thể cập nhật ngày giờ');
+      }
+    } catch (err) {
+      console.error('Failed to update created_at', err);
+      alert('Lỗi máy chủ khi cập nhật ngày giờ');
+    } finally {
+      setIsSavingCreatedAt(false);
+    }
+  };
+
   const openEditProduct = (product: Product) => {
     setEditingProduct(product);
     setProductForm({
@@ -1486,7 +1549,55 @@ export const AdminView: React.FC<AdminViewProps> = ({ setView, products, refresh
                   <div>
                     <h3 className="text-xl font-bold text-teal-900">{isAddingProduct ? 'Thêm Sản Phẩm Mới' : 'Chỉnh Sửa Sản Phẩm'}</h3>
                     {editingProduct && editingProduct.created_at && (
-                      <p className="text-sm text-gray-500 mt-1">Được tạo lúc: {new Date(editingProduct.created_at).toLocaleString('vi-VN')}</p>
+                      <div className="mt-1 flex items-center space-x-2">
+                        {isEditingCreatedAt ? (
+                          <>
+                            <input
+                              type="text"
+                              placeholder="HH:mm:ss, DD/MM/YYYY"
+                              value={tempCreatedAt}
+                              onChange={(e) => setTempCreatedAt(e.target.value)}
+                              className="border border-gray-300 rounded-md p-1 text-sm text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none w-44"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleUpdateCreatedAt}
+                              disabled={isSavingCreatedAt}
+                              className="px-2 py-1 bg-teal-600 text-white rounded hover:bg-teal-700 text-xs font-medium disabled:opacity-50"
+                            >
+                              Lưu
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsEditingCreatedAt(false);
+                                setTempCreatedAt('');
+                              }}
+                              disabled={isSavingCreatedAt}
+                              className="px-2 py-1 border border-gray-300 text-gray-600 rounded hover:bg-gray-100 text-xs font-medium disabled:opacity-50"
+                            >
+                              Hủy
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-500">
+                              Được tạo lúc: {formatCustomDate(editingProduct.created_at)}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTempCreatedAt(formatCustomDate(editingProduct.created_at!));
+                                setIsEditingCreatedAt(true);
+                              }}
+                              className="text-teal-600 hover:text-teal-800 text-sm flex items-center bg-transparent border-none cursor-pointer"
+                              title="Chỉnh sửa thời gian"
+                            >
+                              <Edit size={14} className="ml-1" />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     )}
                   </div>
                   <button onClick={() => { setIsAddingProduct(false); setEditingProduct(null); }} className="text-gray-500 hover:text-gray-700">

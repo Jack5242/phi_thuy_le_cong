@@ -778,7 +778,7 @@ const productFieldToColumn: Record<string, string> = {
 };
 
 export async function updateProduct(id: string, product: Partial<Product>) {
-  const allowedKeys = ['name', 'name_en', 'description', 'description_en', 'details_description', 'details_description_en', 'price', 'category', 'collection', 'image', 'images', 'isNew', 'isPremium', 'isBestSeller', 'amount', 'sizesEnabled', 'sizeUnit', 'sizes'];
+  const allowedKeys = ['name', 'name_en', 'description', 'description_en', 'details_description', 'details_description_en', 'price', 'category', 'collection', 'image', 'images', 'isNew', 'isPremium', 'isBestSeller', 'amount', 'sizesEnabled', 'sizeUnit', 'sizes', 'created_at'];
   const filteredKeys = Object.keys(product).filter(k => allowedKeys.includes(k) && k !== 'id');
   const setClause = filteredKeys.map(k => `${productFieldToColumn[k] || k} = ?`).join(', ');
 
